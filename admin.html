@@ -15,7 +15,20 @@ content="width=device-width, initial-scale=1.0">
 </head>
 
 <body>
+<script>
 
+const password =
+prompt("Введите пароль");
+
+if (password !== "boostadmin") {
+
+  document.body.innerHTML = "";
+
+  alert("Доступ запрещен");
+
+}
+
+</script>
 <header>
 
 <h1>SMM-Boost Admin</h1>
