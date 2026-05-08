@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SMM-Boost</title>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>SMM-Boost</h1>
+  <p>Премиальное продвижение Instagram</p>
+</header>
+
+<section class="services">
+
+  <!-- Подписчики -->
+  <div class="card">
+    <h2>👥 Подписчики</h2>
+    <p class="price">150₽ / 1000</p>
+
+    <ul>
+      <li>📉 Списания: 2%</li>
+      <li>⚡ Скорость: 138/мин</li>
+      <li>🛡 30 дней автодокрутка</li>
+      <li>🌍 Офферные аккаунты</li>
+    </ul>
+
+    <input type="number" id="followersAmount" placeholder="Количество">
+
+    <div class="total">
+      Итого:
+      <span id="followersTotal">0₽</span>
+    </div>
+
+    <button>Заказать</button>
+  </div>
+
+  <!-- Лайки -->
+  <div class="card">
+    <h2>❤️ Лайки</h2>
+    <p class="price">20₽ / 1000</p>
+
+    <ul>
+      <li>📉 Списания: 0%</li>
+      <li>⚡ Скорость: 587/мин</li>
+      <li>🛡 30 дней докрутка</li>
+      <li>🌍 Офферные аккаунты</li>
+    </ul>
+
+    <input type="number" id="likesAmount" placeholder="Количество">
+
+    <div class="total">
+      Итого:
+      <span id="likesTotal">0₽</span>
+    </div>
+
+    <button>Заказать</button>
+  </div>
+
+  <!-- Просмотры -->
+  <div class="card">
+    <h2>👁 Просмотры</h2>
+    <p class="price">7₽ / 1000</p>
+
+    <ul>
+      <li>⚡ Скорость: 689/мин</li>
+      <li>📈 Увеличивают охват</li>
+      <li>🎥 Органические просмотры</li>
+    </ul>
+
+    <input type="number" id="viewsAmount" placeholder="Количество">
+
+    <div class="total">
+      Итого:
+      <span id="viewsTotal">0₽</span>
+    </div>
+
+    <button>Заказать</button>
+  </div>
+
+  <!-- Репосты -->
+  <div class="card">
+    <h2>🔁 Репосты</h2>
+    <p class="price">70₽ / 1000</p>
+
+    <ul>
+      <li>⚡ Скорость: 702/час</li>
+      <li>📈 Добавляют охват</li>
+      <li>🖼 Увеличивают показы</li>
+    </ul>
+
+    <input type="number" id="repostsAmount" placeholder="Количество">
+
+    <div class="total">
+      Итого:
+      <span id="repostsTotal">0₽</span>
+    </div>
+
+    <button>Заказать</button>
+  </div>
+
+  <!-- Комментарии -->
+  <div class="card">
+    <h2>💬 Комментарии</h2>
+    <p class="price">4452₽ / 1000</p>
+
+    <ul>
+      <li>🇷🇺 Русские комментарии</li>
+      <li>⚡ Скорость: 2/час</li>
+      <li>📝 По теме поста</li>
+    </ul>
+
+    <input type="number" id="commentsAmount" placeholder="Количество">
+
+    <div class="total">
+      Итого:
+      <span id="commentsTotal">0₽</span>
+    </div>
+
+    <button>Заказать</button>
+  </div>
+
+</section>
+
+<section class="support">
+  <a href="https://t.me/yourusername" target="_blank">
+    📞 Поддержка
+  </a>
+</section>
+
+<div class="modal" id="orderModal">
+
+  <div class="modal-content">
+
+    <span class="close" id="closeModal">&times;</span>
+
+    <h2>Оформление заказа</h2>
+
+    <div class="order-info">
+
+      <p id="serviceName"></p>
+      <p id="serviceAmount"></p>
+      <p id="servicePrice"></p>
+
+    </div>
+
+    <input type="text" id="instagramLink" placeholder="Ссылка Instagram">
+
+    <button id="payButton">
+      💳 Перейти к оплате
+    </button>
+
+  </div>
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>
