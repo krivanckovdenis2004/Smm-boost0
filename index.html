@@ -7,7 +7,45 @@
 
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
+
+<div class="bg-animation">
+
+  <span></span>
+  <span></span>
+  <span></span>
+  <span></span>
+
+</div>
+
+<nav class="navbar">
+
+  <div class="nav-logo">
+    SMM-Boost
+  </div>
+
+  <div class="nav-links">
+
+    <a href="#services">
+      Услуги
+    </a>
+
+    <a href="#reviews">
+      Отзывы
+    </a>
+
+    <a href="#faq">
+      FAQ
+    </a>
+
+    <a href="admin.html">
+      Admin
+    </a>
+
+  </div>
+
+</nav>
 
 <header class="hero">
 
@@ -40,6 +78,40 @@
   </div>
 
 </header>
+
+<section class="stats">
+
+  <div class="stat-card">
+
+    <h2 id="ordersCount">
+      0
+    </h2>
+
+    <p>Заказов выполнено</p>
+
+  </div>
+
+  <div class="stat-card">
+
+    <h2 id="clientsCount">
+      0
+    </h2>
+
+    <p>Постоянных клиентов</p>
+
+  </div>
+
+  <div class="stat-card">
+
+    <h2>
+      24/7
+    </h2>
+
+    <p>Поддержка</p>
+
+  </div>
+
+</section>
 
 <section class="services" id="services">
 
@@ -152,11 +224,94 @@
 
 </section>
 
-<section class="support">
-  <a href="https://t.me/yourusername" target="_blank">
-    📞 Поддержка
-  </a>
+<section class="reviews" id="reviews">
+
+<section class="faq" id="faq">
+
+  <h2>Частые вопросы</h2>
+
+  <div class="faq-item">
+
+    <h3>
+    Когда начнется выполнение?
+    </h3>
+
+    <p>
+    Обычно запуск начинается
+    в течение нескольких минут.
+    </p>
+
+  </div>
+
+  <div class="faq-item">
+
+    <h3>
+    Есть ли гарантия?
+    </h3>
+
+    <p>
+    Да, большинство услуг
+    имеют гарантию докрутки.
+    </p>
+
+  </div>
+
+  <div class="faq-item">
+
+    <h3>
+    Можно ли заказать повторно?
+    </h3>
+
+    <p>
+    Да, ограничения отсутствуют.
+    </p>
+
+  </div>
+
 </section>
+
+  <h2>Отзывы клиентов</h2>
+
+  <div class="review-grid">
+
+    <div class="review-card">
+
+      <p>
+      🚀 Заказал подписчиков —
+      запуск был через 2 минуты.
+      Качество топ.
+      </p>
+
+      <span>@alexey</span>
+
+    </div>
+
+    <div class="review-card">
+
+      <p>
+      ❤️ Лайки пришли быстро,
+      охват реально поднялся.
+      </p>
+
+      <span>@maksim</span>
+
+    </div>
+
+    <div class="review-card">
+
+      <p>
+      🔥 Лучший сервис,
+      который находил по Instagram.
+      </p>
+
+      <span>@dmitry</span>
+
+    </div>
+
+  </div>
+
+</section>
+
 
 <div class="modal" id="orderModal">
 
@@ -184,7 +339,87 @@
 
 </div>
 
+<script>
+
+setTimeout(() => {
+
+  const orders =
+  document.getElementById('ordersCount');
+
+  const clients =
+  document.getElementById('clientsCount');
+
+  let ordersValue = 0;
+
+  let clientsValue = 0;
+
+  const ordersInterval =
+  setInterval(() => {
+
+    ordersValue += 500;
+
+    orders.innerText =
+    ordersValue.toLocaleString();
+
+    if (ordersValue >= 50000) {
+
+      clearInterval(ordersInterval);
+
+    }
+
+  }, 20);
+
+  const clientsInterval =
+  setInterval(() => {
+
+    clientsValue += 120;
+
+    clients.innerText =
+    clientsValue.toLocaleString();
+
+    if (clientsValue >= 12000) {
+
+      clearInterval(clientsInterval);
+
+    }
+
+  }, 20);
+
+}, 500);
+
+</script>
+
 <script type="module" src="app.js"></script>
+
+<footer class="footer">
+
+  <div class="footer-logo">
+
+    SMM-Boost
+
+  </div>
+
+  <p>
+
+    Премиальное продвижение Instagram
+
+  </p>
+
+  <a href="https://t.me/barakyhi1"
+  target="_blank">
+
+    📞 Поддержка Telegram
+
+  </a>
+
+  <div class="footer-copy">
+
+    © 2025 SMM-Boost.
+    Все права защищены.
+
+  </div>
+
+</footer>
 
 </body>
 </html>
