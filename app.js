@@ -3,7 +3,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import {
   getFirestore,
   collection,
-  addDoc
+  addDoc,
+  getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -172,7 +173,21 @@ document
           createdAt: new Date()
 
       });
+let myOrders = JSON.parse(
 
+  localStorage.getItem('myOrders')
+
+) || [];
+
+myOrders.push(docRef.id);
+
+localStorage.setItem(
+
+  'myOrders',
+
+  JSON.stringify(myOrders)
+
+);
       await fetch("https://api.telegram.org/bot8539363038:AAGm30GEC8_k9YYlFfEFx5mI3iKeiMPAYSU/sendMessage", {
 
         method: "POST",
@@ -209,7 +224,7 @@ ${link}
 ${docRef.id}`);
 
       window.location.href =
-      `track.html?id=${docRef.id}`;
+'orders.html';
 
       document.getElementById('orderModal')
         .style.display = 'none';
@@ -226,4 +241,67 @@ ${docRef.id}`);
     }
 
 });
+async function loadOrders() {
 
+  const ordersList =
+  document.getElementById('ordersList');
+
+  const snapshot =
+  await getDocs(collection(db, "orders"));
+
+  ordersList.innerHTML = '';
+
+  snapshot.forEach((docItem) => {
+
+    const order =
+    docItem.data();
+
+    let statusClass = '';
+
+    if (order.status.includes('🟢')) {
+
+      statusClass = 'doneStatus';
+
+    }
+
+    else if (order.status.includes('🔴')) {
+
+      statusClass = 'cancelStatus';
+
+    }
+
+    else {
+
+      statusClass = 'processStatus';
+
+    }
+
+    ordersList.innerHTML += `
+
+      <div class="order-card">
+
+        <h3>${order.service}</h3>
+
+        <p>
+        Количество:
+        ${order.amount}
+        </p>
+
+        <p>
+        Сумма:
+        ${order.price}₽
+        </p>
+
+        <span class="statusBadge ${statusClass}">
+
+        ${order.status}
+
+        </span>
+
+      </div>
+
+    `;
+
+  });
+
+}
