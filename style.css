@@ -1303,3 +1303,32 @@ header p {
   );
 
 }
+.footer-links {
+
+  display: flex;
+
+  justify-content: center;
+
+  gap: 20px;
+
+  margin-top: 20px;
+
+  flex-wrap: wrap;
+
+}
+
+.footer-links a {
+
+  color: #bdbdbd;
+
+  text-decoration: none;
+
+  transition: 0.3s;
+
+}
+
+.footer-links a:hover {
+
+  color: #9d7bff;
+
+}
