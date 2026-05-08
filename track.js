@@ -64,6 +64,25 @@ async function loadOrder() {
 
     const order =
       orderSnap.data();
+let statusClass = '';
+
+if (order.status.includes('🟢')) {
+
+  statusClass = 'doneStatus';
+
+}
+
+else if (order.status.includes('🔴')) {
+
+  statusClass = 'cancelStatus';
+
+}
+
+else {
+
+  statusClass = 'processStatus';
+
+}
 
     orderInfo.innerHTML = `
 
