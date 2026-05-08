@@ -84,7 +84,12 @@ async function loadOrder() {
 
       <p>
       <b>Статус:</b>
-      ${order.status}
+
+<span class="statusBadge ${statusClass}">
+
+${order.status}
+
+</span>
       </p>
 
     `;

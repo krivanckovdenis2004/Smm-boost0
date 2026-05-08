@@ -184,3 +184,191 @@ header p {
   font-weight: bold;
 
 }
+
+.hero {
+
+  min-height: 90vh;
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  text-align: center;
+
+  padding: 40px 20px;
+
+  background:
+  radial-gradient(circle at top,
+  rgba(120, 70, 255, 0.25),
+  transparent 40%),
+
+  #070b16;
+
+}
+
+.hero-content {
+
+  max-width: 800px;
+
+}
+
+.hero h1 {
+
+  font-size: 72px;
+
+  font-weight: 800;
+
+  margin-bottom: 20px;
+
+  background:
+  linear-gradient(
+    90deg,
+    #ffffff,
+    #9d7bff
+  );
+
+  -webkit-background-clip: text;
+
+  -webkit-text-fill-color: transparent;
+
+}
+
+.hero-subtitle {
+
+  font-size: 24px;
+
+  color: #cfcfcf;
+
+  margin-bottom: 40px;
+
+}
+
+.hero-badges {
+
+  display: flex;
+
+  gap: 15px;
+
+  justify-content: center;
+
+  flex-wrap: wrap;
+
+  margin-bottom: 40px;
+
+}
+
+.hero-badges span {
+
+  background: rgba(255,255,255,0.05);
+
+  border: 1px solid rgba(255,255,255,0.08);
+
+  padding: 12px 18px;
+
+  border-radius: 14px;
+
+  color: #fff;
+
+  font-size: 15px;
+
+}
+
+.hero-button {
+
+  display: inline-block;
+
+  padding: 18px 34px;
+
+  border-radius: 16px;
+
+  background:
+  linear-gradient(
+    135deg,
+    #7a5cff,
+    #9d7bff
+  );
+
+  color: white;
+
+  text-decoration: none;
+
+  font-weight: 700;
+
+  font-size: 18px;
+
+  transition: 0.3s;
+
+  box-shadow:
+  0 0 30px
+  rgba(122,92,255,0.45);
+
+}
+
+.hero-button:hover {
+
+  transform: translateY(-3px);
+
+  box-shadow:
+  0 0 45px
+  rgba(122,92,255,0.65);
+
+}
+.statusBadge {
+
+  display: inline-block;
+
+  padding: 10px 16px;
+
+  border-radius: 12px;
+
+  font-weight: 700;
+
+  margin-top: 10px;
+
+  background:
+  rgba(255,255,255,0.06);
+
+  border:
+  1px solid rgba(255,255,255,0.08);
+
+  color: white;
+
+}
+
+.processStatus {
+
+  background:
+  rgba(255, 193, 7, 0.15);
+
+  border:
+  1px solid rgba(255, 193, 7, 0.4);
+
+  color: #ffd54f;
+
+}
+
+.doneStatus {
+
+  background:
+  rgba(76, 175, 80, 0.15);
+
+  border:
+  1px solid rgba(76, 175, 80, 0.4);
+
+  color: #81ff9b;
+
+}
+
+.cancelStatus {
+
+  background:
+  rgba(244, 67, 54, 0.15);
+
+  border:
+  1px solid rgba(244, 67, 54, 0.4);
+
+  color: #ff8a80;
+
+}

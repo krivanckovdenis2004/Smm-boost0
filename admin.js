@@ -50,6 +50,26 @@ async function loadOrders() {
 
     const order = docItem.data();
 
+let statusClass = '';
+
+if (order.status.includes('🟢')) {
+
+  statusClass = 'doneStatus';
+
+}
+
+else if (order.status.includes('🔴')) {
+
+  statusClass = 'cancelStatus';
+
+}
+
+else {
+
+  statusClass = 'processStatus';
+
+}
+
     const card =
       document.createElement('div');
 
@@ -74,8 +94,17 @@ async function loadOrders() {
 
       </a>
 
-      <p><b>Статус:</b>
-      ${order.status}</p>
+      <p>
+
+<b>Статус:</b>
+
+<span class="statusBadge ${statusClass}">
+
+${order.status}
+
+</span>
+
+</p>
 
       <div style="margin-top:20px">
 
