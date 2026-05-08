@@ -170,21 +170,19 @@ document
 
       });
 
-      alert('Заказ успешно создан 🔥');
-
       await fetch("https://api.telegram.org/bot8539363038:AAGm30GEC8_k9YYlFfEFx5mI3iKeiMPAYSU/sendMessage", {
 
-  method: "POST",
+        method: "POST",
 
-  headers: {
-    "Content-Type": "application/json"
-  },
+        headers: {
+          "Content-Type": "application/json"
+        },
 
-  body: JSON.stringify({
+        body: JSON.stringify({
 
-    chat_id: 8676446654,
+          chat_id: 8676446654,
 
-    text:
+          text:
 `🔥 Новый заказ
 
 📦 Услуга: ${currentService}
@@ -198,11 +196,11 @@ ${link}
 
 🟡 Статус: В обработке`
 
-  })
+        })
 
-});
+      });
 
-});
+      alert('Заказ успешно создан 🔥');
 
       document.getElementById('orderModal')
         .style.display = 'none';
