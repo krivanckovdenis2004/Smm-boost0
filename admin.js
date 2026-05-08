@@ -1,4 +1,5 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
 
@@ -6,13 +7,19 @@ import {
 
   collection,
 
-  getDocs,
+  onSnapshot,
 
   doc,
 
-  updateDoc
+  updateDoc,
 
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  query,
+
+  orderBy
+
+}
+
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
 
@@ -32,150 +39,250 @@ const firebaseConfig = {
 
 };
 
-const app = initializeApp(firebaseConfig);
+const app =
+initializeApp(firebaseConfig);
 
-const db = getFirestore(app);
+const db =
+getFirestore(app);
 
 const ordersContainer =
 document.getElementById('ordersContainer');
 
-async function loadOrders() {
+const filterButtons =
+document.querySelectorAll('.filterBtn');
 
-  ordersContainer.innerHTML = '';
+let currentFilter = 'all';
 
-  const querySnapshot =
-    await getDocs(collection(db, "orders"));
+filterButtons.forEach((btn) => {
 
-  querySnapshot.forEach((docItem) => {
+  btn.addEventListener('click', () => {
 
-    const order = docItem.data();
+    document
+      .querySelector('.activeFilter')
+      ?.classList
+      .remove('activeFilter');
 
-let statusClass = '';
+    btn.classList.add('activeFilter');
 
-if (order.status.includes('🟢')) {
+    currentFilter =
+    btn.dataset.filter;
 
-  statusClass = 'doneStatus';
+    loadOrders();
+
+  });
+
+});
+
+function getStatusClass(status) {
+
+  if (status.includes('🟢')) {
+
+    return 'doneStatus';
+
+  }
+
+  else if (status.includes('🔴')) {
+
+    return 'cancelStatus';
+
+  }
+
+  return 'processStatus';
 
 }
 
-else if (order.status.includes('🔴')) {
+function shouldShow(status) {
 
-  statusClass = 'cancelStatus';
+  if (currentFilter === 'all') {
+
+    return true;
+
+  }
+
+  if (
+
+    currentFilter === 'process' &&
+
+    status.includes('🟡')
+
+  ) {
+
+    return true;
+
+  }
+
+  if (
+
+    currentFilter === 'done' &&
+
+    status.includes('🟢')
+
+  ) {
+
+    return true;
+
+  }
+
+  if (
+
+    currentFilter === 'cancel' &&
+
+    status.includes('🔴')
+
+  ) {
+
+    return true;
+
+  }
+
+  return false;
 
 }
 
-else {
+function loadOrders() {
 
-  statusClass = 'processStatus';
+  const q = query(
 
-}
+    collection(db, "orders"),
 
-    const card =
+    orderBy("createdAt", "desc")
+
+  );
+
+  onSnapshot(q, (snapshot) => {
+
+    ordersContainer.innerHTML = '';
+
+    snapshot.forEach((docItem) => {
+
+      const order =
+      docItem.data();
+
+      if (!shouldShow(order.status)) {
+
+        return;
+
+      }
+
+      const statusClass =
+      getStatusClass(order.status);
+
+      const card =
       document.createElement('div');
 
-    card.className = 'card';
+      card.className = 'card';
 
-    card.innerHTML = `
+      card.innerHTML = `
 
-      <h2>${order.service}</h2>
+        <h2>${order.service}</h2>
 
-      <p><b>Количество:</b>
-      ${order.amount}</p>
+        <p>
+        <b>Количество:</b>
+        ${order.amount}
+        </p>
 
-      <p><b>Сумма:</b>
-      ${order.price}₽</p>
+        <p>
+        <b>Сумма:</b>
+        ${order.price}₽
+        </p>
 
-      <p><b>Ссылка:</b></p>
+        <p>
+        <b>Ссылка:</b>
+        </p>
 
-      <a href="${order.link}"
-      target="_blank">
+        <a href="${order.link}"
+        target="_blank">
 
-      ${order.link}
+        ${order.link}
 
-      </a>
+        </a>
 
-      <p>
+        <p>
 
-<b>Статус:</b>
+        <b>Статус:</b>
 
-<span class="statusBadge ${statusClass}">
+        <span class="statusBadge ${statusClass}">
 
-${order.status}
+        ${order.status}
 
-</span>
+        </span>
 
-</p>
+        </p>
 
-      <div style="margin-top:20px">
+        <div style="margin-top:20px">
 
-        <button class="doneBtn">
-        🟢 Выполнен
-        </button>
+          <button class="doneBtn">
 
-        <button class="cancelBtn">
-        🔴 Отменен
-        </button>
+          🟢 Выполнен
 
-      </div>
+          </button>
 
-    `;
+          <button class="cancelBtn">
 
-    const doneBtn =
+          🔴 Отменен
+
+          </button>
+
+        </div>
+
+      `;
+
+      const doneBtn =
       card.querySelector('.doneBtn');
 
-    const cancelBtn =
+      const cancelBtn =
       card.querySelector('.cancelBtn');
 
-    doneBtn.addEventListener(
-      'click',
-      async () => {
+      doneBtn.addEventListener(
 
-        await updateDoc(
+        'click',
 
-          doc(db, "orders", docItem.id),
+        async () => {
 
-          {
-            status: "🟢 Выполнен"
-          }
+          await updateDoc(
 
-        );
+            doc(db, "orders", docItem.id),
 
-        loadOrders();
+            {
 
-      }
+              status: "🟢 Выполнен"
 
-    );
+            }
 
-    cancelBtn.addEventListener(
-      'click',
-      async () => {
+          );
 
-        await updateDoc(
+        }
 
-          doc(db, "orders", docItem.id),
+      );
 
-          {
-            status: "🔴 Отменен"
-          }
+      cancelBtn.addEventListener(
 
-        );
+        'click',
 
-        loadOrders();
+        async () => {
 
-      }
+          await updateDoc(
 
-    );
+            doc(db, "orders", docItem.id),
 
-    ordersContainer.appendChild(card);
+            {
+
+              status: "🔴 Отменен"
+
+            }
+
+          );
+
+        }
+
+      );
+
+      ordersContainer.appendChild(card);
+
+    });
 
   });
 
 }
 
 loadOrders();
-
-setInterval(() => {
-
-  loadOrders();
-
-}, 5000);
