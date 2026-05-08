@@ -173,3 +173,9 @@ ${order.status}
 }
 
 loadOrders();
+
+setInterval(() => {
+
+  loadOrders();
+
+}, 5000);
