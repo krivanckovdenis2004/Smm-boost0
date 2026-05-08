@@ -39,9 +39,11 @@ function setupCalculator(
   serviceName
 ) {
 
-  const input = document.getElementById(inputId);
+  const input =
+    document.getElementById(inputId);
 
-  const total = document.getElementById(totalId);
+  const total =
+    document.getElementById(totalId);
 
   const button =
     input.parentElement.querySelector('button');
@@ -154,37 +156,36 @@ document
 
     try {
 
-      await addDoc(collection(db, 'orders'), {
+      const docRef =
+        await addDoc(collection(db, 'orders'), {
 
-        service: currentService,
+          service: currentService,
 
-        amount: currentAmount,
+          amount: currentAmount,
 
-        price: currentPrice,
+          price: currentPrice,
 
-        link: link,
+          link: link,
 
-        status: '🟡 В обработке',
+          status: '🟡 В обработке',
 
-        createdAt: new Date()
+          createdAt: new Date()
 
       });
 
-      alert('Заказ успешно создан 🔥');
-
       await fetch("https://api.telegram.org/bot8539363038:AAGm30GEC8_k9YYlFfEFx5mI3iKeiMPAYSU/sendMessage", {
 
-  method: "POST",
+        method: "POST",
 
-  headers: {
-    "Content-Type": "application/json"
-  },
+        headers: {
+          "Content-Type": "application/json"
+        },
 
-  body: JSON.stringify({
+        body: JSON.stringify({
 
-    chat_id: 8676446654,
+          chat_id: 8676446654,
 
-    text:
+          text:
 `🔥 Новый заказ
 
 📦 Услуга: ${currentService}
@@ -198,11 +199,17 @@ ${link}
 
 🟡 Статус: В обработке`
 
-  })
+        })
 
-});
+      });
 
-});
+      alert(`Заказ успешно создан 🔥
+
+Номер заказа:
+${docRef.id}`);
+
+      window.location.href =
+      `track.html?id=${docRef.id}`;
 
       document.getElementById('orderModal')
         .style.display = 'none';
