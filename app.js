@@ -232,7 +232,7 @@ localStorage.setItem(
   JSON.stringify(myOrders)
 
 );
-      await fetch("https://eon8e8gh7h0nvjz.m.pipedream.net", {
+      fetch("https://eon8e8gh7h0nvjz.m.pipedream.net", {
   method: "POST",
   headers: {
     "Content-Type": "application/json"
@@ -256,7 +256,7 @@ localStorage.setItem(
   })
 });
 
-await fetch("https://api.telegram.org/bot8539363038:AAGm30GEC8_k9YYlFfEFx5mI3iKeiMPAYSU/sendMessage", {
+fetch("https://api.telegram.org/bot8539363038:AAGm30GEC8_k9YYlFfEFx5mI3iKeiMPAYSU/sendMessage", {
   method: "POST",
   headers: {
     "Content-Type": "application/json"
