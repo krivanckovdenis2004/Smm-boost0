@@ -232,43 +232,37 @@ localStorage.setItem(
   JSON.stringify(myOrders)
 
 );
-      await fetch("https://api.telegram.org/bot8539363038:AAGm30GEC8_k9YYlFfEFx5mI3iKeiMPAYSU/sendMessage", {
-
-await fetch("https://eon8e8gh7h0nvjz.m.pipedream.net", {
+      await fetch("https://eon8e8gh7h0nvjz.m.pipedream.net", {
   method: "POST",
   headers: {
     "Content-Type": "application/json"
   },
   body: JSON.stringify({
     service:
-  currentService === "Подписчики"
-    ? 10216
-    : currentService === "Лайки"
-    ? 5948
-    : currentService === "Просмотры"
-    ? 7777
-    : currentService === "Репосты"
-    ? 8888
-    : currentService === "Комментарии"
-    ? 9999
-    : null,
+      currentService === "Подписчики"
+        ? 1810
+        : currentService === "Лайки"
+        ? 1910
+        : currentService === "Просмотры"
+        ? 7777
+        : currentService === "Репосты"
+        ? 8888
+        : currentService === "Комментарии"
+        ? 9999
+        : null,
 
     link: link,
-
     quantity: currentAmount
   })
 });
 
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-
-          chat_id: 8676446654,
-
+await fetch("https://api.telegram.org/bot8539363038:AAGm30GEC8_k9YYlFfEFx5mI3iKeiMPAYSU/sendMessage", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    chat_id: 8676446654,
           text:
 `🔥 Новый заказ
 
