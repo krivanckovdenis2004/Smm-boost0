@@ -158,8 +158,6 @@ document
 const payBtn =
 document.getElementById('payButton');
 
-if(payBtn.disabled) return;
-
 payBtn.disabled = true;
 
 payBtn.innerText =
@@ -169,8 +167,6 @@ payBtn.innerText =
       .value;
 const orderButton =
 document.getElementById('payButton');
-
-if (orderButton.disabled) return;
 
 const instagramRegex =
 /^(https?:\/\/)?(www\.)?instagram\.com\/[A-Za-z0-9._]+\/?$/;
@@ -256,8 +252,11 @@ localStorage.setItem(
     quantity: currentAmount
   })
 });
+alert("Заказ отправлен!");
+document.getElementById('orderModal')
+  .style.display = 'none';
 
-fetch("https://api.telegram.org/bot...", {
+fetch("https://api.telegram.org/bot8539363038:AAGm30GEC8_k9YYlFfEFx5mI3iKeiMPAYSU", {
   method: "POST",
   mode: "no-cors",
   headers: {
