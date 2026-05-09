@@ -1332,3 +1332,52 @@ header p {
   color: #9d7bff;
 
 }
+.telegram-support {
+
+position: fixed;
+
+right: 20px;
+
+bottom: 20px;
+
+width: 60px;
+
+height: 60px;
+
+border-radius: 50%;
+
+background: linear-gradient(
+135deg,
+#7b5cff,
+#9d7bff
+);
+
+display: flex;
+
+align-items: center;
+
+justify-content: center;
+
+font-size: 30px;
+
+color: white;
+
+text-decoration: none;
+
+box-shadow:
+0 0 25px rgba(123,92,255,.7);
+
+z-index: 9999;
+
+transition: .3s;
+
+}
+
+.telegram-support:hover {
+
+transform: scale(1.1);
+
+box-shadow:
+0 0 35px rgba(123,92,255,1);
+
+}
