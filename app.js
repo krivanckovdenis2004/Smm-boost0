@@ -241,13 +241,17 @@ await fetch("https://eon8e8gh7h0nvjz.m.pipedream.net", {
   },
   body: JSON.stringify({
     service:
-      currentService === "Подписчики"
-        ? 10216
-        : currentService === "Лайки"
-        ? 5948
-        : currentService === "Просмотры"
-        ? 1910
-        : currentService ===
+  currentService === "Подписчики"
+    ? 10216
+    : currentService === "Лайки"
+    ? 5948
+    : currentService === "Просмотры"
+    ? 7777
+    : currentService === "Репосты"
+    ? 8888
+    : currentService === "Комментарии"
+    ? 9999
+    : null,
 
     link: link,
 
