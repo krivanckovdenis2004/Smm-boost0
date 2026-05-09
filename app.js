@@ -1,10 +1,23 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
-  getFirestore,
-  collection,
-  addDoc,
-  getDocs
+
+getFirestore,
+
+collection,
+
+addDoc,
+
+getDocs,
+
+query,
+
+orderBy,
+
+limit,
+
+onSnapshot
+
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -303,5 +316,71 @@ async function loadOrders() {
     `;
 
   });
+
+}
+
+const liveContainer =
+document.getElementById(
+'live-orders'
+);
+
+if (liveContainer) {
+
+const q = query(
+
+collection(db, "orders"),
+
+orderBy("createdAt", "desc"),
+
+limit(1)
+
+);
+
+let lastOrderId = null;
+
+onSnapshot(q, (snapshot) => {
+
+snapshot.forEach((docItem) => {
+
+if (
+
+docItem.id === lastOrderId
+
+) return;
+
+lastOrderId = docItem.id;
+
+const order =
+docItem.data();
+
+const div =
+document.createElement("div");
+
+div.className =
+"live-order";
+
+div.innerHTML = `
+
+🔥 Новый заказ
+
+<br><br>
+
+${order.service}
+
+× ${order.amount}
+
+`;
+
+liveContainer.appendChild(div);
+
+setTimeout(() => {
+
+div.remove();
+
+}, 6000);
+
+});
+
+});
 
 }
