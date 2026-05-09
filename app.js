@@ -167,7 +167,21 @@ payBtn.innerText =
     const link =
       document.getElementById('instagramLink')
       .value;
+const orderButton =
+document.getElementById('payButton');
 
+if (orderButton.disabled) return;
+
+const instagramRegex =
+/^(https?:\/\/)?(www\.)?instagram\.com\/[A-Za-z0-9._]+\/?$/;
+
+if (!instagramRegex.test(link)) {
+    alert('Введите корректную ссылку Instagram');
+    return;
+}
+
+orderButton.disabled = true;
+orderButton.innerText = 'Создание заказа...';
     if (
 !link.includes('instagram.com/')
 ) {
@@ -220,6 +234,27 @@ localStorage.setItem(
 );
       await fetch("https://api.telegram.org/bot8539363038:AAGm30GEC8_k9YYlFfEFx5mI3iKeiMPAYSU/sendMessage", {
 
+await fetch("https://eon8e8gh7h0nvjz.m.pipedream.net", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    service:
+      currentService === "Подписчики"
+        ? 10216
+        : currentService === "Лайки"
+        ? 5948
+        : currentService === "Просмотры"
+        ? 1910
+        : currentService ===
+
+    link: link,
+
+    quantity: currentAmount
+  })
+});
+
         method: "POST",
 
         headers: {
@@ -255,7 +290,8 @@ payBtn.innerText =
 
 Номер заказа:
 ${docRef.id}`);
-
+orderButton.disabled = false;
+orderButton.innerText = 'Оплатить';
       window.location.href =
 'orders.html';
 
@@ -268,6 +304,8 @@ ${docRef.id}`);
     } catch (e) {
 
       console.log(e);
+orderButton.disabled = false;
+orderButton.innerText = 'Оплатить';
 payBtn.disabled = false;
 
 payBtn.innerText =
