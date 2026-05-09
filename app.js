@@ -155,18 +155,35 @@ document
 document
   .getElementById('payButton')
   .addEventListener('click', async () => {
+const payBtn =
+document.getElementById('payButton');
 
+if(payBtn.disabled) return;
+
+payBtn.disabled = true;
+
+payBtn.innerText =
+"Создание заказа...";
     const link =
       document.getElementById('instagramLink')
       .value;
 
-    if (!link) {
+    if (
+!link.includes('instagram.com/')
+) {
 
-      alert('Введите ссылку');
+alert(
+'Введите корректную ссылку Instagram'
+);
 
-      return;
+payBtn.disabled = false;
 
-    }
+payBtn.innerText =
+"💳 Перейти к оплате";
+
+return;
+
+}
 
     try {
 
@@ -230,7 +247,10 @@ ${link}
         })
 
       });
+payBtn.disabled = false;
 
+payBtn.innerText =
+"Оплатить";
       alert(`Заказ успешно создан 🔥
 
 Номер заказа:
@@ -248,6 +268,10 @@ ${docRef.id}`);
     } catch (e) {
 
       console.log(e);
+payBtn.disabled = false;
+
+payBtn.innerText =
+"Оплатить";
 
       alert('Ошибка создания заказа');
 
@@ -338,14 +362,22 @@ limit(1)
 
 let lastOrderId = null;
 
+let initialized = false;
+
 onSnapshot(q, (snapshot) => {
+
+if(!initialized){
+
+initialized = true;
+
+return;
+
+}
 
 snapshot.forEach((docItem) => {
 
 if (
-
 docItem.id === lastOrderId
-
 ) return;
 
 lastOrderId = docItem.id;
@@ -372,6 +404,15 @@ ${order.service}
 `;
 
 liveContainer.appendChild(div);
+
+const allOrders =
+liveContainer.querySelectorAll('.live-order');
+
+if(allOrders.length > 2){
+
+allOrders[0].remove();
+
+}
 
 setTimeout(() => {
 
