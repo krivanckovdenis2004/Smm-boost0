@@ -63,24 +63,25 @@ b.classList.remove('active');
 btn.classList.add('active');
 
 const value =
-btn.dataset.value;
+parseInt(btn.dataset.value);
+
+const total =
+(value / 5) * 99;
 
 document.getElementById(
 'commentsAmount'
 ).value = value;
 
-const total =
-(value / 5) * 99;
-currentService = 'Комментарии';
-
-currentAmount = parseInt(value);
-
-currentPrice = total;
-
 document.getElementById(
 'commentsTotal'
 ).innerText =
 total.toFixed(2) + '₽';
+
+currentService = 'Комментарии';
+
+currentAmount = value;
+
+currentPrice = total;
 
 });
 
