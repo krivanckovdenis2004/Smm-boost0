@@ -291,6 +291,7 @@ if (!instagramRegex.test(link)) {
           link: link,
 
           status: '🟡 В обработке',
+japOrderId: data.orderId,
 
 createdAt: Date.now()
 
@@ -310,9 +311,11 @@ localStorage.setItem(
   JSON.stringify(myOrders)
 
 );
-      await fetch("https://eon8e8gh7h0nvjz.m.pipedream.net", {
+    const response = await fetch(
+"https://eon8e8gh7h0nvjz.m.pipedream.net",
+{
   method: "POST",
-  mode: "no-cors",
+  mode: "cors",
   headers: {
     "Content-Type": "application/json"
   },
@@ -339,7 +342,27 @@ currentService === "Подписчики"
     quantity: currentAmount
   })
 });
+
+const data = await response.json();
 alert("Заказ отправлен!");
+const orderData = {
+  id: Date.now(),
+  service: currentService,
+  quantity: currentAmount,
+  link: link,
+  status: "В обработке",
+  created: new Date().toLocaleString()
+};
+
+let orders =
+JSON.parse(localStorage.getItem("orders")) || [];
+
+orders.unshift(orderData);
+
+localStorage.setItem(
+  "orders",
+  JSON.stringify(orders)
+);
 document.getElementById('orderModal')
   .style.display = 'none';
 
