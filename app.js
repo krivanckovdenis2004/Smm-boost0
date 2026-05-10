@@ -281,8 +281,7 @@ document
 
     try {
 
-      await fetch(
-"https://express-js-on-vercel-gilt-xi-67.vercel.app/api/api",
+      await fetch("/api/api",
       {
         method: "POST",
         headers: {
