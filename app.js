@@ -282,7 +282,7 @@ document
     try {
 
       await fetch(
-      "https://eon8e8gh7h0nvjz.m.pipedream.net",
+      "https://hook.us2.make.com/q2hfegrgye8bzyy9r2bsfqpn6vm4pg5o",
       {
         method: "POST",
         headers: {
