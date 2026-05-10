@@ -81,7 +81,11 @@ total.toFixed(2) + '₽';
 
 });
 
+if(commentButtons.length > 0){
+
 commentButtons[0].click();
+
+}
 
 function setupCalculator(
   inputId,
@@ -189,83 +193,6 @@ function setupCalculator(
 
 }
 
-} else {
-
-error.style.display = 'none';
-
-}
-
-}
-    let price = 0;
-
-if (serviceName === "Комментарии") {
-
-price = Math.ceil(amount / 5) * 99;
-
-} else {
-
-price = (amount / 1000) * pricePer1000;
-
-}
-
-    total.innerText =
-      price.toFixed(2) + '₽';
-
-  });
-
-  button.addEventListener('click', () => {
-
-    const amount =
-      parseFloat(input.value) || 0;
-if (
-serviceName === "Комментарии" &&
-(amount < 5 || amount > 20)
-) {
-
-alert(
-'Комментарии: от 5 до 20'
-);
-
-return;
-
-}
-    let price = 0;
-
-if (serviceName === "Комментарии") {
-
-price = Math.ceil(amount / 5) * 99;
-
-} else {
-
-price = (amount / 1000) * pricePer1000;
-
-}
-
-    currentService = serviceName;
-
-    currentAmount = amount;
-
-    currentPrice = price;
-
-    document.getElementById('serviceName')
-      .innerText =
-      'Услуга: ' + serviceName;
-
-    document.getElementById('serviceAmount')
-      .innerText =
-      'Количество: ' + amount;
-
-    document.getElementById('servicePrice')
-      .innerText =
-      'Сумма: ' + price.toFixed(2) + '₽';
-
-    document.getElementById('orderModal')
-      .style.display = 'flex';
-
-  });
-
-}
-
 setupCalculator(
   'followersAmount',
   'followersTotal',
@@ -335,17 +262,13 @@ const instagramRegex =
 /instagram\.com/;
 
 if (!instagramRegex.test(link)) {
-    alert('Введите корректную ссылку Instagram');
-    return;
-}
 
-orderButton.disabled = true;
-orderButton.innerText = 'Создание заказа...';
-    if (
-  !link.includes("instagram.com/")
-) {
-  alert("Введите корректную ссылку Instagram");
-  return;
+    alert('Введите корректную ссылку Instagram');
+
+    payBtn.disabled = false;
+    payBtn.innerText = "Оплатить";
+
+    return;
 }
 
     try {
