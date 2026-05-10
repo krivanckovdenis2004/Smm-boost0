@@ -71,6 +71,9 @@ document.getElementById(
 
 const total =
 (value / 5) * 99;
+currentAmount = parseInt(value);
+
+currentPrice = total;
 
 document.getElementById(
 'commentsTotal'
