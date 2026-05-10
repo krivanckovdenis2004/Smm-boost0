@@ -291,7 +291,6 @@ if (!instagramRegex.test(link)) {
           link: link,
 
           status: '🟡 В обработке',
-japOrderId: data.orderId,
 
 createdAt: Date.now()
 
