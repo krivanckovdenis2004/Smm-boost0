@@ -322,36 +322,64 @@ currentService === "Подписчики"
   })
 });
 
-await addDoc(collection(db, 'orders'), {
+const response = await fetch(
+"https://eon8e8gh7h0nvjz.m.pipedream.net",
+{
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    service:
+currentService === "Подписчики"
+? 8841
 
-  service: currentService,
-  amount: currentAmount,
-  price: currentPrice,
-  link: link,
-  status: '🟡 В обработке',
-  createdAt: Date.now()
+: currentService === "Лайки"
+? 10130
 
+: currentService === "Просмотры"
+? 6454
+
+: currentService === "Репосты"
+? 10175
+
+: currentService === "Комментарии"
+? 3383
+
+: null,
+
+    link: link,
+    quantity: currentAmount
+  })
 });
 
-alert("Заказ отправлен!");
-const orderData = {
-  id: Date.now(),
-  service: currentService,
-  quantity: currentAmount,
-  link: link,
-  status: "В обработке",
-  created: new Date().toLocaleString()
-};
+const docRef = await addDoc(
+  collection(db, 'orders'),
+  {
 
-let orders =
-JSON.parse(localStorage.getItem("orders")) || [];
+    service: currentService,
+    amount: currentAmount,
+    price: currentPrice,
+    link: link,
+    status: '🟡 В обработке',
+    createdAt: Date.now()
 
-orders.unshift(orderData);
+  }
+);
+
+let myOrders = JSON.parse(
+  localStorage.getItem('myOrders')
+) || [];
+
+myOrders.unshift(docRef.id);
 
 localStorage.setItem(
-  "orders",
-  JSON.stringify(orders)
+  'myOrders',
+  JSON.stringify(myOrders)
 );
+
+alert("Заказ успешно создан 🔥");
+
 document.getElementById('orderModal')
   .style.display = 'none';
 
@@ -359,11 +387,8 @@ payBtn.disabled = false;
 
 payBtn.innerText =
 "Оплатить";
-      alert("Заказ успешно создан 🔥");
 
-orderButton.disabled = false;
-orderButton.innerText = 'Оплатить';
-      window.location.href =
+window.location.href =
 'orders.html';
 
       document.getElementById('orderModal')
