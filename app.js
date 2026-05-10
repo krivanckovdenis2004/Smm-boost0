@@ -278,30 +278,11 @@ if (!instagramRegex.test(link)) {
 }
 
     try {
-
-      const docRef =
-        await addDoc(collection(db, 'orders'), {
-
-          service: currentService,
-
-          amount: currentAmount,
-
-          price: currentPrice,
-
-          link: link,
-
-          status: '🟡 В обработке',
-
-createdAt: Date.now()
-
-      });
 let myOrders = JSON.parse(
 
   localStorage.getItem('myOrders')
 
 ) || [];
-
-myOrders.push(docRef.id);
 
 localStorage.setItem(
 
@@ -314,7 +295,6 @@ localStorage.setItem(
 "https://eon8e8gh7h0nvjz.m.pipedream.net",
 {
   method: "POST",
-  mode: "cors",
   headers: {
     "Content-Type": "application/json"
   },
@@ -342,7 +322,17 @@ currentService === "Подписчики"
   })
 });
 
-const data = await response.json();
+await addDoc(collection(db, 'orders'), {
+
+  service: currentService,
+  amount: currentAmount,
+  price: currentPrice,
+  link: link,
+  status: '🟡 В обработке',
+  createdAt: Date.now()
+
+});
+
 alert("Заказ отправлен!");
 const orderData = {
   id: Date.now(),
@@ -369,10 +359,8 @@ payBtn.disabled = false;
 
 payBtn.innerText =
 "Оплатить";
-      alert(`Заказ успешно создан 🔥
+      alert("Заказ успешно создан 🔥");
 
-Номер заказа:
-${docRef.id}`);
 orderButton.disabled = false;
 orderButton.innerText = 'Оплатить';
       window.location.href =
