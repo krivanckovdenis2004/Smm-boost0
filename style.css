@@ -1461,3 +1461,33 @@ display:none;
 font-weight:600;
 
 }
+.comment-buttons{
+
+display:flex;
+gap:10px;
+margin-top:20px;
+margin-bottom:20px;
+
+}
+
+.comment-option{
+
+flex:1;
+padding:15px;
+border:none;
+border-radius:14px;
+background:#1b1b1b;
+color:white;
+font-size:20px;
+font-weight:700;
+cursor:pointer;
+transition:0.3s;
+
+}
+
+.comment-option.active{
+
+background:#8b5cf6;
+box-shadow:0 0 20px #8b5cf6;
+
+}

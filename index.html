@@ -252,12 +252,34 @@ content="summary_large_image">
     <li>📝 По теме поста</li>
   </ul>
 
-  <input
-  type="number"
-  id="commentsAmount"
-  placeholder="От 5 до 20"
-  min="5"
-  max="20">
+  <div class="comment-buttons">
+
+<button class="comment-option"
+data-value="5">
+5
+</button>
+
+<button class="comment-option"
+data-value="10">
+10
+</button>
+
+<button class="comment-option"
+data-value="15">
+15
+</button>
+
+<button class="comment-option"
+data-value="20">
+20
+</button>
+
+</div>
+
+<input
+type="hidden"
+id="commentsAmount"
+value="5">
 
   <div id="commentsError"
   class="input-error">

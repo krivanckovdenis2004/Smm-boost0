@@ -45,6 +45,43 @@ const db = getFirestore(app);
 let currentService = '';
 let currentAmount = 0;
 let currentPrice = 0;
+const commentButtons =
+document.querySelectorAll(
+'.comment-option'
+);
+
+commentButtons.forEach(btn => {
+
+btn.addEventListener('click', () => {
+
+commentButtons.forEach(b => {
+
+b.classList.remove('active');
+
+});
+
+btn.classList.add('active');
+
+const value =
+btn.dataset.value;
+
+document.getElementById(
+'commentsAmount'
+).value = value;
+
+const total =
+(value / 5) * 99;
+
+document.getElementById(
+'commentsTotal'
+).innerText =
+total.toFixed(2) + '₽';
+
+});
+
+});
+
+commentButtons[0].click();
 
 function setupCalculator(
   inputId,
