@@ -20,54 +20,6 @@
 
 <h1 class="orders-title">Мои заказы</h1>
 
-<div id="orders-list"></div>
-
-<script>
-const orders =
-JSON.parse(localStorage.getItem("orders")) || [];
-
-const container =
-document.getElementById("orders-list");
-
-if (orders.length === 0) {
-
-  container.innerHTML = `
-    <div class="empty-orders">
-      Заказов пока нет
-    </div>
-  `;
-
-} else {
-
-  orders.forEach(order => {
-
-    container.innerHTML += `
-      <div class="order-card">
-
-        <h3>${order.service}</h3>
-
-        <p>
-          Количество:
-          ${order.quantity}
-        </p>
-
-        <p>
-          Статус:
-          ${order.status}
-        </p>
-
-        <p>
-          ${order.created}
-        </p>
-
-      </div>
-    `;
-
-  });
-
-}
-</script>
-
 <div class="bg-animation">
 
   <span></span>
