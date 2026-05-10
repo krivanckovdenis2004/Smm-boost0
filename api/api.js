@@ -28,7 +28,7 @@ console.log(service, quantity, link);
         body: new URLSearchParams({
 key:'bc947f6bce9eedf10169ad2001b2487',
           action: 'add',
-          service: '8341',,
+          service: '8341',
           link: link,
           quantity: String(quantity)
         })
