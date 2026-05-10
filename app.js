@@ -227,19 +227,19 @@ localStorage.setItem(
   body: JSON.stringify({
     service:
 currentService === "Подписчики"
-? 10129
+? 1810
 
 : currentService === "Лайки"
-? 10130
-
-: currentService === "Просмотры"
 ? 1910
 
+: currentService === "Просмотры"
+? 10341
+
 : currentService === "Репосты"
-? 5555
+? 10222
 
 : currentService === "Комментарии"
-? 6666
+? 9344
 
 : null,
 
