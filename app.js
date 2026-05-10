@@ -108,7 +108,7 @@ function setupCalculator(
     document.getElementById(totalId);
 
   const button =
-    input.parentElement.querySelector('button');
+input.parentElement.querySelector('.order-btn');
 
   input.addEventListener('input', () => {
 
