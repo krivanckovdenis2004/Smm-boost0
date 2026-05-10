@@ -169,7 +169,7 @@ const orderButton =
 document.getElementById('payButton');
 
 const instagramRegex =
-/^(https?:\/\/)?(www\.)?instagram\.com\/[A-Za-z0-9._]+\/?$/;
+/instagram\.com/;
 
 if (!instagramRegex.test(link)) {
     alert('Введите корректную ссылку Instagram');
@@ -179,20 +179,10 @@ if (!instagramRegex.test(link)) {
 orderButton.disabled = true;
 orderButton.innerText = 'Создание заказа...';
     if (
-!link.includes('instagram.com/')
+  !link.includes("instagram.com/")
 ) {
-
-alert(
-'Введите корректную ссылку Instagram'
-);
-
-payBtn.disabled = false;
-
-payBtn.innerText =
-"💳 Перейти к оплате";
-
-return;
-
+  alert("Введите корректную ссылку Instagram");
+  return;
 }
 
     try {
@@ -228,7 +218,7 @@ localStorage.setItem(
   JSON.stringify(myOrders)
 
 );
-      fetch("https://eon8e8gh7h0nvjz.m.pipedream.net", {
+      await fetch("https://eon8e8gh7h0nvjz.m.pipedream.net", {
   method: "POST",
   mode: "no-cors",
   headers: {
