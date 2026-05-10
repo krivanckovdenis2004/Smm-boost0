@@ -256,31 +256,6 @@ alert("Заказ отправлен!");
 document.getElementById('orderModal')
   .style.display = 'none';
 
-fetch("https://api.telegram.org/bot8539363038:AAGm30GEC8_k9YYlFfEFx5mI3iKeiMPAYSU", {
-  method: "POST",
-  mode: "no-cors",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    chat_id: 8676446654,
-          text:
-`🔥 Новый заказ
-
-📦 Услуга: ${currentService}
-
-🔢 Количество: ${currentAmount}
-
-💰 Сумма: ${currentPrice.toFixed(2)}₽
-
-🔗 Ссылка:
-${link}
-
-🟡 Статус: В обработке`
-
-        })
-
-      });
 payBtn.disabled = false;
 
 payBtn.innerText =
