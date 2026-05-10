@@ -1491,3 +1491,11 @@ background:#8b5cf6;
 box-shadow:0 0 20px #8b5cf6;
 
 }
+.input-error{
+
+color:#ff4d4d;
+font-size:14px;
+margin-top:10px;
+display:none;
+
+}

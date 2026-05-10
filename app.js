@@ -87,7 +87,8 @@ function setupCalculator(
   inputId,
   totalId,
   pricePer1000,
-  serviceName
+  serviceName,
+  minAmount
 ) {
 
   const input =
@@ -103,16 +104,90 @@ function setupCalculator(
 
     const amount =
       parseFloat(input.value) || 0;
-if(serviceName === "Комментарии"){
 
-const error =
-document.getElementById(
-'commentsError'
-);
+    const error =
+      document.getElementById(
+        inputId.replace('Amount', 'Error')
+      );
 
-if(amount < 5){
+    if(amount < minAmount){
 
-error.style.display = 'block';
+      error.style.display = 'block';
+
+    } else {
+
+      error.style.display = 'none';
+
+    }
+
+    let price = 0;
+
+    if (serviceName === "Комментарии") {
+
+      price = Math.ceil(amount / 5) * 99;
+
+    } else {
+
+      price =
+      (amount / 1000) * pricePer1000;
+
+    }
+
+    total.innerText =
+      price.toFixed(2) + '₽';
+
+  });
+
+  button.addEventListener('click', () => {
+
+    const amount =
+      parseFloat(input.value) || 0;
+
+    if(amount < minAmount){
+
+      alert(
+      `Минимальный заказ: ${minAmount}`
+      );
+
+      return;
+
+    }
+
+    let price = 0;
+
+    if (serviceName === "Комментарии") {
+
+      price = Math.ceil(amount / 5) * 99;
+
+    } else {
+
+      price =
+      (amount / 1000) * pricePer1000;
+
+    }
+
+    currentService = serviceName;
+    currentAmount = amount;
+    currentPrice = price;
+
+    document.getElementById('serviceName')
+      .innerText =
+      'Услуга: ' + serviceName;
+
+    document.getElementById('serviceAmount')
+      .innerText =
+      'Количество: ' + amount;
+
+    document.getElementById('servicePrice')
+      .innerText =
+      'Сумма: ' + price.toFixed(2) + '₽';
+
+    document.getElementById('orderModal')
+      .style.display = 'flex';
+
+  });
+
+}
 
 } else {
 
@@ -195,35 +270,40 @@ setupCalculator(
   'followersAmount',
   'followersTotal',
   150,
-  'Подписчики'
+  'Подписчики',
+  100
 );
 
 setupCalculator(
   'likesAmount',
   'likesTotal',
   20,
-  'Лайки'
+  'Лайки',
+  50
 );
 
 setupCalculator(
   'viewsAmount',
   'viewsTotal',
   7,
-  'Просмотры'
+  'Просмотры',
+  100
 );
 
 setupCalculator(
   'repostsAmount',
   'repostsTotal',
   70,
-  'Репосты'
+  'Репосты',
+  10
 );
 
 setupCalculator(
   'commentsAmount',
   'commentsTotal',
   99,
-  'Комментарии'
+  'Комментарии',
+  5
 );
 
 document
