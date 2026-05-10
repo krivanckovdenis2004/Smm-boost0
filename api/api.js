@@ -28,15 +28,26 @@ console.log(service, quantity, link);
         body: new URLSearchParams({
 key:'bc947f6bce9eedf10169ad2001b2487',
           action: 'add',
-          service: '8341',
+          service: '1910',
           link: link,
           quantity: String(quantity)
         })
       }
     );
 
-    const japData =
-    await japResponse.json();
+    const japText = await japResponse.text();
+
+console.log(japText);
+
+let japData;
+
+try {
+  japData = JSON.parse(japText);
+} catch {
+  return res.status(500).json({
+    error: japText
+  });
+}
 
     // Telegram уведомление
     await fetch(
