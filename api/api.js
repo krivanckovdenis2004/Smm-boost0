@@ -12,6 +12,8 @@ export default async function handler(req, res) {
     link
   } = req.body;
 
+console.log(service, quantity, link);
+
   try {
 
     // Отправка в JAP
@@ -26,7 +28,7 @@ export default async function handler(req, res) {
         body: new URLSearchParams({
 key:'bc947f6bce9eedf10169ad2001b2487',
           action: 'add',
-          service: String(service),
+          service: '8341',,
           link: link,
           quantity: String(quantity)
         })
