@@ -95,29 +95,39 @@ async function loadOrders() {
         }
 
         let statusClass = '';
-
         let progress = 60;
 
         if (order.status.includes('🟢')) {
 
           statusClass = 'doneStatus';
-
           progress = 100;
+
+        }
+
+        else if (order.status.includes('🟠')) {
+
+          statusClass = 'partialStatus';
+          progress = 80;
 
         }
 
         else if (order.status.includes('🔴')) {
 
           statusClass = 'cancelStatus';
-
           progress = 100;
+
+        }
+
+        else if (order.status.includes('🟡')) {
+
+          statusClass = 'processStatus';
+          progress = 60;
 
         }
 
         else {
 
           statusClass = 'processStatus';
-
           progress = 60;
 
         }
@@ -212,6 +222,12 @@ function showToast(status) {
   if (status.includes('🟢')) {
 
     toastClass = 'done';
+
+  }
+
+  else if (status.includes('🟠')) {
+
+    toastClass = 'partial';
 
   }
 
