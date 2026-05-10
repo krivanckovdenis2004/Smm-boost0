@@ -29,7 +29,7 @@ console.log(service, quantity, link);
         body: new URLSearchParams({
 key:'0219ab7f08e341275316fbd82e43df29',
           action: 'add',
-          service: '8841', //test
+          service: String(service),
           link: link,
           quantity: String(quantity)
         })
@@ -87,4 +87,4 @@ ${japData.order || 'Ошибка'}`
   }
 
 }
-//.    // update
+
