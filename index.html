@@ -218,51 +218,61 @@ content="summary_large_image">
   </div>
 
   <!-- Репосты -->
-  <div class="card">
-    <h2>🔁 Репосты</h2>
-    <p class="price">70₽ / 1000</p>
+<div class="card">
+  <h2>🔁 Репосты</h2>
+  <p class="price">70₽ / 1000</p>
 
-    <ul>
-      <li>⚡ Скорость: 702/час</li>
-      <li>📈 Добавляют охват</li>
-      <li>🖼 Увеличивают показы</li>
-    </ul>
+  <ul>
+    <li>⚡ Скорость: 702/час</li>
+    <li>📈 Добавляют охват</li>
+    <li>🖼 Увеличивают показы</li>
+  </ul>
 
-    <input
-type="number"
-id="commentsAmount"
-placeholder="От 5 до 20"
-min="5"
-max="20">
+  <input
+  type="number"
+  id="repostsAmount"
+  placeholder="Количество">
 
-    <div class="total">
-      Итого:
-      <span id="repostsTotal">0₽</span>
-    </div>
-
-    <button>Заказать</button>
+  <div class="total">
+    Итого:
+    <span id="repostsTotal">0₽</span>
   </div>
+
+  <button>Заказать</button>
+</div>
 
   <!-- Комментарии -->
-  <div class="card">
-    <h2>💬 Комментарии</h2>
-    <p class="price">99₽ / 5 комментариев</p>
+<div class="card">
+  <h2>💬 Комментарии</h2>
+  <p class="price">99₽ / 5 комментариев</p>
 
-    <ul>
-      <li>🇷🇺 Русские комментарии</li>
-      <li>⚡ Скорость: 2/час</li>
-      <li>📝 По теме поста</li>
-    </ul>
+  <ul>
+    <li>🇷🇺 Русские комментарии</li>
+    <li>⚡ Скорость: 2/час</li>
+    <li>📝 По теме поста</li>
+  </ul>
 
-    <input type="number" id="commentsAmount" placeholder="Количество">
+  <input
+  type="number"
+  id="commentsAmount"
+  placeholder="От 5 до 20"
+  min="5"
+  max="20">
 
-    <div class="total">
-      Итого:
-      <span id="commentsTotal">0₽</span>
-    </div>
+  <div id="commentsError"
+  class="input-error">
 
-    <button>Заказать</button>
+  Минимум 5 комментариев
+
   </div>
+
+  <div class="total">
+    Итого:
+    <span id="commentsTotal">0₽</span>
+  </div>
+
+  <button>Заказать</button>
+</div>
 
 </section>
 

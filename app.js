@@ -66,11 +66,35 @@ function setupCalculator(
 
     const amount =
       parseFloat(input.value) || 0;
+if(serviceName === "Комментарии"){
 
-    const price =
-serviceName === "Комментарии"
-? amount * pricePer1000
-: (amount / 1000) * pricePer1000;
+const error =
+document.getElementById(
+'commentsError'
+);
+
+if(amount < 5){
+
+error.style.display = 'block';
+
+} else {
+
+error.style.display = 'none';
+
+}
+
+}
+    let price = 0;
+
+if (serviceName === "Комментарии") {
+
+price = Math.ceil(amount / 5) * 99;
+
+} else {
+
+price = (amount / 1000) * pricePer1000;
+
+}
 
     total.innerText =
       price.toFixed(2) + '₽';
@@ -93,8 +117,17 @@ alert(
 return;
 
 }
-    const price =
-      (amount / 1000) * pricePer1000;
+    let price = 0;
+
+if (serviceName === "Комментарии") {
+
+price = Math.ceil(amount / 5) * 99;
+
+} else {
+
+price = (amount / 1000) * pricePer1000;
+
+}
 
     currentService = serviceName;
 
@@ -152,7 +185,7 @@ setupCalculator(
 setupCalculator(
   'commentsAmount',
   'commentsTotal',
-  20,
+  99,
   'Комментарии'
 );
 

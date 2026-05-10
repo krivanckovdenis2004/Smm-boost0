@@ -1448,3 +1448,16 @@ translateY(0);
 }
 
 }
+.input-error{
+
+color:#ff4d4d;
+
+font-size:14px;
+
+margin-top:8px;
+
+display:none;
+
+font-weight:600;
+
+}
