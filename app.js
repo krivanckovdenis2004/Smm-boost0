@@ -282,7 +282,7 @@ document
     try {
 
       await fetch(
-      "https://hook.us2.make.com/q2hfegrgye8bzyy9r2bsfqpn6vm4pg5o",
+"https://express-js-on-vercel-gilt-xi-67.vercel.app/api/order",
       {
         method: "POST",
         headers: {
