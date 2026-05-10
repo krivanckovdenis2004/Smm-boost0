@@ -251,202 +251,116 @@ document
 document
   .getElementById('payButton')
   .addEventListener('click', async () => {
-const payBtn =
-document.getElementById('payButton');
 
-payBtn.disabled = true;
+    const payBtn =
+    document.getElementById('payButton');
 
-payBtn.innerText =
-"Создание заказа...";
+    payBtn.disabled = true;
+
+    payBtn.innerText =
+    "Создание заказа...";
+
     const link =
-      document.getElementById('instagramLink')
-      .value;
-const orderButton =
-document.getElementById('payButton');
+    document.getElementById('instagramLink')
+    .value;
 
-const instagramRegex =
-/instagram\.com/;
+    const instagramRegex =
+    /instagram\.com/;
 
-if (!instagramRegex.test(link)) {
+    if (!instagramRegex.test(link)) {
 
-    alert('Введите корректную ссылку Instagram');
+      alert('Введите корректную ссылку Instagram');
 
-    payBtn.disabled = false;
-    payBtn.innerText = "Оплатить";
+      payBtn.disabled = false;
 
-    return;
-}
+      payBtn.innerText = "Оплатить";
+
+      return;
+
+    }
 
     try {
-let myOrders = JSON.parse(
 
-  localStorage.getItem('myOrders')
+      await fetch(
+      "https://eon8e8gh7h0nvjz.m.pipedream.net",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          service:
+          currentService === "Подписчики"
+          ? 8841
 
-) || [];
+          : currentService === "Лайки"
+          ? 10130
 
-localStorage.setItem(
+          : currentService === "Просмотры"
+          ? 6454
 
-  'myOrders',
+          : currentService === "Репосты"
+          ? 10175
 
-  JSON.stringify(myOrders)
+          : currentService === "Комментарии"
+          ? 3383
 
-);
+          : null,
 
-const response = await fetch(
-"https://eon8e8gh7h0nvjz.m.pipedream.net",
-{
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    service:
-currentService === "Подписчики"
-? 8841
+          link: link,
+          quantity: currentAmount
+        })
+      });
 
-: currentService === "Лайки"
-? 10130
+      const docRef = await addDoc(
+        collection(db, 'orders'),
+        {
 
-: currentService === "Просмотры"
-? 6454
+          service: currentService,
+          amount: currentAmount,
+          price: currentPrice,
+          link: link,
+          status: '🟡 В обработке',
+          createdAt: Date.now()
 
-: currentService === "Репосты"
-? 10175
+        }
+      );
 
-: currentService === "Комментарии"
-? 3383
+      let myOrders = JSON.parse(
+        localStorage.getItem('myOrders')
+      ) || [];
 
-: null,
+      myOrders.unshift(docRef.id);
 
-    link: link,
-    quantity: currentAmount
-  })
-});
+      localStorage.setItem(
+        'myOrders',
+        JSON.stringify(myOrders)
+      );
 
-const docRef = await addDoc(
-  collection(db, 'orders'),
-  {
+      payBtn.disabled = false;
 
-    service: currentService,
-    amount: currentAmount,
-    price: currentPrice,
-    link: link,
-    status: '🟡 В обработке',
-    createdAt: Date.now()
+      payBtn.innerText =
+      "Оплатить";
 
-  }
-);
-
-let myOrders = JSON.parse(
-  localStorage.getItem('myOrders')
-) || [];
-
-myOrders.unshift(docRef.id);
-
-localStorage.setItem(
-  'myOrders',
-  JSON.stringify(myOrders)
-);
-
-alert("Заказ успешно создан 🔥");
-
-document.getElementById('orderModal')
-  .style.display = 'none';
-
-payBtn.disabled = false;
-
-payBtn.innerText =
-"Оплатить";
-
-window.location.href =
-'orders.html';
-
-      document.getElementById('orderModal')
-        .style.display = 'none';
-
-      document.getElementById('instagramLink')
-        .value = '';
+      window.location.href =
+      'orders.html';
 
     } catch (e) {
 
       console.log(e);
-orderButton.disabled = false;
-orderButton.innerText = 'Оплатить';
-payBtn.disabled = false;
 
-payBtn.innerText =
-"Оплатить";
+      payBtn.disabled = false;
+
+      payBtn.innerText =
+      "Оплатить";
 
       alert('Ошибка создания заказа');
 
     }
 
 });
-async function loadOrders() {
 
-  const ordersList =
-  document.getElementById('ordersList');
-
-  const snapshot =
-  await getDocs(collection(db, "orders"));
-
-  ordersList.innerHTML = '';
-
-  snapshot.forEach((docItem) => {
-
-    const order =
-    docItem.data();
-
-    let statusClass = '';
-
-    if (order.status.includes('🟢')) {
-
-      statusClass = 'doneStatus';
-
-    }
-
-    else if (order.status.includes('🔴')) {
-
-      statusClass = 'cancelStatus';
-
-    }
-
-    else {
-
-      statusClass = 'processStatus';
-
-    }
-
-    ordersList.innerHTML += `
-
-      <div class="order-card">
-
-        <h3>${order.service}</h3>
-
-        <p>
-        Количество:
-        ${order.amount}
-        </p>
-
-        <p>
-        Сумма:
-        ${order.price}₽
-        </p>
-
-        <span class="statusBadge ${statusClass}">
-
-        ${order.status}
-
-        </span>
-
-      </div>
-
-    `;
-
-  });
-
-}
-
+  
 const liveContainer =
 document.getElementById(
 'live-orders'
