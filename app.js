@@ -68,7 +68,9 @@ function setupCalculator(
       parseFloat(input.value) || 0;
 
     const price =
-      (amount / 1000) * pricePer1000;
+serviceName === "Комментарии"
+? amount * pricePer1000
+: (amount / 1000) * pricePer1000;
 
     total.innerText =
       price.toFixed(2) + '₽';
@@ -79,7 +81,18 @@ function setupCalculator(
 
     const amount =
       parseFloat(input.value) || 0;
+if (
+serviceName === "Комментарии" &&
+(amount < 5 || amount > 20)
+) {
 
+alert(
+'Комментарии: от 5 до 20'
+);
+
+return;
+
+}
     const price =
       (amount / 1000) * pricePer1000;
 
@@ -139,7 +152,7 @@ setupCalculator(
 setupCalculator(
   'commentsAmount',
   'commentsTotal',
-  4452,
+  20,
   'Комментарии'
 );
 
