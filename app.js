@@ -71,6 +71,8 @@ document.getElementById(
 
 const total =
 (value / 5) * 99;
+currentService = 'Комментарии';
+
 currentAmount = parseInt(value);
 
 currentPrice = total;
