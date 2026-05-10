@@ -291,36 +291,6 @@ localStorage.setItem(
   JSON.stringify(myOrders)
 
 );
-    const response = await fetch(
-"https://eon8e8gh7h0nvjz.m.pipedream.net",
-{
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    service:
-currentService === "Подписчики"
-? 8841
-
-: currentService === "Лайки"
-? 10130
-
-: currentService === "Просмотры"
-? 6454
-
-: currentService === "Репосты"
-? 10175
-
-: currentService === "Комментарии"
-? 3383
-
-: null,
-
-    link: link,
-    quantity: currentAmount
-  })
-});
 
 const response = await fetch(
 "https://eon8e8gh7h0nvjz.m.pipedream.net",
