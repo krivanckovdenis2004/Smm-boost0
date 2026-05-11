@@ -317,11 +317,11 @@ const data = await response.json();
 
 console.log(data);
 
-if (!data.order) {
-  throw new Error("JAP order ID not found");
-}
-
-const japOrderId = data.order.toString();
+const japOrderId =
+  data.order ||
+  data.id ||
+  data.orderId ||
+  "unknown";
 
       const docRef = await addDoc(
         collection(db, 'orders'),
