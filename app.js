@@ -281,13 +281,16 @@ document
 
     try {
 
-      await fetch("/api/api",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
+   const response = await fetch("/api/api",
+{
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+const data = await response.json();
+
+const japOrderId = data.order;
           service:
           currentService === "Подписчики"
           ? 8841
@@ -319,8 +322,9 @@ document
           amount: currentAmount,
           price: currentPrice,
           link: link,
-          status: '🟡 В обработке',
-          createdAt: Date.now()
+          status: 'Pending',
+japOrderId: japOrderId,
+createdAt: Date.now()
 
         }
       );
