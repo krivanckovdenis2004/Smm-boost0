@@ -1,4 +1,5 @@
 {
+  "name": "smm-boost",
   "type": "module",
   "dependencies": {
     "firebase": "^10.12.2"
