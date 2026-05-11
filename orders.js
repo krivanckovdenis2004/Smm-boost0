@@ -157,11 +157,12 @@ async function loadOrders() {
             </p>
 
             <a href="${order.link}"
-            target="_blank">
+target="_blank"
+class="order-link">
 
-            ${order.link}
+Открыть Instagram
 
-            </a>
+</a>
 
             <div style="margin-top:20px">
 

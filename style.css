@@ -1537,3 +1537,10 @@ font-size:24px;
 opacity:0.7;
 
 }
+.order-link {
+  display: inline-block;
+  margin-top: 10px;
+  color: #8b5cf6;
+  text-decoration: none;
+  font-weight: 600;
+}
