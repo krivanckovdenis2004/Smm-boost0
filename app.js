@@ -315,7 +315,13 @@ document
 
 const data = await response.json();
 
-const japOrderId = data.order;
+console.log(data);
+
+if (!data.order) {
+  throw new Error("JAP order ID not found");
+}
+
+const japOrderId = data.order.toString();
 
       const docRef = await addDoc(
         collection(db, 'orders'),
@@ -326,7 +332,7 @@ const japOrderId = data.order;
           price: currentPrice,
           link: link,
           status: 'Pending',
-japOrderId: japOrderId,
+japOrderId: japOrderId || "",
 createdAt: Date.now()
 
         }
