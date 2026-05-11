@@ -73,9 +73,10 @@ ${japData.order || 'Ошибка'}`
     );
 
     return res.status(200).json({
-      success: true,
-      jap: japData
-    });
+  success: true,
+  order: japData.order || null,
+  data: japData
+});
 
   } catch (e) {
 
