@@ -1,5 +1,4 @@
 import { initializeApp } from "firebase/app";
-
 import {
   getFirestore,
   collection,
@@ -18,70 +17,61 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-
 const db = getFirestore(app);
 
 export default async function handler(req, res) {
 
   try {
 
-    const ordersSnapshot =
-    await getDocs(collection(db, "orders"));
+    const snapshot = await getDocs(collection(db, "orders"));
 
-    for (const orderDoc of ordersSnapshot.docs) {
+    for (const orderDoc of snapshot.docs) {
 
       const order = orderDoc.data();
 
       if (!order.japOrderId) continue;
 
-      const response = await fetch(
-        "https://justanotherpanel.com/api/v2",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-            "application/x-www-form-urlencoded"
-          },
-          body: new URLSearchParams({
-            key: "0219ab7f08e341275316fbd82e43df29",
-            action: "status",
-            order: order.japOrderId
-          })
-        }
-      );
+      const response = await fetch("https://justanotherpanel.com/api/v2", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({
+          key: "0219ab7f08e341275316fbd82e43df29",
+          action: "status",
+          order: order.japOrderId
+        })
+      });
 
       const data = await response.json();
 
-      let newStatus = "🟡 В обработке";
+      let newStatus = "Pending";
 
       if (data.status === "Completed") {
-        newStatus = "🟢 Выполнен";
+        newStatus = "✅ Выполнен";
       }
 
-      else if (data.status === "Partial") {
-        newStatus = "🟠 Частично выполнен";
+      if (data.status === "Processing") {
+        newStatus = "🟡 В обработке";
       }
 
-      else if (data.status === "Canceled") {
-        newStatus = "🔴 Отменен";
+      if (data.status === "Canceled") {
+        newStatus = "❌ Отменен";
       }
 
-      await updateDoc(
-        doc(db, "orders", orderDoc.id),
-        {
-          status: newStatus
-        }
-      );
+      await updateDoc(doc(db, "orders", orderDoc.id), {
+        status: newStatus
+      });
 
     }
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true
     });
 
   } catch (e) {
 
-    return res.status(500).json({
+    res.status(500).json({
       error: e.message
     });
 
