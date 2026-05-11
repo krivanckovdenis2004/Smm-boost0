@@ -359,7 +359,8 @@ createdAt: Date.now(),
 
     } catch (e) {
 
-      console.log(e);
+      alert(e.message);
+console.error(e);
 
       payBtn.disabled = false;
 
