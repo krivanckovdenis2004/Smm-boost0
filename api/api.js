@@ -6,7 +6,6 @@ export default async function handler(req, res) {
     });
   }
 
-
   const {
     service,
     quantity,
@@ -87,4 +86,3 @@ ${japData.order || 'Ошибка'}`
   }
 
 }
-
