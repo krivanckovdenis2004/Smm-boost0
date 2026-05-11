@@ -1,4 +1,4 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
 
@@ -288,31 +288,34 @@ document
     "Content-Type": "application/json"
   },
   body: JSON.stringify({
+
+    service:
+      currentService === "Подписчики"
+      ? 8841
+
+      : currentService === "Лайки"
+      ? 10130
+
+      : currentService === "Просмотры"
+      ? 6454
+
+      : currentService === "Репосты"
+      ? 10175
+
+      : currentService === "Комментарии"
+      ? 3383
+
+      : null,
+
+    link: link,
+    quantity: currentAmount
+
+  })
+});
+
 const data = await response.json();
 
 const japOrderId = data.order;
-          service:
-          currentService === "Подписчики"
-          ? 8841
-
-          : currentService === "Лайки"
-          ? 10130
-
-          : currentService === "Просмотры"
-          ? 6454
-
-          : currentService === "Репосты"
-          ? 10175
-
-          : currentService === "Комментарии"
-          ? 3383
-
-          : null,
-
-          link: link,
-          quantity: currentAmount
-        })
-      });
 
       const docRef = await addDoc(
         collection(db, 'orders'),
