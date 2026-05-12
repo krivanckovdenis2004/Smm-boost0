@@ -164,6 +164,14 @@ function loadOrders() {
 
       }
 
+      // render card
+
+    });
+
+  });
+
+}
+
       const statusClass =
       getStatusClass(order.status);
 

@@ -331,9 +331,9 @@ const japOrderId =
           amount: currentAmount,
           price: currentPrice,
           link: link,
-          status: 'Pending',
+          status: '🟡 В обработке',
 japOrderId: japOrderId || "",
-createdAt: Date.now(),
+createdAt: serverTimestamp(),
 
         }
       );
