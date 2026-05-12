@@ -1,21 +1,12 @@
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { initializeApp } from "firebase/app";
 
 import {
-
   getFirestore,
-
   collection,
-
   getDocs,
-
   doc,
-
   updateDoc
-
-}
-
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+} from "firebase/firestore";
 
 const firebaseConfig = {
 
@@ -57,8 +48,8 @@ export default async function handler(req, res) {
       if (!order.japOrderId) continue;
 
       if (
-        order.status.includes("🟢") ||
-        order.status.includes("🔴")
+        order.status?.includes("🟢") ||
+        order.status?.includes("🔴")
       ) {
         continue;
       }
@@ -93,20 +84,27 @@ export default async function handler(req, res) {
         if (
           status.includes("completed")
         ) {
+
           newStatus = "🟢 Выполнен";
+
         }
 
         else if (
           status.includes("partial")
         ) {
+
           newStatus = "🟠 Частично";
+
         }
 
         else if (
           status.includes("canceled")
         ) {
+
           newStatus = "🔴 Отменен";
+
         }
+
       }
 
       await updateDoc(
@@ -122,7 +120,9 @@ export default async function handler(req, res) {
       success: true
     });
 
-  } catch (e) {
+  }
+
+  catch (e) {
 
     console.error(e);
 
