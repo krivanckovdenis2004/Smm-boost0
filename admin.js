@@ -93,50 +93,47 @@ function getStatusClass(status) {
 
 function shouldShow(status) {
 
-  if (currentFilter === 'all') {
+    if (currentFilter === 'all') {
+        return true;
+    }
 
-    return true;
+    const s = status.toLowerCase();
 
-  }
+    if (
+        currentFilter === 'process' &&
+        (
+            s.includes('🟡') ||
+            s.includes('pending') ||
+            s.includes('process') ||
+            s.includes('обработ')
+        )
+    ) {
+        return true;
+    }
 
-  if (
+    if (
+        currentFilter === 'done' &&
+        (
+            s.includes('🟢') ||
+            s.includes('completed') ||
+            s.includes('done') ||
+            s.includes('выполн')
+        )
+    ) {
+        return true;
+    }
 
-    currentFilter === 'process' &&
+    if (
+        currentFilter === 'cancel' &&
+        (
+            s.includes('🔴') ||
+            s.includes('cancel')
+        )
+    ) {
+        return true;
+    }
 
-    status.includes('🟡')
-
-  ) {
-
-    return true;
-
-  }
-
-  if (
-
-    currentFilter === 'done' &&
-
-    status.includes('🟢')
-
-  ) {
-
-    return true;
-
-  }
-
-  if (
-
-    currentFilter === 'cancel' &&
-
-    status.includes('🔴')
-
-  ) {
-
-    return true;
-
-  }
-
-  return false;
-
+    return false;
 }
 
 function loadOrders() {
