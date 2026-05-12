@@ -1,9 +1,3 @@
 {
   "installCommand": "npm install",
-  "crons": [
-    {
-      "path": "/api/check-status",
-      "schedule": "*/5 * * * *"
-    }
-  ]
 }
