@@ -20,7 +20,7 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           asset: "USDT",
-          amount: String(amount || 1),
+          amount: String(((amount || 100) / 60).toFixed(2)),
           description: description || "Оплата заказа SMM-Boost"
         })
       }
