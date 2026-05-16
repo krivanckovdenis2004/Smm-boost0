@@ -19,10 +19,18 @@ export default async function handler(req, res) {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          asset: "USDT",
-          amount: String(((amount || 100) / 60).toFixed(2)),
-          description: description || "Оплата заказа SMM-Boost"
-        })
+  asset: "USDT",
+  amount: String(((amount || 100) / 60).toFixed(2)),
+  description: description || "Оплата заказа SMM-Boost",
+  payload: JSON.stringify({
+    service: body.service,
+    link: body.link,
+    quantity: body.quantity,
+    priceRub: amount
+  }),
+  paid_btn_name: "openBot",
+  paid_btn_url: "https://smm-boost.pro/orders.html"
+})
       }
     );
 
