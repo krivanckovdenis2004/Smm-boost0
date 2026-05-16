@@ -142,8 +142,6 @@ function loadOrders() {
 
     collection(db, "orders"),
 
-    orderBy("createdAt", "desc")
-
   );
 
   onSnapshot(q, (snapshot) => {
