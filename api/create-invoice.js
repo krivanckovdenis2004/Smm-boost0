@@ -8,7 +8,13 @@ export default async function handler(req, res) {
 
   try {
 
-    const { amount, description } = req.body;
+    const {
+      amount,
+      description,
+      service,
+      link,
+      quantity
+    } = req.body;
 
     const response = await fetch(
       "https://pay.crypt.bot/api/createInvoice",
@@ -19,18 +25,16 @@ export default async function handler(req, res) {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-  asset: "USDT",
-  amount: String(((amount || 100) / 60).toFixed(2)),
-  description: description || "Оплата заказа SMM-Boost",
-  payload: JSON.stringify({
-    service: body.service,
-    link: body.link,
-    quantity: body.quantity,
-    priceRub: amount
-  }),
-  paid_btn_name: "openBot",
-  paid_btn_url: "https://smm-boost.pro/orders.html"
-})
+          asset: "USDT",
+          amount: String(((amount || 100) / 60).toFixed(2)),
+          description: description || "Оплата заказа SMM-Boost",
+          payload: JSON.stringify({
+            service: service,
+            link: link,
+            quantity: quantity,
+            priceRub: amount
+          })
+        })
       }
     );
 
