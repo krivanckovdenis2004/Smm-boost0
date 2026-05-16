@@ -284,10 +284,12 @@ document
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            amount: currentPrice,
-            description:
-              `${currentService} — ${currentAmount}`
-          })
+  amount: currentPrice,
+  description: `${currentService} — ${currentAmount}`,
+  service: currentService,
+  quantity: currentAmount,
+  link: link
+})
         }
       );
 
