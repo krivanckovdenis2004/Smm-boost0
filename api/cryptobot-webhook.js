@@ -1,3 +1,25 @@
+import { initializeApp } from "firebase/app";
+
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  serverTimestamp
+} from "firebase/firestore";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8",
+  authDomain: "smm-boost-905d5.firebaseapp.com",
+  projectId: "smm-boost-905d5",
+  storageBucket: "smm-boost-905d5.firebasestorage.app",
+  messagingSenderId: "554912523069",
+  appId: "1:554912523069:web:26d405b696b9d45e5edb54",
+  measurementId: "G-E6SRLXZW5V"
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+
 export default async function handler(req, res) {
 
   if (req.method !== "POST") {
@@ -25,14 +47,10 @@ export default async function handler(req, res) {
     const serviceMap = {
       "Подписчики": 8841,
       "Рост аудитории": 8841,
-
       "Лайки": 10130,
       "Вовлеченность": 10130,
-
       "Просмотры": 6454,
-
       "Репосты": 10175,
-
       "Комментарии": 3383,
       "Активность в комментариях": 3383
     };
@@ -70,45 +88,17 @@ export default async function handler(req, res) {
       japData.orderId ||
       "";
 
-    const firebaseKey =
-      process.env.FIREBASE_API_KEY ||
-      "AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8";
-
-    await fetch(
-      `https://firestore.googleapis.com/v1/projects/smm-boost-905d5/databases/(default)/documents/orders?key=${firebaseKey}`,
+    await addDoc(
+      collection(db, "orders"),
       {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          fields: {
-            service: {
-              stringValue: orderData.service
-            },
-            amount: {
-              integerValue: String(orderData.quantity)
-            },
-            price: {
-              doubleValue: Number(orderData.priceRub || 0)
-            },
-            link: {
-              stringValue: orderData.link
-            },
-            status: {
-              stringValue: "🟡 В обработке"
-            },
-            japOrderId: {
-              stringValue: String(japOrderId)
-            },
-            invoiceId: {
-              stringValue: String(invoice.invoice_id)
-            },
-            createdAt: {
-              timestampValue: new Date().toISOString()
-            }
-          }
-        })
+        service: orderData.service,
+        amount: Number(orderData.quantity),
+        price: Number(orderData.priceRub || 0),
+        link: orderData.link,
+        status: "🟡 В обработке",
+        japOrderId: String(japOrderId),
+        invoiceId: String(invoice.invoice_id),
+        createdAt: serverTimestamp()
       }
     );
 
