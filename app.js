@@ -244,11 +244,100 @@ setupCalculator(
 );
 
 document
-  .getElementById('closeModal')
-  .addEventListener('click', () => {
+  .getElementById('payButton')
+  .addEventListener('click', async () => {
 
-    document.getElementById('orderModal')
-      .style.display = 'none';
+    const payBtn =
+    document.getElementById('payButton');
+
+    payBtn.disabled = true;
+
+    payBtn.innerText =
+    "Создание оплаты...";
+
+    const link =
+    document.getElementById('instagramLink')
+    .value;
+
+    const instagramRegex =
+    /instagram\.com/;
+
+    if (!instagramRegex.test(link)) {
+
+      alert('Введите корректную ссылку Instagram');
+
+      payBtn.disabled = false;
+
+      payBtn.innerText = "Оплатить";
+
+      return;
+
+    }
+
+    try {
+
+      const response = await fetch(
+        "/api/create-invoice",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            amount: currentPrice,
+            description:
+              `${currentService} — ${currentAmount}`
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      console.log(data);
+
+      if (
+        data.ok &&
+        data.result &&
+        data.result.pay_url
+      ) {
+
+        localStorage.setItem(
+          "pendingOrder",
+          JSON.stringify({
+            service: currentService,
+            amount: currentAmount,
+            price: currentPrice,
+            link: link,
+            invoiceId: data.result.invoice_id
+          })
+        );
+
+        window.location.href =
+        data.result.pay_url;
+
+        return;
+
+      }
+
+      alert("Ошибка создания оплаты");
+
+      payBtn.disabled = false;
+
+      payBtn.innerText =
+      "Оплатить";
+
+    } catch (e) {
+
+      console.error(e);
+
+      alert("Ошибка создания оплаты");
+
+      payBtn.disabled = false;
+
+      payBtn.innerText =
+      "Оплатить";
+
+    }
 
 });
 
