@@ -1591,3 +1591,34 @@ opacity:0.7;
   font-size: 14px;
   line-height: 1.5;
 }
+.seo-block {
+
+  max-width: 900px;
+
+  margin: 80px auto 40px;
+
+  padding: 30px;
+
+  color: white;
+
+  opacity: 0.9;
+
+  line-height: 1.7;
+
+}
+
+.seo-block h2 {
+
+  margin-bottom: 20px;
+
+  font-size: 28px;
+
+}
+
+.seo-block p {
+
+  margin-bottom: 15px;
+
+  font-size: 16px;
+
+}
