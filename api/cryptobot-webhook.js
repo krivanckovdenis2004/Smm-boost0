@@ -31,7 +31,7 @@ export default async function handler(req, res) {
   try {
 
     const update = req.body;
-
+console.log("CRYPTOBOT UPDATE:", JSON.stringify(update));
     if (update.update_type !== "invoice_paid") {
       return res.status(200).json({
         success: true
