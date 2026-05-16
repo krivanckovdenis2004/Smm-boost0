@@ -87,6 +87,28 @@ console.log("CRYPTOBOT UPDATE:", JSON.stringify(update));
       japData.id ||
       japData.orderId ||
       "";
+    await fetch(
+  `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      chat_id: process.env.TELEGRAM_CHAT_ID,
+      text:
+`🔥 Новый оплаченный заказ
+
+Услуга: ${orderData.service}
+Количество: ${orderData.quantity}
+Сумма: ${orderData.priceRub}₽
+Ссылка: ${orderData.link}
+
+JAP ID:
+${japOrderId || "Ошибка"}`
+    })
+  }
+);
 
     await addDoc(
       collection(db, "orders"),
