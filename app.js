@@ -551,3 +551,10 @@ div.remove();
 });
 
 }
+const closeModalBtn = document.getElementById('closeModal');
+
+if (closeModalBtn) {
+  closeModalBtn.addEventListener('click', () => {
+    document.getElementById('orderModal').style.display = 'none';
+  });
+}
