@@ -45,18 +45,7 @@ export default async function handler(req, res) {
       invoice.payload || "{}"
     );
 
-    const serviceMap = {
-      "Подписчики": 8841,
-      "Рост аудитории": 8841,
-      "Лайки": 10130,
-      "Вовлеченность": 10130,
-      "Просмотры": 6454,
-      "Репосты": 10175,
-      "Комментарии": 3383,
-      "Активность в комментариях": 3383
-    };
-
-    const japService = serviceMap[orderData.service];
+    const japService = orderData.serviceId;
 
     if (!japService) {
       throw new Error("Unknown service");
@@ -92,6 +81,7 @@ export default async function handler(req, res) {
     const orderPayload = {
       publicOrderId: String(orderData.publicOrderId || ""),
       service: String(orderData.service || ""),
+      serviceId: String(orderData.serviceId || ""),
       amount: Number(orderData.quantity || 0),
       price: Number(orderData.priceRub || 0),
       link: String(orderData.link || ""),

@@ -15,7 +15,8 @@ export default async function handler(req, res) {
       link,
       quantity,
       orderDocId,
-      publicOrderId
+      publicOrderId,
+      serviceId
     } = req.body;
 
     const response = await fetch(
@@ -32,6 +33,7 @@ export default async function handler(req, res) {
           description: description || "Оплата заказа SMM-Boost",
           payload: JSON.stringify({
             service: service,
+            serviceId: serviceId,
             link: link,
             quantity: quantity,
             priceRub: amount,

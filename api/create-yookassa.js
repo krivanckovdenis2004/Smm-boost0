@@ -15,7 +15,8 @@ export default async function handler(req, res) {
       link,
       quantity,
       orderDocId,
-      publicOrderId
+      publicOrderId,
+      serviceId
     } = req.body;
 
     const auth = Buffer.from(
@@ -51,6 +52,7 @@ export default async function handler(req, res) {
           description: description || "Оплата заказа SMM-Boost",
           metadata: {
             service: String(service || ""),
+            serviceId: String(serviceId || ""),
             link: String(link || ""),
             quantity: String(quantity || ""),
             priceRub: String(amount || ""),
