@@ -1689,3 +1689,109 @@ transition:.3s;
 transform:translateY(-2px);
 
 }
+
+
+/* Final order/payment fixes */
+.payment-buttons{
+  display:flex;
+  gap:12px;
+  margin-top:20px;
+}
+
+.payment-method-btn{
+  flex:1;
+  padding:15px 12px;
+  border:none;
+  border-radius:16px;
+  background:linear-gradient(135deg,#7a5cff,#9d7bff,#5c8dff);
+  color:white;
+  font-size:15px;
+  font-weight:700;
+  cursor:pointer;
+  transition:.3s;
+  box-shadow:0 0 22px rgba(122,92,255,.28);
+}
+
+.payment-method-btn:hover{
+  transform:translateY(-2px);
+}
+
+.payment-method-btn:disabled{
+  opacity:.65;
+  cursor:not-allowed;
+  transform:none;
+}
+
+.crypto-btn{
+  background:linear-gradient(135deg,#1f2937,#7a5cff);
+}
+
+.compact-order-card{
+  padding:18px !important;
+  border-radius:18px !important;
+}
+
+.order-card-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:12px;
+}
+
+.order-id{
+  display:inline-block;
+  padding:7px 10px;
+  border-radius:999px;
+  background:rgba(157,123,255,.12);
+  border:1px solid rgba(157,123,255,.25);
+  color:#c9b8ff;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.4px;
+}
+
+.compact-order-card h2{
+  font-size:20px !important;
+  margin:8px 0 12px !important;
+}
+
+.order-meta{
+  display:grid;
+  gap:6px;
+  margin-bottom:10px;
+}
+
+.order-meta p{
+  margin:0;
+  font-size:14px;
+  color:#d6d6d6;
+}
+
+.small-progress{
+  height:9px !important;
+  margin-top:14px !important;
+}
+
+.waitStatus{
+  background:rgba(160,160,160,.14);
+  border:1px solid rgba(160,160,160,.35);
+  color:#d0d0d0;
+}
+
+.partialStatus{
+  background:rgba(255,152,0,.15);
+  border:1px solid rgba(255,152,0,.4);
+  color:#ffcc80;
+}
+
+@media (max-width: 520px){
+  .payment-buttons{
+    flex-direction:column;
+  }
+
+  .order-card-top{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+}
