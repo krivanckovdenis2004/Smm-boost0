@@ -1,3 +1,26 @@
+import { initializeApp } from "firebase/app";
+
+import {
+  getFirestore,
+  doc,
+  updateDoc,
+  setDoc,
+  serverTimestamp
+} from "firebase/firestore";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8",
+  authDomain: "smm-boost-905d5.firebaseapp.com",
+  projectId: "smm-boost-905d5",
+  storageBucket: "smm-boost-905d5.firebasestorage.app",
+  messagingSenderId: "554912523069",
+  appId: "1:554912523069:web:26d405b696b9d45e5edb54",
+  measurementId: "G-E6SRLXZW5V"
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+
 export default async function handler(req, res) {
 
   if (req.method !== "POST") {
@@ -12,6 +35,7 @@ export default async function handler(req, res) {
 
     if (
       event.event !== "payment.succeeded" ||
+      !event.object ||
       event.object.status !== "succeeded"
     ) {
       return res.status(200).json({
@@ -33,8 +57,7 @@ export default async function handler(req, res) {
       "Активность в комментариях": 3383
     };
 
-    const japService =
-      serviceMap[orderData.service];
+    const japService = serviceMap[orderData.service];
 
     if (!japService) {
       throw new Error("Unknown service");
@@ -45,8 +68,7 @@ export default async function handler(req, res) {
       {
         method: "POST",
         headers: {
-          "Content-Type":
-          "application/x-www-form-urlencoded"
+          "Content-Type": "application/x-www-form-urlencoded"
         },
         body: new URLSearchParams({
           key: process.env.JAP_API_KEY,
@@ -66,6 +88,32 @@ export default async function handler(req, res) {
       japData.orderId ||
       "";
 
+    const orderDocId = orderData.orderDocId;
+
+    const orderPayload = {
+      publicOrderId: String(orderData.publicOrderId || ""),
+      service: String(orderData.service || ""),
+      amount: Number(orderData.quantity || 0),
+      price: Number(orderData.priceRub || 0),
+      link: String(orderData.link || ""),
+      status: "🟡 В обработке",
+      paymentMethod: "ЮKassa",
+      paymentId: String(payment.id || ""),
+      japOrderId: String(japOrderId),
+      paidAt: serverTimestamp()
+    };
+
+    if (orderDocId) {
+      try {
+        await updateDoc(doc(db, "orders", orderDocId), orderPayload);
+      } catch (e) {
+        await setDoc(doc(db, "orders", orderDocId), {
+          ...orderPayload,
+          createdAt: serverTimestamp()
+        }, { merge: true });
+      }
+    }
+
     await fetch(
       `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`,
       {
@@ -78,6 +126,7 @@ export default async function handler(req, res) {
           text:
 `🔥 Новый оплаченный заказ через ЮKassa
 
+ID: ${orderData.publicOrderId || orderDocId || "—"}
 Услуга: ${orderData.service}
 Количество: ${orderData.quantity}
 Сумма: ${orderData.priceRub}₽

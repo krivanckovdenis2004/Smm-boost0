@@ -2,8 +2,9 @@ import { initializeApp } from "firebase/app";
 
 import {
   getFirestore,
-  collection,
-  addDoc,
+  doc,
+  updateDoc,
+  setDoc,
   serverTimestamp
 } from "firebase/firestore";
 
@@ -31,7 +32,7 @@ export default async function handler(req, res) {
   try {
 
     const update = req.body;
-console.log("CRYPTOBOT UPDATE:", JSON.stringify(update));
+
     if (update.update_type !== "invoice_paid") {
       return res.status(200).json({
         success: true
@@ -55,8 +56,7 @@ console.log("CRYPTOBOT UPDATE:", JSON.stringify(update));
       "Активность в комментариях": 3383
     };
 
-    const japService =
-      serviceMap[orderData.service];
+    const japService = serviceMap[orderData.service];
 
     if (!japService) {
       throw new Error("Unknown service");
@@ -67,8 +67,7 @@ console.log("CRYPTOBOT UPDATE:", JSON.stringify(update));
       {
         method: "POST",
         headers: {
-          "Content-Type":
-          "application/x-www-form-urlencoded"
+          "Content-Type": "application/x-www-form-urlencoded"
         },
         body: new URLSearchParams({
           key: process.env.JAP_API_KEY,
@@ -87,18 +86,46 @@ console.log("CRYPTOBOT UPDATE:", JSON.stringify(update));
       japData.id ||
       japData.orderId ||
       "";
-    await fetch(
-  `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`,
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      chat_id: process.env.TELEGRAM_CHAT_ID,
-      text:
-`🔥 Новый оплаченный заказ
 
+    const orderDocId = orderData.orderDocId;
+
+    const orderPayload = {
+      publicOrderId: String(orderData.publicOrderId || ""),
+      service: String(orderData.service || ""),
+      amount: Number(orderData.quantity || 0),
+      price: Number(orderData.priceRub || 0),
+      link: String(orderData.link || ""),
+      status: "🟡 В обработке",
+      paymentMethod: "CryptoBot",
+      invoiceId: String(invoice.invoice_id || ""),
+      japOrderId: String(japOrderId),
+      paidAt: serverTimestamp()
+    };
+
+    if (orderDocId) {
+      try {
+        await updateDoc(doc(db, "orders", orderDocId), orderPayload);
+      } catch (e) {
+        await setDoc(doc(db, "orders", orderDocId), {
+          ...orderPayload,
+          createdAt: serverTimestamp()
+        }, { merge: true });
+      }
+    }
+
+    await fetch(
+      `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          chat_id: process.env.TELEGRAM_CHAT_ID,
+          text:
+`🔥 Новый оплаченный заказ через CryptoBot
+
+ID: ${orderData.publicOrderId || orderDocId || "—"}
 Услуга: ${orderData.service}
 Количество: ${orderData.quantity}
 Сумма: ${orderData.priceRub}₽
@@ -106,21 +133,7 @@ console.log("CRYPTOBOT UPDATE:", JSON.stringify(update));
 
 JAP ID:
 ${japOrderId || "Ошибка"}`
-    })
-  }
-);
-
-    await addDoc(
-      collection(db, "orders"),
-      {
-        service: orderData.service,
-        amount: Number(orderData.quantity),
-        price: Number(orderData.priceRub || 0),
-        link: orderData.link,
-        status: "🟡 В обработке",
-        japOrderId: String(japOrderId),
-        invoiceId: String(invoice.invoice_id),
-        createdAt: serverTimestamp()
+        })
       }
     );
 

@@ -13,7 +13,9 @@ export default async function handler(req, res) {
       description,
       service,
       link,
-      quantity
+      quantity,
+      orderDocId,
+      publicOrderId
     } = req.body;
 
     const response = await fetch(
@@ -26,13 +28,15 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           asset: "USDT",
-          amount: String(((amount || 100) / 60).toFixed(2)),
+          amount: String((((amount || 100) * 1.12) / 70).toFixed(2)),
           description: description || "Оплата заказа SMM-Boost",
           payload: JSON.stringify({
             service: service,
             link: link,
             quantity: quantity,
-            priceRub: amount
+            priceRub: amount,
+            orderDocId: orderDocId,
+            publicOrderId: publicOrderId
           })
         })
       }
