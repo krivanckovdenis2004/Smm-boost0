@@ -26,9 +26,11 @@ function shouldCheckJapStatus(order) {
   const status = order.status || '';
 
   if (!order.japOrderId) return false;
-  if (status.includes('🕓')) return false;
+
+  // Проверку останавливаем только если заказ уже финальный
   if (status.includes('🟢')) return false;
   if (status.includes('🔴')) return false;
+  if (status.includes('🟠')) return false;
 
   return true;
 }
