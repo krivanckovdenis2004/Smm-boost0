@@ -8,7 +8,13 @@ export default async function handler(req, res) {
 
   try {
 
-    const { amount, description } = req.body;
+    const {
+      amount,
+      description,
+      service,
+      link,
+      quantity
+    } = req.body;
 
     const auth = Buffer.from(
       process.env.YOOKASSA_SHOP_ID + ":" + process.env.YOOKASSA_SECRET_KEY
@@ -36,7 +42,13 @@ export default async function handler(req, res) {
             type: "redirect",
             return_url: "https://smm-boost.pro/orders.html"
           },
-          description: description || "Оплата заказа SMM-Boost"
+          description: description || "Оплата заказа SMM-Boost",
+          metadata: {
+            service: String(service),
+            link: String(link),
+            quantity: String(quantity),
+            priceRub: String(amount)
+          }
         })
       }
     );
