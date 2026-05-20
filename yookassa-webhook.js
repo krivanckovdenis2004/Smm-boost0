@@ -1,0 +1,1 @@
+// updated yookassa-webhook.js
