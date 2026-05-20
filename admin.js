@@ -23,195 +23,137 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const ordersContainer = document.getElementById('ordersContainer');
-const filterButtons = document.querySelectorAll('.filterBtn');
-
-let currentFilter = 'all';
-let unsubscribeOrders = null;
+const ordersContainer = document.getElementById("ordersContainer");
+const filterButtons = document.querySelectorAll(".filterBtn");
+let currentFilter = "all";
+let allOrders = [];
 
 filterButtons.forEach((btn) => {
-  btn.addEventListener('click', () => {
-    document.querySelector('.activeFilter')?.classList.remove('activeFilter');
-    btn.classList.add('activeFilter');
+  btn.addEventListener("click", () => {
+    document.querySelector(".activeFilter")?.classList.remove("activeFilter");
+    btn.classList.add("activeFilter");
     currentFilter = btn.dataset.filter;
-    loadOrders();
+    renderOrders();
   });
 });
 
-function getStatusClass(status = '') {
-  if (status.includes('🟢')) return 'doneStatus';
-  if (status.includes('🔴')) return 'cancelStatus';
-  if (status.includes('🟠')) return 'partialStatus';
-  if (status.includes('🕓')) return 'waitStatus';
-  return 'processStatus';
+function getStatusClass(status = "") {
+  if (status.includes("🟢")) return "doneStatus";
+  if (status.includes("🔴")) return "cancelStatus";
+  if (status.includes("🟠")) return "partialStatus";
+  if (status.includes("🕓")) return "waitStatus";
+  return "processStatus";
 }
 
-function shouldShow(status = '') {
-  if (currentFilter === 'all') return true;
-
+function shouldShow(status = "") {
   const s = status.toLowerCase();
 
-  if (currentFilter === 'process') {
-    return (
-      s.includes('🟡') ||
-      s.includes('🕓') ||
-      s.includes('pending') ||
-      s.includes('process') ||
-      s.includes('обработ') ||
-      s.includes('ожида')
-    );
+  if (currentFilter === "all") return true;
+
+  if (currentFilter === "process") {
+    return s.includes("🟡") || s.includes("🕓") || s.includes("pending") || s.includes("process") || s.includes("обработ") || s.includes("ожидает");
   }
 
-  if (currentFilter === 'done') {
-    return (
-      s.includes('🟢') ||
-      s.includes('completed') ||
-      s.includes('done') ||
-      s.includes('выполн')
-    );
+  if (currentFilter === "done") {
+    return s.includes("🟢") || s.includes("completed") || s.includes("done") || s.includes("выполн");
   }
 
-  if (currentFilter === 'cancel') {
-    return (
-      s.includes('🔴') ||
-      s.includes('cancel') ||
-      s.includes('отмен')
-    );
+  if (currentFilter === "cancel") {
+    return s.includes("🔴") || s.includes("cancel") || s.includes("отмен");
   }
 
   return true;
 }
 
-function getProgress(order) {
-  if (typeof order.progress === 'number') {
-    return Math.min(100, Math.max(0, order.progress));
-  }
-
-  const status = order.status || '';
-  if (status.includes('🟢')) return 100;
-  if (status.includes('🔴')) return 100;
-  if (status.includes('🟠')) return 80;
-  if (status.includes('🟡')) return 60;
-  if (status.includes('🕓')) return 15;
-  return 50;
-}
-
-function getSafe(value, fallback = '—') {
-  if (value === undefined || value === null || value === '') return fallback;
-  return value;
-}
-
-async function setOrderStatus(orderId, status, progress) {
-  await updateDoc(doc(db, 'orders', orderId), {
-    status,
-    progress
-  });
-}
-
-async function checkJap(orderId) {
+function formatDate(value) {
   try {
-    await fetch(`/api/check-status?orderDocId=${encodeURIComponent(orderId)}`);
-  } catch (e) {
-    console.error(e);
-    alert('Не удалось проверить JAP статус');
+    if (!value || !value.toDate) return "—";
+    return value.toDate().toLocaleString("ru-RU");
+  } catch {
+    return "—";
   }
 }
 
-function renderOrder(docItem) {
-  const order = docItem.data();
-  const status = order.status || '🕓 Ожидает оплаты';
+function renderOrders() {
+  ordersContainer.innerHTML = "";
 
-  if (!shouldShow(status)) return;
+  const filtered = allOrders.filter(({ order }) => shouldShow(order.status || ""));
 
-  const statusClass = getStatusClass(status);
-  const publicOrderId = order.publicOrderId || docItem.id.slice(0, 8).toUpperCase();
-  const progress = getProgress(order);
-
-  const card = document.createElement('div');
-  card.className = 'card compact-order-card admin-order-card';
-
-  card.innerHTML = `
-    <div class="order-card-top">
-      <span class="order-id">ID: ${publicOrderId}</span>
-      <span class="statusBadge ${statusClass}">${status}</span>
-    </div>
-
-    <h2>${getSafe(order.service, 'Заказ')}</h2>
-
-    <div class="order-meta">
-      <p><b>Количество:</b> ${getSafe(order.amount, 0)}</p>
-      <p><b>Сумма:</b> ${getSafe(order.price, 0)}₽</p>
-      <p><b>Оплата:</b> ${getSafe(order.paymentMethod)}</p>
-      <p><b>JAP ID:</b> ${getSafe(order.japOrderId)}</p>
-      ${order.japStatus ? `<p><b>JAP статус:</b> ${order.japStatus}</p>` : ''}
-    </div>
-
-    <a href="${order.link || '#'}" target="_blank" class="order-link">
-      Открыть ссылку
-    </a>
-
-    <div class="progressBar small-progress">
-      <div class="progressFill" style="width:${progress}%"></div>
-    </div>
-
-    <div class="admin-order-actions">
-      <button class="admin-action-btn process-btn">🟡 В обработке</button>
-      <button class="admin-action-btn done-btn">🟢 Выполнен</button>
-      <button class="admin-action-btn partial-btn">🟠 Частично</button>
-      <button class="admin-action-btn cancel-btn">🔴 Отменён</button>
-      <button class="admin-action-btn sync-btn">🔄 JAP</button>
-    </div>
-  `;
-
-  card.querySelector('.process-btn').addEventListener('click', () => {
-    setOrderStatus(docItem.id, '🟡 В обработке', 60);
-  });
-
-  card.querySelector('.done-btn').addEventListener('click', () => {
-    setOrderStatus(docItem.id, '🟢 Выполнено', 100);
-  });
-
-  card.querySelector('.partial-btn').addEventListener('click', () => {
-    setOrderStatus(docItem.id, '🟠 Частично выполнено', 80);
-  });
-
-  card.querySelector('.cancel-btn').addEventListener('click', () => {
-    setOrderStatus(docItem.id, '🔴 Отменено', 100);
-  });
-
-  card.querySelector('.sync-btn').addEventListener('click', () => {
-    checkJap(docItem.id);
-  });
-
-  ordersContainer.appendChild(card);
-}
-
-function loadOrders() {
-  if (!ordersContainer) return;
-
-  if (unsubscribeOrders) {
-    unsubscribeOrders();
+  if (filtered.length === 0) {
+    ordersContainer.innerHTML = '<p class="emptyOrders">Заказов пока нет</p>';
+    return;
   }
 
-  const q = query(
-    collection(db, 'orders'),
-    orderBy('createdAt', 'desc')
-  );
+  filtered.forEach(({ id, order }) => {
+    const status = order.status || "🕓 Ожидает оплаты";
+    const statusClass = getStatusClass(status);
+    const publicOrderId = order.publicOrderId || id.slice(0, 8).toUpperCase();
 
-  unsubscribeOrders = onSnapshot(q, (snapshot) => {
-    ordersContainer.innerHTML = '';
+    const card = document.createElement("div");
+    card.className = "card admin-order-card compact-order-card";
 
-    if (snapshot.empty) {
-      ordersContainer.innerHTML = '<p class="emptyOrders">Заказов пока нет</p>';
-      return;
-    }
+    card.innerHTML = `
+      <div class="order-card-top">
+        <span class="order-id">ID: ${publicOrderId}</span>
+        <span class="statusBadge ${statusClass}">${status}</span>
+      </div>
 
-    snapshot.forEach(renderOrder);
+      <h2>${order.service || "Заказ"}</h2>
 
-    if (!ordersContainer.innerHTML.trim()) {
-      ordersContainer.innerHTML = '<p class="emptyOrders">Нет заказов по выбранному фильтру</p>';
-    }
+      <div class="order-meta">
+        <p><b>Количество:</b> ${order.amount || 0}</p>
+        <p><b>Сумма:</b> ${order.price || 0}₽</p>
+        <p><b>Оплата:</b> ${order.paymentMethod || "—"}</p>
+        <p><b>JAP ID:</b> ${order.japOrderId || "—"}</p>
+        <p><b>Создан:</b> ${formatDate(order.createdAt)}</p>
+      </div>
+
+      <a href="${order.link || "#"}" target="_blank" class="order-link">
+        Открыть ссылку
+      </a>
+
+      <div class="progressBar small-progress">
+        <div class="progressFill" style="width:${Number(order.progress || 0)}%"></div>
+      </div>
+
+      <div class="admin-order-actions">
+        <button class="syncBtn">🔄 Обновить JAP</button>
+        <button class="doneBtn">🟢 Выполнен</button>
+        <button class="cancelBtn">🔴 Отменен</button>
+      </div>
+    `;
+
+    card.querySelector(".syncBtn").addEventListener("click", async () => {
+      await fetch(`/api/check-status?orderDocId=${encodeURIComponent(id)}`);
+    });
+
+    card.querySelector(".doneBtn").addEventListener("click", async () => {
+      await updateDoc(doc(db, "orders", id), {
+        status: "🟢 Выполнено",
+        progress: 100
+      });
+    });
+
+    card.querySelector(".cancelBtn").addEventListener("click", async () => {
+      await updateDoc(doc(db, "orders", id), {
+        status: "🔴 Отменено",
+        progress: 100
+      });
+    });
+
+    ordersContainer.appendChild(card);
   });
 }
 
-loadOrders();
+const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+
+onSnapshot(q, (snapshot) => {
+  allOrders = [];
+  snapshot.forEach((docItem) => {
+    allOrders.push({
+      id: docItem.id,
+      order: docItem.data()
+    });
+  });
+  renderOrders();
+});

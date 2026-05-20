@@ -1796,32 +1796,126 @@ transform:translateY(-2px);
   }
 }
 
-/* Admin compact fixes */
-.admin-order-card{
-  cursor: default;
+
+/* Platform services layout */
+.section-heading {
+  text-align: center;
+  max-width: 850px;
+  margin: 0 auto 24px;
+  padding: 0 20px;
 }
 
-.admin-order-actions{
-  display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap:10px;
-  margin-top:14px;
+.section-heading h2 {
+  font-size: 38px;
+  margin-bottom: 10px;
 }
 
-.admin-action-btn{
-  padding:10px 12px !important;
-  border:none;
-  border-radius:12px;
-  color:white;
-  background:rgba(255,255,255,.08);
-  font-size:13px !important;
-  font-weight:700;
-  cursor:pointer;
-  box-shadow:none !important;
-  animation:none !important;
+.section-heading p {
+  color: #bdbdbd;
+  line-height: 1.6;
 }
 
-.admin-action-btn:hover{
-  background:rgba(157,123,255,.22);
-  transform:translateY(-2px);
+.platform-tabs {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 10px auto 30px;
+  padding: 0 20px;
+}
+
+.platform-btn {
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.06);
+  color: white;
+  border-radius: 16px;
+  padding: 13px 18px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.platform-btn:hover,
+.platform-btn.active {
+  background: linear-gradient(135deg, #7a5cff, #9d7bff);
+  box-shadow: 0 0 25px rgba(122,92,255,0.35);
+  transform: translateY(-2px);
+}
+
+.services-grid {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.service-card {
+  display: none;
+  min-height: auto;
+}
+
+.service-card.active-service {
+  display: block;
+}
+
+.service-label {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(157,123,255,0.14);
+  color: #d8ccff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.service-card h2 {
+  font-size: 21px;
+  line-height: 1.25;
+}
+
+.service-card ul {
+  min-height: 78px;
+}
+
+.payment-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.payment-method-btn {
+  flex: 1;
+  padding: 16px;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #7a5cff, #9d7bff, #5c8dff);
+  background-size: 300% 300%;
+  animation: gradientMove 5s ease infinite;
+  color: white;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.3s;
+  box-shadow: 0 0 25px rgba(122,92,255,0.30);
+}
+
+.payment-method-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 35px rgba(122,92,255,0.5);
+}
+
+@media (max-width: 520px) {
+  .services-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-buttons {
+    flex-direction: column;
+  }
+
+  .section-heading h2 {
+    font-size: 30px;
+  }
 }
