@@ -6,39 +6,33 @@ getFirestore,
 
 collection,
 
-addDoc,
-
-getDocs,
-
 query,
 
 orderBy,
 
 limit,
 
-onSnapshot,
-serverTimestamp
+onSnapshot
 
-
-} 
+}
 
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
 
-  apiKey: "AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8",
+apiKey: "AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8",
 
-  authDomain: "smm-boost-905d5.firebaseapp.com",
+authDomain: "smm-boost-905d5.firebaseapp.com",
 
-  projectId: "smm-boost-905d5",
+projectId: "smm-boost-905d5",
 
-  storageBucket: "smm-boost-905d5.firebasestorage.app",
+storageBucket: "smm-boost-905d5.firebasestorage.app",
 
-  messagingSenderId: "554912523069",
+messagingSenderId: "554912523069",
 
-  appId: "1:554912523069:web:26d405b696b9d45e5edb54",
+appId: "1:554912523069:web:26d405b696b9d45e5edb54",
 
-  measurementId: "G-E6SRLXZW5V"
+measurementId: "G-E6SRLXZW5V"
 
 };
 
@@ -49,6 +43,7 @@ const db = getFirestore(app);
 let currentService = '';
 let currentAmount = 0;
 let currentPrice = 0;
+
 const commentButtons =
 document.querySelectorAll(
 '.comment-option'
@@ -98,377 +93,308 @@ commentButtons[0].click();
 }
 
 function setupCalculator(
-  inputId,
-  totalId,
-  pricePer1000,
-  serviceName,
-  minAmount
+inputId,
+totalId,
+pricePer1000,
+serviceName,
+minAmount
 ) {
 
-  const input =
-    document.getElementById(inputId);
+const input =
+document.getElementById(inputId);
 
-  const total =
-    document.getElementById(totalId);
+const total =
+document.getElementById(totalId);
 
-  const button =
+const button =
 input.parentElement.querySelector('.order-btn');
 
-  input.addEventListener('input', () => {
+input.addEventListener('input', () => {
 
-    const amount =
-      parseFloat(input.value) || 0;
+const amount =
+parseFloat(input.value) || 0;
 
-    const error =
-      document.getElementById(
-        inputId.replace('Amount', 'Error')
-      );
+const error =
+document.getElementById(
+inputId.replace('Amount', 'Error')
+);
 
-    if(amount < minAmount){
+if(amount < minAmount){
 
-      error.style.display = 'block';
+error.style.display = 'block';
 
-    } else {
+} else {
 
-      error.style.display = 'none';
+error.style.display = 'none';
 
-    }
+}
 
-    let price = 0;
+let price = 0;
 
-    if (serviceName === "Комментарии") {
+if (serviceName === "Комментарии") {
 
-      price = Math.ceil(amount / 5) * 99;
+price = Math.ceil(amount / 5) * 99;
 
-    } else {
+} else {
 
-      price =
-      (amount / 1000) * pricePer1000;
+price =
+(amount / 1000) * pricePer1000;
 
-    }
+}
 
-    total.innerText =
-      price.toFixed(2) + '₽';
+total.innerText =
+price.toFixed(2) + '₽';
 
-  });
+});
 
-  button.addEventListener('click', () => {
+button.addEventListener('click', () => {
 
-    const amount =
-      parseFloat(input.value) || 0;
+const amount =
+parseFloat(input.value) || 0;
 
-    if(amount < minAmount){
+if(amount < minAmount){
 
-      alert(
-      `Минимальный заказ: ${minAmount}`
-      );
+alert(
+`Минимальный заказ: ${minAmount}`
+);
 
-      return;
+return;
 
-    }
+}
 
-    let price = 0;
+let price = 0;
 
-    if (serviceName === "Комментарии") {
+if (serviceName === "Комментарии") {
 
-      price = Math.ceil(amount / 5) * 99;
+price = Math.ceil(amount / 5) * 99;
 
-    } else {
+} else {
 
-      price =
-      (amount / 1000) * pricePer1000;
+price =
+(amount / 1000) * pricePer1000;
 
-    }
+}
 
-    currentService = serviceName;
-    currentAmount = amount;
-    currentPrice = price;
+currentService = serviceName;
+currentAmount = amount;
+currentPrice = price;
 
-    document.getElementById('serviceName')
-      .innerText =
-      'Услуга: ' + serviceName;
+document.getElementById('serviceName')
+.innerText =
+'Услуга: ' + serviceName;
 
-    document.getElementById('serviceAmount')
-      .innerText =
-      'Количество: ' + amount;
+document.getElementById('serviceAmount')
+.innerText =
+'Количество: ' + amount;
 
-    document.getElementById('servicePrice')
-      .innerText =
-      'Сумма: ' + price.toFixed(2) + '₽';
+document.getElementById('servicePrice')
+.innerText =
+'Сумма: ' + price.toFixed(2) + '₽';
 
-    document.getElementById('orderModal')
-      .style.display = 'flex';
+document.getElementById('orderModal')
+.style.display = 'flex';
 
-  });
+});
 
 }
 
 setupCalculator(
-  'followersAmount',
-  'followersTotal',
-  150,
-  'Подписчики',
-  100
+'followersAmount',
+'followersTotal',
+150,
+'Подписчики',
+100
 );
 
 setupCalculator(
-  'likesAmount',
-  'likesTotal',
-  20,
-  'Лайки',
-  50
+'likesAmount',
+'likesTotal',
+20,
+'Лайки',
+50
 );
 
 setupCalculator(
-  'viewsAmount',
-  'viewsTotal',
-  7,
-  'Просмотры',
-  100
+'viewsAmount',
+'viewsTotal',
+7,
+'Просмотры',
+100
 );
 
 setupCalculator(
-  'repostsAmount',
-  'repostsTotal',
-  70,
-  'Репосты',
-  10
+'repostsAmount',
+'repostsTotal',
+70,
+'Репосты',
+10
 );
 
 setupCalculator(
-  'commentsAmount',
-  'commentsTotal',
-  99,
-  'Комментарии',
-  5
+'commentsAmount',
+'commentsTotal',
+99,
+'Комментарии',
+5
 );
 
-document
-  .getElementById('payButton')
-  .addEventListener('click', async () => {
+async function createPayment(type){
 
-    const payBtn =
-    document.getElementById('payButton');
+const link =
+document.getElementById(
+'instagramLink'
+).value;
 
-    payBtn.disabled = true;
+const socialRegex =
+/instagram\.com|tiktok\.com|youtube\.com|youtu\.be|vk\.com/i;
 
-    payBtn.innerText =
-    "Создание оплаты...";
+if (!socialRegex.test(link)) {
 
-    const link =
-    document.getElementById('instagramLink')
-    .value;
+alert(
+'Введите корректную ссылку'
+);
 
-    const instagramRegex =
-    /instagram\.com/;
+return;
 
-    if (!instagramRegex.test(link)) {
+}
 
-      alert('Введите корректную ссылку Instagram');
+const button =
+type === 'crypto'
+? document.getElementById(
+'cryptoPayButton'
+)
 
-      payBtn.disabled = false;
+: document.getElementById(
+'yookassaPayButton'
+);
 
-      payBtn.innerText = "Оплатить";
+button.disabled = true;
 
-      return;
+button.innerText =
+"Создание оплаты...";
 
-    }
+try {
 
-    try {
+const response = await fetch(
 
-      const response = await fetch(
-        "/api/create-invoice",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-  amount: currentPrice,
-  description: `${currentService} — ${currentAmount}`,
-  service: currentService,
-  quantity: currentAmount,
-  link: link
-})
-        }
-      );
+type === 'crypto'
 
-      const data = await response.json();
+? "/api/create-invoice"
 
-      console.log(data);
+: "/api/create-yookassa",
 
-      if (
-        data.ok &&
-        data.result &&
-        data.result.pay_url
-      ) {
-
-        localStorage.setItem(
-          "pendingOrder",
-          JSON.stringify({
-            service: currentService,
-            amount: currentAmount,
-            price: currentPrice,
-            link: link,
-            invoiceId: data.result.invoice_id
-          })
-        );
-
-        window.location.href =
-        data.result.pay_url;
-
-        return;
-
-      }
-
-      alert("Ошибка создания оплаты");
-
-      payBtn.disabled = false;
-
-      payBtn.innerText =
-      "Оплатить";
-
-    } catch (e) {
-
-      console.error(e);
-
-      alert("Ошибка создания оплаты");
-
-      payBtn.disabled = false;
-
-      payBtn.innerText =
-      "Оплатить";
-
-    }
-
-});
-
-document
-  .getElementById('payButton')
-  .addEventListener('click', async () => {
-
-    const payBtn =
-    document.getElementById('payButton');
-
-    payBtn.disabled = true;
-
-    payBtn.innerText =
-    "Создание заказа...";
-
-    const link =
-    document.getElementById('instagramLink')
-    .value;
-
-    const instagramRegex =
-    /instagram\.com/;
-
-    if (!instagramRegex.test(link)) {
-
-      alert('Введите корректную ссылку Instagram');
-
-      payBtn.disabled = false;
-
-      payBtn.innerText = "Оплатить";
-
-      return;
-
-    }
-
-    try {
-
-   const response = await fetch("/api/api",
 {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
+method: "POST",
 
-    service:
-      currentService === "Подписчики"
-      ? 8841
+headers: {
+"Content-Type":
+"application/json"
+},
 
-      : currentService === "Лайки"
-      ? 10130
+body: JSON.stringify({
 
-      : currentService === "Просмотры"
-      ? 6454
+amount: currentPrice,
 
-      : currentService === "Репосты"
-      ? 10175
+description:
+`${currentService} — ${currentAmount}`,
 
-      : currentService === "Комментарии"
-      ? 3383
+service: currentService,
 
-      : null,
+quantity: currentAmount,
 
-    link: link,
-    quantity: currentAmount
+link: link
 
-  })
-});
+})
+}
 
-const data = await response.json();
+);
+
+const data =
+await response.json();
 
 console.log(data);
 
-const japOrderId =
-  data.order ||
-  data.id ||
-  data.orderId ||
-  "unknown";
+if(type === 'crypto'){
 
-      const docRef = await addDoc(
-        collection(db, 'orders'),
-        {
+if (
+data.ok &&
+data.result &&
+data.result.pay_url
+) {
 
-          service: currentService,
-          amount: currentAmount,
-          price: currentPrice,
-          link: link,
-          status: '🟡 В обработке',
-japOrderId: japOrderId || "",
-createdAt: serverTimestamp(),
+window.location.href =
+data.result.pay_url;
 
-        }
-      );
+return;
 
-      let myOrders = JSON.parse(
-        localStorage.getItem('myOrders')
-      ) || [];
+}
 
-      myOrders.unshift(docRef.id);
+} else {
 
-      localStorage.setItem(
-        'myOrders',
-        JSON.stringify(myOrders)
-      );
+if (
+data.confirmation &&
+data.confirmation.confirmation_url
+) {
 
-      payBtn.disabled = false;
+window.location.href =
+data.confirmation.confirmation_url;
 
-      payBtn.innerText =
-      "Оплатить";
+return;
 
-      window.location.href =
-      'orders.html';
+}
 
-    } catch (e) {
+}
 
-      alert(e.message);
+alert("Ошибка создания оплаты");
+
+button.disabled = false;
+
+button.innerText =
+type === 'crypto'
+
+? "💎 CryptoBot"
+
+: "🏦 ЮKassa";
+
+} catch (e) {
+
 console.error(e);
 
-      payBtn.disabled = false;
+alert("Ошибка создания оплаты");
 
-      payBtn.innerText =
-      "Оплатить";
+button.disabled = false;
 
-      alert('Ошибка создания заказа');
+button.innerText =
+type === 'crypto'
 
-    }
+? "💎 CryptoBot"
 
-});
+: "🏦 ЮKassa";
 
-  
+}
+
+}
+
+document
+.getElementById(
+'cryptoPayButton'
+)
+
+.addEventListener(
+'click',
+() => createPayment('crypto')
+);
+
+document
+.getElementById(
+'yookassaPayButton'
+)
+
+.addEventListener(
+'click',
+() => createPayment('yookassa')
+);
+
 const liveContainer =
 document.getElementById(
 'live-orders'
@@ -551,10 +477,23 @@ div.remove();
 });
 
 }
-const closeModalBtn = document.getElementById('closeModal');
+
+const closeModalBtn =
+document.getElementById(
+'closeModal'
+);
 
 if (closeModalBtn) {
-  closeModalBtn.addEventListener('click', () => {
-    document.getElementById('orderModal').style.display = 'none';
-  });
+
+closeModalBtn.addEventListener(
+'click',
+() => {
+
+document.getElementById(
+'orderModal'
+).style.display = 'none';
+
+}
+);
+
 }
