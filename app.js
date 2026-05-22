@@ -117,7 +117,7 @@ showPlatform("Instagram");
 
 async function createPayment(type) {
   const link = document.getElementById("instagramLink").value.trim();
-  const socialRegex = /instagram\.com|tiktok\.com|youtube\.com|youtu\.be|vk\.com/i;
+  const socialRegex = /instagram\.com|tiktok\.com|youtube\.com|youtu\.be|vk\.com|vk\.ru|t\.me|telegram\.me/i;
 
   if (!socialRegex.test(link)) {
     alert("Введите корректную ссылку на соцсеть");
