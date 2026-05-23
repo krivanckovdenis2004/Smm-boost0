@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Бесплатные подписчики и розыгрыш 100.000 просмотров | SMM-Boost</title>
+  <meta name="description" content="Участвуйте в розыгрыше 100.000 просмотров и получите случайный подарок за подписку: 100 подписчиков, 10.000 просмотров или 1000 лайков." />
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="bg-animation">
+  <span></span>
+  <span></span>
+  <span></span>
+  <span></span>
+</div>
+
+<nav class="navbar">
+  <div class="nav-logo">SMM-Boost</div>
+  <div class="nav-links">
+    <a href="index.html">Главная</a>
+    <a href="index.html#services">Услуги</a>
+    <a href="orders.html">Мои заказы</a>
+  </div>
+</nav>
+
+<main class="giveaway-page">
+  <section class="giveaway-hero-card">
+    <div class="giveaway-status">🎆 Розыгрыш активен</div>
+    <h1>🎁 Бесплатные подписчики + розыгрыш 100.000 просмотров</h1>
+    <p class="giveaway-lead">
+      Подпишитесь на наш Telegram-канал, примите участие в розыгрыше и получите случайный подарок за подписку.
+    </p>
+
+    <img class="giveaway-poster" src="giveaway-poster.jpg" alt="Розыгрыш 100000 просмотров от SMM-Boost">
+
+    <div class="giveaway-prize-grid">
+      <div class="giveaway-mini-card">
+        <strong>🏆 Главный приз</strong>
+        <span>100.000 просмотров на любую соцсеть</span>
+      </div>
+      <div class="giveaway-mini-card">
+        <strong>🎲 Подарок за подписку</strong>
+        <span>100 подписчиков / 10.000 просмотров / 1000 лайков</span>
+      </div>
+      <div class="giveaway-mini-card">
+        <strong>🔀 Можно распределить</strong>
+        <span>на один профиль, разные посты, видео или каналы</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="giveaway-steps card">
+    <h2>🚀 Условия участия</h2>
+    <ol>
+      <li>Подпишитесь на Telegram-канал <a href="https://t.me/smmboost_pro" target="_blank">@smmboost_pro</a></li>
+      <li>Поставьте реакцию на пост с розыгрышем</li>
+      <li>Напишите комментарий под постом</li>
+      <li>Сделайте скрин подписки и отправьте его в личные сообщения администрации канала. Контакты администрации указаны в описании канала.</li>
+    </ol>
+
+    <div class="giveaway-actions">
+      <a class="hero-button" href="https://t.me/smmboost_pro" target="_blank" id="openChannelBtn">📲 Перейти в канал</a>
+      <button class="hero-button secondary-gift-btn" id="claimGiftBtn">🎲 Получить случайный подарок</button>
+    </div>
+  </section>
+
+  <section class="gift-result card" id="giftResult" hidden>
+    <div class="giveaway-status">Ваш подарок</div>
+    <h2 id="giftTitle">🎁</h2>
+    <p id="giftText"></p>
+    <p class="gift-id">ID заявки: <span id="giftId"></span></p>
+  </section>
+
+  <section class="giveaway-form card" id="giveawayForm" hidden>
+    <h2>📩 Данные для бесплатного подарка</h2>
+    <p class="form-hint">Заполните форму и скопируйте заявку. После этого отправьте её вместе со скрином подписки администратору канала.</p>
+
+    <label>Соцсеть</label>
+    <select id="socialSelect">
+      <option>TikTok</option>
+      <option>Telegram</option>
+      <option>YouTube</option>
+      <option>VK</option>
+      <option>Instagram</option>
+    </select>
+
+    <label>Ссылка на профиль / пост / видео</label>
+    <input id="targetLink" type="url" placeholder="https://...">
+
+    <label>Ваш Telegram username</label>
+    <input id="telegramUser" type="text" placeholder="@username">
+
+    <button class="order-btn" id="copyRequestBtn">📋 Скопировать заявку</button>
+    <a class="hero-button" href="https://t.me/smmboost_pro" target="_blank">Открыть канал</a>
+
+    <p class="form-hint small">Акция одноразовая для одного устройства. При обновлении страницы подарок не меняется.</p>
+  </section>
+</main>
+
+<script>
+(function(){
+  const gifts = [
+    { title: '👥 100 подписчиков', text: 'Бесплатные 100 подписчиков на выбранную соцсеть.' },
+    { title: '👁 10.000 просмотров', text: 'Бесплатные 10.000 просмотров на пост, видео или канал.' },
+    { title: '❤️ 1000 лайков', text: 'Бесплатные 1000 лайков на выбранный пост или видео.' }
+  ];
+
+  const resultBox = document.getElementById('giftResult');
+  const formBox = document.getElementById('giveawayForm');
+  const giftTitle = document.getElementById('giftTitle');
+  const giftText = document.getElementById('giftText');
+  const giftIdEl = document.getElementById('giftId');
+  const claimBtn = document.getElementById('claimGiftBtn');
+
+  function makeId(){
+    return 'FREE-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+  }
+
+  function loadGift(){
+    const saved = localStorage.getItem('smmBoostFreeGift');
+    if(saved){
+      return JSON.parse(saved);
+    }
+    const index = Math.floor(Math.random() * gifts.length);
+    const gift = { ...gifts[index], id: makeId(), createdAt: new Date().toISOString() };
+    localStorage.setItem('smmBoostFreeGift', JSON.stringify(gift));
+    return gift;
+  }
+
+  function showGift(gift){
+    giftTitle.textContent = gift.title;
+    giftText.textContent = gift.text;
+    giftIdEl.textContent = gift.id;
+    resultBox.hidden = false;
+    formBox.hidden = false;
+    claimBtn.textContent = '✅ Подарок уже выбран';
+  }
+
+  claimBtn.addEventListener('click', function(){
+    showGift(loadGift());
+  });
+
+  const existing = localStorage.getItem('smmBoostFreeGift');
+  if(existing){
+    showGift(JSON.parse(existing));
+  }
+
+  document.getElementById('copyRequestBtn').addEventListener('click', async function(){
+    const gift = loadGift();
+    const social = document.getElementById('socialSelect').value;
+    const link = document.getElementById('targetLink').value.trim();
+    const tg = document.getElementById('telegramUser').value.trim();
+
+    if(!link || !tg){
+      alert('Заполните ссылку и Telegram username');
+      return;
+    }
+
+    const message = `Заявка на бесплатный подарок SMM-Boost\nID: ${gift.id}\nПодарок: ${gift.title}\nСоцсеть: ${social}\nСсылка: ${link}\nTelegram: ${tg}\nСкрин подписки прикрепляю ниже.`;
+
+    try{
+      await navigator.clipboard.writeText(message);
+      alert('Заявка скопирована. Отправьте её администратору канала вместе со скрином подписки.');
+    }catch(e){
+      alert(message);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
