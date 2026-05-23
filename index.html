@@ -76,27 +76,28 @@ content="накрутка тик ток, накрутка подписчиков
     SMM-Boost
   </div>
 
-  <div class="nav-links">
+  <div class="nav-links main-nav-links">
 
     <a href="#services">
       Услуги
     </a>
 
-    <a href="giveaway.html">
-      🎁 Розыгрыш
+    <a href="orders.html">
+      Мои заказы
     </a>
 
-    <a href="#reviews">
-      Отзывы
-    </a>
+    <button class="menu-toggle" type="button" aria-label="Открыть меню" aria-expanded="false">
+      ☰ Меню
+    </button>
 
-    <a href="#faq">
-      FAQ
-    </a>
-<a href="orders.html">
-  Мои заказы
-</a>
+  </div>
 
+  <div class="nav-menu" id="navMenu">
+    <a href="giveaway.html">🎁 Розыгрыш</a>
+    <a href="#reviews">Отзывы</a>
+    <a href="#faq">FAQ</a>
+    <a href="contacts.html">Контакты</a>
+    <a href="privacy.html">Политика</a>
   </div>
 
 </nav>
@@ -1208,6 +1209,35 @@ height:22px;
 .social-logo{width:20px;height:20px;}
 }
 </style>
+
+
+<script>
+(function(){
+  const btn = document.querySelector('.menu-toggle');
+  const menu = document.querySelector('.nav-menu');
+  if(!btn || !menu) return;
+
+  btn.addEventListener('click', function(e){
+    e.stopPropagation();
+    const opened = menu.classList.toggle('open');
+    btn.setAttribute('aria-expanded', opened ? 'true' : 'false');
+  });
+
+  document.addEventListener('click', function(e){
+    if(!menu.contains(e.target) && !btn.contains(e.target)){
+      menu.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  menu.querySelectorAll('a').forEach(function(link){
+    link.addEventListener('click', function(){
+      menu.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+    });
+  });
+})();
+</script>
 
 </body>
 </html>
