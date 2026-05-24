@@ -58,12 +58,13 @@ const link = document.getElementById('profileLink').value;
 
 const done = localStorage.getItem('subscribed_profiles');
 
-if(!done || parseInt(done) < 10){
+if(mutuals.length >= 10){
+  const done = localStorage.getItem('subscribed_profiles');
 
-alert('Сначала подпишитесь минимум на 10 профилей');
-
-return;
-
+  if(!done || parseInt(done) < 10){
+    alert('Сначала подпишитесь минимум на 10 профилей');
+    return;
+  }
 }
 
 if(localStorage.getItem('my_profile_added')){
