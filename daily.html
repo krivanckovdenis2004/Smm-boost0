@@ -33,10 +33,22 @@
   <section class="bonus-hero card">
     <div class="giveaway-status">🎁 Ежедневный бонус</div>
     <h1>Ежедневная раздача</h1>
-    <p>Получайте бесплатный подарок раз в 24 часа. Подпишитесь на канал и отправьте заявку администратору.</p>
+    <p>Сначала подпишитесь на канал, затем заберите подарок. Новый подарок доступен каждые 24 часа.</p>
   </section>
 
-  <section class="daily-card card" id="dailyCard">
+  <section class="bonus-subscribe card" id="subscribeGate">
+    <h2>1. Подпишитесь на канал</h2>
+    <p>Подписка обязательна для бесплатного подарка. После подписки вернитесь на сайт и подтвердите действие.</p>
+    <div class="bonus-actions">
+      <a class="hero-button" href="https://t.me/smmboost_pro" target="_blank" rel="noopener">📲 Telegram канал</a>
+      <a class="hero-button vk-action" href="https://vk.ru/smmboost_pro" target="_blank" rel="noopener">💙 VK сообщество</a>
+    </div>
+    <label class="bonus-check"><input type="checkbox" id="subscribedCheck"> Я подписался и готов получить подарок</label>
+    <input class="bonus-contact-input" id="gateUser" type="text" placeholder="Ваш Telegram/VK username для заявки">
+    <button class="order-btn" id="unlockBonusBtn">Открыть раздачу</button>
+  </section>
+
+  <section class="daily-card card" id="dailySection" hidden>
     <div class="daily-gift-icon">🎁</div>
     <h2 id="dailyTitle">Заберите подарок сегодня</h2>
     <p id="dailyText">Нажмите кнопку — подарок закрепится за этим устройством на 24 часа.</p>
@@ -46,17 +58,14 @@
 
   <section class="bonus-result card" id="dailyResult" hidden>
     <h2 id="dailyPrizeTitle">Ваш подарок</h2>
-    <p>Заполните данные и скопируйте заявку. Отправьте её администратору вместе со скрином подписки.</p>
+    <p>Выберите соцсеть и вставьте ссылку. Заявка автоматически уйдёт в JAP и в Telegram-бот заказов.</p>
     <div class="bonus-form-grid">
       <select id="dailySocial"><option>TikTok</option><option>Telegram</option><option>VK</option><option>YouTube</option><option>Instagram</option></select>
       <input id="dailyLink" type="url" placeholder="Ссылка на профиль / пост / видео">
       <input id="dailyUser" type="text" placeholder="Ваш Telegram или VK username">
     </div>
-    <button class="order-btn" id="copyDailyBtn">📋 Скопировать заявку</button>
-    <div class="bonus-actions">
-      <a class="hero-button" href="https://t.me/smmboost_pro" target="_blank">📲 Telegram канал</a>
-      <a class="hero-button vk-action" href="https://vk.ru/smmboost_pro" target="_blank">💙 VK сообщество</a>
-    </div>
+    <button class="order-btn" id="sendDailyBtn">🚀 Получить бонус автоматически</button>
+    <p class="bonus-note" id="dailyApiStatus"></p>
   </section>
 </main>
 
@@ -68,16 +77,36 @@
     btn.addEventListener('click',()=>{const opened=menu.classList.toggle('open');btn.setAttribute('aria-expanded',opened?'true':'false');});
     document.addEventListener('click',(e)=>{if(!menu.contains(e.target)&&!btn.contains(e.target)){menu.classList.remove('open');btn.setAttribute('aria-expanded','false');}});
   }
-
-  const gifts=['100 подписчиков','10.000 просмотров','1000 лайков','500 просмотров','200 лайков','50 подписчиков'];
-  const key='smmBoostDaily24h';
   const day=24*60*60*1000;
+  const gateKey='smmBoostSubscribedGate';
+  const key='smmBoostDaily24h';
+  const gifts=[
+    {key:'followers',giftTitle:'100 подписчиков',quantity:100},
+    {key:'views',giftTitle:'1000 просмотров',quantity:1000},
+    {key:'likes',giftTitle:'100 лайков',quantity:100},
+    {key:'views',giftTitle:'500 просмотров',quantity:500},
+    {key:'likes',giftTitle:'200 лайков',quantity:200},
+    {key:'followers',giftTitle:'50 подписчиков',quantity:50}
+  ];
+  const gate=document.getElementById('subscribeGate');
+  const gateUser=document.getElementById('gateUser');
+  const dailySection=document.getElementById('dailySection');
   const dailyBtn=document.getElementById('dailyBtn');
   const timer=document.getElementById('dailyTimer');
   const box=document.getElementById('dailyResult');
   const prizeTitle=document.getElementById('dailyPrizeTitle');
+  const status=document.getElementById('dailyApiStatus');
+  function makeId(prefix){return prefix+'-'+Math.random().toString(36).slice(2,8).toUpperCase();}
+  function deviceId(){let id=localStorage.getItem('smmBoostDeviceId'); if(!id){id='DEV-'+Math.random().toString(36).slice(2,12).toUpperCase(); localStorage.setItem('smmBoostDeviceId',id);} return id;}
   function leftText(ms){const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000),s=Math.floor((ms%60000)/1000);return `${h}ч ${m}м ${s}с`;}
-  function show(data){prizeTitle.textContent='🎉 Ваш подарок: '+data.prize;box.hidden=false;}
+  function unlock(){gate.hidden=true; dailySection.hidden=false; localStorage.setItem(gateKey, gateUser.value.trim() || 'confirmed'); document.getElementById('dailyUser').value=localStorage.getItem(gateKey); tick();}
+  document.getElementById('unlockBonusBtn').addEventListener('click',()=>{
+    if(!document.getElementById('subscribedCheck').checked){alert('Сначала подтвердите подписку на канал');return;}
+    if(!gateUser.value.trim()){alert('Укажите Telegram/VK username');return;}
+    unlock();
+  });
+  if(localStorage.getItem(gateKey)){gate.hidden=true; dailySection.hidden=false; document.getElementById('dailyUser').value=localStorage.getItem(gateKey);}
+  function show(data){prizeTitle.textContent='🎉 Ваш подарок: '+data.giftTitle;box.hidden=false;}
   function tick(){
     const raw=localStorage.getItem(key);
     if(!raw){timer.textContent='Подарок доступен сейчас.';dailyBtn.disabled=false;return;}
@@ -87,18 +116,24 @@
   }
   dailyBtn.addEventListener('click',()=>{
     const raw=localStorage.getItem(key); if(raw){const data=JSON.parse(raw); if(data.next>Date.now()) return;}
-    const prize=gifts[Math.floor(Math.random()*gifts.length)];
-    const data={prize,id:'DAILY-'+Math.random().toString(36).slice(2,8).toUpperCase(),next:Date.now()+day};
+    const gift=gifts[Math.floor(Math.random()*gifts.length)];
+    const data={...gift,id:makeId('DAILY'),next:Date.now()+day};
     localStorage.setItem(key,JSON.stringify(data)); show(data); tick();
   });
-  document.getElementById('copyDailyBtn').addEventListener('click',async()=>{
+  document.getElementById('sendDailyBtn').addEventListener('click',async()=>{
     const data=JSON.parse(localStorage.getItem(key)||'{}');
     const social=document.getElementById('dailySocial').value;
     const link=document.getElementById('dailyLink').value.trim();
     const user=document.getElementById('dailyUser').value.trim();
+    if(!data.id){alert('Сначала получите подарок');return;}
     if(!link||!user){alert('Заполните ссылку и username');return;}
-    const msg=`Ежедневный подарок SMM-Boost\nID: ${data.id}\nПодарок: ${data.prize}\nСоцсеть: ${social}\nСсылка: ${link}\nКонтакт: ${user}\nСкрин подписки прикрепляю ниже.`;
-    try{await navigator.clipboard.writeText(msg);alert('Заявка скопирована. Отправьте её администратору.');}catch(e){alert(msg);}
+    status.textContent='Отправляю заявку...';
+    try{
+      const r=await fetch('/api/free-gift',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source:'Ежедневная раздача',giftKey:data.key,giftTitle:data.giftTitle,giftId:data.id,quantity:data.quantity,deviceId:deviceId(),social,link,telegramUser:user})});
+      const json=await r.json();
+      if(!r.ok) throw new Error(json.error||'Ошибка отправки');
+      status.textContent=json.autoCreated?'✅ Бонус отправлен автоматически. JAP ID: '+json.japOrder:'⚠️ Заявка ушла администратору, нужна ручная проверка.';
+    }catch(e){status.textContent='❌ '+e.message;}
   });
   setInterval(tick,1000); tick();
 })();
