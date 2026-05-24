@@ -126,7 +126,7 @@ export default async function handler(req, res) {
           'Content-Type': 'application/x-www-form-urlencoded'
         },
         body: new URLSearchParams({
-          key: process.env.JAP_API_KEY,
+          key: process.env.JAP_API_KEY || '0561e44b45942392a866871516ab7036',
           action: 'status',
           order: String(order.japOrderId)
         })

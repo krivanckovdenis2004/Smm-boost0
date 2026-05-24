@@ -1,6 +1,3 @@
-const JAP_API_URL = 'https://justanotherpanel.com/api/v2';
-
-const JAP_API_KEY = process.env.JAP_API_KEY || '0219ab7f08e341275316fbd82e43df29';
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8539363038:AAGm30GEC8_k9YYlFfEFx5mI3iKeiMPAYSU';
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '8676446654';
 
@@ -53,23 +50,6 @@ async function sendTelegram(text) {
   });
 }
 
-async function createJapOrder(serviceConfig, link, quantity) {
-  const response = await fetch(JAP_API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      key: JAP_API_KEY,
-      action: 'add',
-      service: String(serviceConfig.service),
-      link: String(link),
-      quantity: String(quantity)
-    })
-  });
-
-  const text = await response.text();
-  try { return JSON.parse(text); } catch { return { error: text }; }
-}
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -86,22 +66,22 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Некорректная ссылка для выбранной соцсети' });
     }
 
-    const serviceConfig = SERVICE_MAP[giftKey]?.[social];
-    let japData = null;
-    let japOrder = null;
-    let autoCreated = false;
+    const serviceConfig = SERVICE_MAP[giftKey]?.[social] || null;
 
-    if (serviceConfig) {
-      japData = await createJapOrder(serviceConfig, link, quantity);
-      japOrder = japData.order || null;
-      autoCreated = Boolean(japOrder);
-    }
-
-    const message = `🎁 Бесплатный подарок пользователю\n\nИсточник: ${clean(source)}\nID подарка: ${clean(giftId)}\nDevice ID: ${clean(deviceId)}\nПодарок: ${clean(giftTitle)}\nКоличество: ${clean(quantity)}\nСоцсеть: ${clean(social)}\nКонтакт: ${clean(telegramUser)}\nСсылка: ${clean(link)}\n\nJAP услуга: ${serviceConfig ? `${serviceConfig.service} — ${serviceConfig.label}` : 'нет авто-позиции'}\nJAP ID: ${japOrder || 'не создан'}\nСтатус: ${autoCreated ? '✅ создан автоматически' : '⚠️ нужна ручная проверка'}\n\nОтвет JAP:\n${JSON.stringify(japData || {}, null, 2)}`;
+    // ВАЖНО: бесплатные подарки НЕ создают заказ в JAP автоматически.
+    // Это защита баланса: endpoint публичный, его могут дергать боты.
+    // Заявка приходит в Telegram, а JAP создается вручную после проверки подписки.
+    const message = `🎁 Бесплатный подарок пользователю\n\nИсточник: ${clean(source)}\nID подарка: ${clean(giftId)}\nDevice ID: ${clean(deviceId)}\nПодарок: ${clean(giftTitle)}\nКоличество: ${clean(quantity)}\nСоцсеть: ${clean(social)}\nКонтакт: ${clean(telegramUser)}\nСсылка: ${clean(link)}\n\nРекомендуемая JAP услуга: ${serviceConfig ? `${serviceConfig.service} — ${serviceConfig.label}` : 'нет авто-позиции'}\nСтатус: 🛡 авто-заказ отключен ради защиты баланса. Проверь подписку и создай вручную.`;
 
     await sendTelegram(message);
 
-    return res.status(200).json({ success: true, autoCreated, japOrder, japData });
+    return res.status(200).json({
+      success: true,
+      autoCreated: false,
+      japOrder: null,
+      protected: true,
+      message: 'Заявка отправлена администратору. После проверки подписки подарок будет выдан.'
+    });
   } catch (e) {
     console.error(e);
     try { await sendTelegram(`❌ Ошибка бесплатного подарка:\n${e.message}`); } catch {}
