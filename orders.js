@@ -91,10 +91,30 @@ function getStatusClass(status) {
 
 function getLinkTitle(link) {
   if (!link) return 'Открыть ссылку';
-  if (link.includes('tiktok.com')) return 'Открыть TikTok';
-  if (link.includes('youtube.com') || link.includes('youtu.be')) return 'Открыть YouTube';
-  if (link.includes('vk.com')) return 'Открыть VK';
-  return 'Открыть Instagram';
+
+  const url = link.toLowerCase();
+
+  if (url.includes('t.me') || url.includes('telegram.me')) {
+    return 'Открыть Telegram';
+  }
+
+  if (url.includes('tiktok.com')) {
+    return 'Открыть TikTok';
+  }
+
+  if (url.includes('youtube.com') || url.includes('youtu.be')) {
+    return 'Открыть YouTube';
+  }
+
+  if (url.includes('vk.com') || url.includes('vk.ru')) {
+    return 'Открыть VK';
+  }
+
+  if (url.includes('instagram.com')) {
+    return 'Открыть Instagram';
+  }
+
+  return 'Открыть ссылку';
 }
 
 async function loadOrders() {
