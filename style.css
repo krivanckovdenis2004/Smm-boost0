@@ -2560,3 +2560,343 @@ flex-direction:column;
 @media (max-width: 760px){
   .fortune-wheel span{font-size:10px !important;width:84px !important;margin-left:-42px !important;}
 }
+
+/* Mutual subscriptions page */
+.mutual-page{
+  width:min(1120px, calc(100% - 28px));
+  margin:0 auto;
+  padding:130px 0 70px;
+}
+
+.mutual-hero,
+.mutual-gate,
+.mutual-tasks,
+.mutual-add,
+.mutual-list{
+  margin-bottom:24px;
+}
+
+.mutual-hero{
+  text-align:center;
+  padding:34px 24px;
+  background:radial-gradient(circle at 50% 0%, rgba(157,123,255,.22), rgba(15,15,25,.92) 60%);
+}
+
+.mutual-hero h1{
+  font-size:clamp(42px, 8vw, 84px);
+  line-height:1;
+  margin:18px 0 12px;
+  background:linear-gradient(90deg,#fff,#b99cff);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+.mutual-hero p,
+.mutual-list-head p,
+.mutual-gate p,
+.mutual-tasks p{
+  color:#d0d0d0;
+  line-height:1.6;
+}
+
+.mutual-form label{
+  display:block;
+  margin:14px 0 8px;
+  color:#ddd;
+  font-weight:800;
+}
+
+.mutual-form input,
+.mutual-form select,
+.mutual-list select{
+  width:100%;
+  box-sizing:border-box;
+  padding:15px;
+  border-radius:14px;
+  border:1px solid rgba(157,123,255,.35);
+  background:rgba(0,0,0,.32);
+  color:white;
+  font-size:16px;
+  outline:none;
+}
+
+.mutual-counter{
+  display:inline-flex;
+  margin:12px 0 16px;
+  padding:10px 14px;
+  border-radius:999px;
+  background:rgba(157,123,255,.15);
+  border:1px solid rgba(157,123,255,.28);
+  color:#d8c7ff;
+  font-weight:900;
+}
+
+.mutual-tasks-list,
+.mutual-links-list{
+  display:grid;
+  gap:14px;
+}
+
+.mutual-task-card,
+.mutual-link-card{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  align-items:center;
+  padding:16px;
+  border-radius:18px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.09);
+}
+
+.mutual-task-card.done{
+  border-color:rgba(0,255,150,.35);
+  background:rgba(0,255,150,.07);
+}
+
+.mutual-task-card strong,
+.mutual-link-top span{
+  display:block;
+  color:#fff;
+  font-weight:900;
+}
+
+.mutual-task-card span{
+  display:block;
+  margin-top:6px;
+  color:#aaa;
+  font-size:14px;
+  word-break:break-all;
+}
+
+.mutual-open-task,
+.mutual-small-btn{
+  flex-shrink:0;
+  padding:12px 16px !important;
+  border-radius:14px !important;
+  font-size:14px !important;
+  text-decoration:none;
+  border:none;
+  cursor:pointer;
+}
+
+.mutual-list-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:18px;
+  margin-bottom:18px;
+}
+
+.mutual-list-head h2{
+  margin-top:0;
+}
+
+.mutual-list-head select{
+  max-width:220px;
+}
+
+.mutual-link-card{
+  align-items:flex-start;
+  flex-direction:column;
+}
+
+.mutual-link-top{
+  width:100%;
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:center;
+}
+
+.mutual-link-top b{
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(157,123,255,.16);
+  color:#d8c7ff;
+  font-size:12px;
+}
+
+.mutual-profile-link{
+  color:#a889ff;
+  word-break:break-all;
+  text-decoration:none;
+  font-weight:800;
+}
+
+.mutual-link-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.mutual-bump-btn:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+  transform:none !important;
+}
+
+.mutual-empty{
+  padding:18px;
+  border-radius:18px;
+  background:rgba(255,255,255,.04);
+  color:#bbb;
+  text-align:center;
+}
+
+.bonus-note.success{color:#72ff9b;}
+.bonus-note.error{color:#ff8a80;}
+
+@media (max-width:760px){
+  .mutual-page{padding-top:125px;}
+  .mutual-task-card{align-items:stretch; flex-direction:column;}
+  .mutual-open-task{width:100%; text-align:center; box-sizing:border-box;}
+  .mutual-list-head{flex-direction:column;}
+  .mutual-list-head select{max-width:none;}
+  .mutual-link-actions{width:100%; flex-direction:column;}
+  .mutual-small-btn{width:100%; box-sizing:border-box; text-align:center;}
+}
+.mutuals-page{
+
+padding:140px 20px 60px;
+
+max-width:900px;
+
+margin:auto;
+
+color:white;
+
+}
+
+.mutuals-sub{
+
+opacity:.7;
+
+margin-bottom:30px;
+
+}
+
+.mutuals-warning{
+
+padding:18px;
+
+border-radius:18px;
+
+background:rgba(255,255,255,.06);
+
+margin-bottom:30px;
+
+}
+
+.mutual-card{
+
+padding:20px;
+
+border-radius:20px;
+
+background:rgba(255,255,255,.05);
+
+margin-bottom:20px;
+
+border:1px solid rgba(255,255,255,.08);
+
+}
+
+.mutual-card a{
+
+display:inline-block;
+
+margin-top:10px;
+
+color:#9d7bff;
+
+text-decoration:none;
+
+}
+
+.mutual-card button{
+
+margin-top:15px;
+
+width:100%;
+
+}
+
+.mutuals-form{
+
+margin-top:40px;
+
+display:flex;
+
+flex-direction:column;
+
+gap:15px;
+
+}
+
+.mutuals-form input,
+.mutuals-form select{
+
+padding:16px;
+
+border-radius:16px;
+
+background:#111;
+
+border:none;
+
+color:white;
+
+}
+
+.mutuals-form button{
+
+padding:16px;
+
+border:none;
+
+border-radius:16px;
+
+background:linear-gradient(135deg,#7a5cff,#9d7bff);
+
+color:white;
+
+font-weight:700;
+
+cursor:pointer;
+
+}
+
+.boost-box{
+
+margin-top:50px;
+
+padding:30px;
+
+border-radius:25px;
+
+background:rgba(122,92,255,.12);
+
+text-align:center;
+
+}
+
+.boost-box a{
+
+display:inline-block;
+
+margin-top:20px;
+
+padding:16px 24px;
+
+border-radius:16px;
+
+background:#9d7bff;
+
+color:white;
+
+text-decoration:none;
+
+font-weight:700;
+
+}
