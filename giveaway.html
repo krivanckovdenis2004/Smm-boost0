@@ -58,13 +58,13 @@
       <li>Подпишитесь на Telegram-канал <a href="https://t.me/smmboost_pro" target="_blank">@smmboost_pro</a></li>
       <li>Поставьте реакцию на пост с розыгрышем</li>
       <li>Напишите комментарий под постом</li>
-      <li>Сделайте скрин подписки и отправьте его администрации: в Telegram-канале или в нашу группу ВК.</li>
+      <li>Сделайте скрин подписки и отправьте его в личные сообщения администрации канала. Контакты администрации указаны в описании канала.</li>
     </ol>
 
     <div class="giveaway-actions">
-      <a class="hero-button" href="https://t.me/smmboost_pro" target="_blank" id="openChannelBtn">📲 Перейти в Telegram</a>
-      <a class="hero-button vk-contact-btn" href="https://vk.ru/smmboost_pro" target="_blank">🔵 Написать в ВК</a>
-      <button class="hero-button secondary-gift-btn" id="claimGiftBtn">🎲 Получить случайный подарок</button>
+      <a class="hero-button" href="https://t.me/smmboost_pro" target="_blank" id="openChannelBtn">📲 Telegram канал</a>
+      <a class="hero-button vk-btn" href="https://vk.ru/smmboost_pro" target="_blank">💙 Наш VK</a>
+      <button class="hero-button secondary-gift-btn" id="claimGiftBtn">🎲 Получить подарок</button>
     </div>
   </section>
 
@@ -95,10 +95,7 @@
     <input id="telegramUser" type="text" placeholder="@username">
 
     <button class="order-btn" id="copyRequestBtn">📋 Скопировать заявку</button>
-    <div class="giveaway-contact-row">
-      <a class="hero-button" href="https://t.me/smmboost_pro" target="_blank">📲 Открыть Telegram</a>
-      <a class="hero-button vk-contact-btn" href="https://vk.ru/smmboost_pro" target="_blank">🔵 Открыть ВК</a>
-    </div>
+    <div class="social-action-buttons"><a class="hero-button" href="https://t.me/smmboost_pro" target="_blank">📲 Telegram</a><a class="hero-button vk-btn" href="https://vk.ru/smmboost_pro" target="_blank">💙 VK сообщество</a></div>
 
     <p class="form-hint small">Акция одноразовая для одного устройства. При обновлении страницы подарок не меняется.</p>
   </section>
@@ -163,7 +160,7 @@
       return;
     }
 
-    const message = `Заявка на бесплатный подарок SMM-Boost\nID: ${gift.id}\nПодарок: ${gift.title}\nСоцсеть: ${social}\nСсылка: ${link}\nTelegram: ${tg}\nСкрин подписки прикрепляю ниже.\nКанал: https://t.me/smmboost_pro\nВК: https://vk.ru/smmboost_pro`;
+    const message = `Заявка на бесплатный подарок SMM-Boost\nID: ${gift.id}\nПодарок: ${gift.title}\nСоцсеть: ${social}\nСсылка: ${link}\nTelegram: ${tg}\nСкрин подписки прикрепляю ниже.`;
 
     try{
       await navigator.clipboard.writeText(message);
