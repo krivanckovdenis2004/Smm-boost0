@@ -4,59 +4,87 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Взаимные подписки | SMM-BOOST</title>
+<meta name="description" content="Взаимные подписки SMM-BOOST: добавьте свой профиль, подпишитесь на других участников и поднимайте ссылку в топ раз в 2 часа.">
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="mutuals-page">
+<div class="bg-animation"><span></span><span></span><span></span><span></span></div>
 
-<h1>🔥 Взаимные подписки</h1>
+<nav class="navbar">
+  <div class="nav-logo">SMM-Boost</div>
+  <div class="nav-links main-nav-links">
+    <a href="index.html#services">Услуги</a>
+    <a href="orders.html">Мои заказы</a>
+    <button class="menu-toggle" type="button" aria-label="Открыть меню" aria-expanded="false">☰ Меню</button>
+  </div>
+  <div class="nav-menu" id="navMenu">
+    <a href="giveaway.html">🎁 Розыгрыш</a>
+    <a href="fortune.html">🎡 Колесо фортуны</a>
+    <a href="daily.html">🎁 Ежедневная раздача</a>
+    <a href="mutuals.html">🤝 Взаимные подписки</a>
+    <a href="index.html#reviews">Отзывы</a>
+    <a href="index.html#faq">FAQ</a>
+    <a href="contacts.html">Контакты</a>
+    <a href="privacy.html">Политика</a>
+  </div>
+</nav>
 
-<p class="mutuals-sub">
-Временная система продвижения сообщества SMM-BOOST
-</p>
+<main class="mutuals-page">
+  <section class="mutuals-hero card">
+    <div class="giveaway-status">🔥 Бесплатная активность</div>
+    <h1>🤝 Взаимные подписки</h1>
+    <p class="mutuals-sub">Добавьте свой профиль, подписывайтесь на других участников и получайте взаимную активность.</p>
 
-<div class="mutuals-warning">
-⚠️ Чтобы добавить свою ссылку — подпишитесь минимум на 10 профилей ниже
-</div>
+    <div class="mutuals-info-grid">
+      <div><b>1 ссылка</b><span>на одного пользователя</span></div>
+      <div><b>10 профилей</b><span>нужно открыть перед добавлением, когда участников много</span></div>
+      <div><b>2 часа</b><span>таймер поднятия в топ</span></div>
+    </div>
+  </section>
 
-<div class="mutuals-list" id="mutualsList"></div>
+  <section class="mutuals-form card" id="addProfileBox">
+    <h2>🚀 Добавить свой профиль</h2>
+    <p class="form-hint" id="mutualsRequirement">Если в списке уже есть 10+ профилей, сначала откройте 10 профилей участников.</p>
 
-<div class="mutuals-form">
+    <label>Соцсеть</label>
+    <select id="social">
+      <option>TikTok</option>
+      <option>Telegram</option>
+      <option>VK</option>
+      <option>YouTube</option>
+      <option>Instagram</option>
+    </select>
 
-<select id="social">
-<option>TikTok</option>
-<option>Telegram</option>
-<option>VK</option>
-<option>YouTube</option>
-<option>Instagram</option>
-</select>
+    <label>Ссылка на профиль</label>
+    <input type="url" id="profileLink" placeholder="https://...">
 
-<input type="url" id="profileLink" placeholder="Ссылка на профиль">
+    <button class="order-btn" id="addProfileBtn">🚀 Добавить профиль</button>
+    <p class="form-hint small" id="subscribedCounter">Открыто профилей: 0/10</p>
+  </section>
 
-<button onclick="addProfile()">
-🚀 Добавить профиль
-</button>
+  <section class="mutuals-list-wrap card">
+    <div class="mutuals-list-head">
+      <div>
+        <h2>📋 Профили участников</h2>
+        <p>Открывайте профили, подписывайтесь и возвращайтесь на сайт.</p>
+      </div>
+      <button class="mutual-refresh" id="refreshMutualsBtn">🔄 Обновить</button>
+    </div>
 
-</div>
+    <div class="mutuals-list" id="mutualsList">
+      <div class="mutual-empty">Загружаем профили...</div>
+    </div>
+  </section>
 
-<div class="boost-box">
+  <section class="boost-box">
+    <h2>🚀 Хотите быстрее?</h2>
+    <p>Запустите автоматическое продвижение и получайте подписчиков без поиска взаимок.</p>
+    <a href="index.html#services">Получить продвижение</a>
+  </section>
+</main>
 
-<h2>🚀 Устали от взаимок?</h2>
-
-<p>
-Запустите автоматическое продвижение и получайте подписчиков без поиска взаимок.
-</p>
-
-<a href="index.html#services">
-Получить продвижение
-</a>
-
-</div>
-
-</div>
-
-<script src="mutuals.js"></script>
-
+<script src="mutuals.js" type="module"></script>
 </body>
 </html>
