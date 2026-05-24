@@ -40,10 +40,11 @@
     <h2>1. Подпишитесь на канал</h2>
     <p>Подписка обязательна для участия. После подписки вернитесь на сайт и подтвердите действие.</p>
     <div class="bonus-actions">
-      <a class="hero-button" href="https://t.me/smmboost_pro" target="_blank" rel="noopener">📲 Telegram канал</a>
-      <a class="hero-button vk-action" href="https://vk.ru/smmboost_pro" target="_blank" rel="noopener">💙 VK сообщество</a>
+      <a class="hero-button subscribe-open-btn" data-subscribe-target="telegram" href="https://t.me/smmboost_pro" target="_blank" rel="noopener">📲 Telegram канал</a>
+      <a class="hero-button vk-action subscribe-open-btn" data-subscribe-target="vk" href="https://vk.ru/smmboost_pro" target="_blank" rel="noopener">💙 VK сообщество</a>
     </div>
     <label class="bonus-check"><input type="checkbox" id="subscribedCheck"> Я подписался и готов получить бонус</label>
+    <div class="bonus-error" id="subscribeError" hidden>Вы не подписались на канал</div>
     <input class="bonus-contact-input" id="gateUser" type="text" placeholder="Ваш Telegram/VK username для заявки">
     <button class="order-btn" id="unlockBonusBtn">Открыть колесо</button>
   </section>
@@ -90,7 +91,9 @@
 
   const day=24*60*60*1000;
   const gateKey='smmBoostSubscribedGate';
+  const clickKey='smmBoostSubscribeClicked';
   const key='smmBoostFortune24h';
+  const readyPopupKey='smmBoostFortuneReadyShown';
   const prizes=[
     {key:'followers',title:'50 подписчиков',giftTitle:'50 подписчиков',quantity:50},
     {key:'views',title:'1000 просмотров',giftTitle:'1000 просмотров',quantity:1000},
@@ -99,6 +102,7 @@
     {key:'views',title:'500 просмотров',giftTitle:'500 просмотров',quantity:500},
     {key:'likes',title:'100 лайков',giftTitle:'100 лайков',quantity:100}
   ];
+
   const wheel=document.getElementById('fortuneWheel');
   const labels=[...wheel.querySelectorAll('span')];
   const spinBtn=document.getElementById('spinBtn');
@@ -109,22 +113,50 @@
   const gate=document.getElementById('subscribeGate');
   const gateUser=document.getElementById('gateUser');
   const status=document.getElementById('fortuneApiStatus');
+  const subscribeError=document.getElementById('subscribeError');
+  const unlockBtn=document.getElementById('unlockBonusBtn');
+  const check=document.getElementById('subscribedCheck');
 
   function placeLabels(rotation=0){
     labels.forEach(label=>{
       const a=Number(label.dataset.angle||0);
-      label.style.transform=`rotate(${a}deg) translateY(-42%) rotate(${-a-rotation}deg)`;
+      label.style.transform=`rotate(${a}deg) translateY(-44%) rotate(${-a-rotation}deg)`;
     });
   }
   placeLabels(0);
+
+  document.querySelectorAll('.subscribe-open-btn').forEach(a=>{
+    a.addEventListener('click',()=>{
+      localStorage.setItem(clickKey, a.dataset.subscribeTarget || 'opened');
+      subscribeError.hidden=true;
+      unlockBtn.classList.remove('bonus-btn-error');
+      setTimeout(()=>{ check.checked=true; }, 400);
+    });
+  });
 
   function makeId(prefix){return prefix+'-'+Math.random().toString(36).slice(2,8).toUpperCase();}
   function deviceId(){let id=localStorage.getItem('smmBoostDeviceId'); if(!id){id='DEV-'+Math.random().toString(36).slice(2,12).toUpperCase(); localStorage.setItem('smmBoostDeviceId',id);} return id;}
   function leftText(ms){const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000),s=Math.floor((ms%60000)/1000);return `${h}ч ${m}м ${s}с`;}
   function unlock(){gate.hidden=true; wheelSection.hidden=false; localStorage.setItem(gateKey, gateUser.value.trim() || 'confirmed'); const u=localStorage.getItem(gateKey); document.getElementById('fortuneUser').value=u; tick();}
-  document.getElementById('unlockBonusBtn').addEventListener('click',()=>{
-    if(!document.getElementById('subscribedCheck').checked){alert('Сначала подтвердите подписку на канал');return;}
-    if(!gateUser.value.trim()){alert('Укажите Telegram/VK username');return;}
+  unlockBtn.addEventListener('click',()=>{
+    if(!localStorage.getItem(clickKey)){
+      subscribeError.hidden=false;
+      subscribeError.textContent='Вы не подписались на канал';
+      unlockBtn.classList.add('bonus-btn-error');
+      return;
+    }
+    if(!check.checked){
+      subscribeError.hidden=false;
+      subscribeError.textContent='Поставьте галочку после подписки';
+      unlockBtn.classList.add('bonus-btn-error');
+      return;
+    }
+    if(!gateUser.value.trim()){
+      subscribeError.hidden=false;
+      subscribeError.textContent='Укажите Telegram/VK username';
+      unlockBtn.classList.add('bonus-btn-error');
+      return;
+    }
     unlock();
   });
   if(localStorage.getItem(gateKey)){gate.hidden=true; wheelSection.hidden=false; document.getElementById('fortuneUser').value=localStorage.getItem(gateKey);}
@@ -132,14 +164,26 @@
   function showSaved(data){
     title.textContent='🎉 Ваш бонус: '+data.giftTitle;
     box.hidden=false;
-    const idx=prizes.findIndex(p=>p.title===data.title);
-    if(idx>=0){ const rot=Number(data.rotation||0); wheel.style.transform=`rotate(${rot}deg)`; placeLabels(rot); }
+    const rot=Number(data.rotation||0);
+    wheel.style.transform=`rotate(${rot}deg)`;
+    placeLabels(rot);
+  }
+  function resetAvailable(){
+    localStorage.removeItem(key);
+    box.hidden=true;
+    spinBtn.disabled=false;
+    timer.textContent='Колесо снова доступно.';
+    if(!sessionStorage.getItem(readyPopupKey)){
+      sessionStorage.setItem(readyPopupKey,'1');
+      setTimeout(()=>alert('🎉 Колесо фортуны снова доступно!'),200);
+    }
   }
   function tick(){
     const raw=localStorage.getItem(key);
     if(!raw){timer.textContent='Колесо доступно сейчас.'; spinBtn.disabled=false; return;}
     const data=JSON.parse(raw); const left=data.next-Date.now();
-    if(left<=0){timer.textContent='Колесо снова доступно.'; spinBtn.disabled=false; return;}
+    if(left<=0){ resetAvailable(); return; }
+    sessionStorage.removeItem(readyPopupKey);
     spinBtn.disabled=true; timer.textContent='Следующая попытка через: '+leftText(left); showSaved(data);
   }
   spinBtn.addEventListener('click',()=>{

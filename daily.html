@@ -40,10 +40,11 @@
     <h2>1. Подпишитесь на канал</h2>
     <p>Подписка обязательна для бесплатного подарка. После подписки вернитесь на сайт и подтвердите действие.</p>
     <div class="bonus-actions">
-      <a class="hero-button" href="https://t.me/smmboost_pro" target="_blank" rel="noopener">📲 Telegram канал</a>
-      <a class="hero-button vk-action" href="https://vk.ru/smmboost_pro" target="_blank" rel="noopener">💙 VK сообщество</a>
+      <a class="hero-button subscribe-open-btn" data-subscribe-target="telegram" href="https://t.me/smmboost_pro" target="_blank" rel="noopener">📲 Telegram канал</a>
+      <a class="hero-button vk-action subscribe-open-btn" data-subscribe-target="vk" href="https://vk.ru/smmboost_pro" target="_blank" rel="noopener">💙 VK сообщество</a>
     </div>
     <label class="bonus-check"><input type="checkbox" id="subscribedCheck"> Я подписался и готов получить подарок</label>
+    <div class="bonus-error" id="subscribeError" hidden>Вы не подписались на канал</div>
     <input class="bonus-contact-input" id="gateUser" type="text" placeholder="Ваш Telegram/VK username для заявки">
     <button class="order-btn" id="unlockBonusBtn">Открыть раздачу</button>
   </section>
@@ -79,7 +80,9 @@
   }
   const day=24*60*60*1000;
   const gateKey='smmBoostSubscribedGate';
+  const clickKey='smmBoostSubscribeClicked';
   const key='smmBoostDaily24h';
+  const readyPopupKey='smmBoostDailyReadyShown';
   const gifts=[
     {key:'followers',giftTitle:'100 подписчиков',quantity:100},
     {key:'views',giftTitle:'1000 просмотров',quantity:1000},
@@ -96,22 +99,62 @@
   const box=document.getElementById('dailyResult');
   const prizeTitle=document.getElementById('dailyPrizeTitle');
   const status=document.getElementById('dailyApiStatus');
+  const subscribeError=document.getElementById('subscribeError');
+  const unlockBtn=document.getElementById('unlockBonusBtn');
+  const check=document.getElementById('subscribedCheck');
+
+  document.querySelectorAll('.subscribe-open-btn').forEach(a=>{
+    a.addEventListener('click',()=>{
+      localStorage.setItem(clickKey, a.dataset.subscribeTarget || 'opened');
+      subscribeError.hidden=true;
+      unlockBtn.classList.remove('bonus-btn-error');
+      setTimeout(()=>{ check.checked=true; }, 400);
+    });
+  });
+
   function makeId(prefix){return prefix+'-'+Math.random().toString(36).slice(2,8).toUpperCase();}
   function deviceId(){let id=localStorage.getItem('smmBoostDeviceId'); if(!id){id='DEV-'+Math.random().toString(36).slice(2,12).toUpperCase(); localStorage.setItem('smmBoostDeviceId',id);} return id;}
   function leftText(ms){const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000),s=Math.floor((ms%60000)/1000);return `${h}ч ${m}м ${s}с`;}
   function unlock(){gate.hidden=true; dailySection.hidden=false; localStorage.setItem(gateKey, gateUser.value.trim() || 'confirmed'); document.getElementById('dailyUser').value=localStorage.getItem(gateKey); tick();}
-  document.getElementById('unlockBonusBtn').addEventListener('click',()=>{
-    if(!document.getElementById('subscribedCheck').checked){alert('Сначала подтвердите подписку на канал');return;}
-    if(!gateUser.value.trim()){alert('Укажите Telegram/VK username');return;}
+  unlockBtn.addEventListener('click',()=>{
+    if(!localStorage.getItem(clickKey)){
+      subscribeError.hidden=false;
+      subscribeError.textContent='Вы не подписались на канал';
+      unlockBtn.classList.add('bonus-btn-error');
+      return;
+    }
+    if(!check.checked){
+      subscribeError.hidden=false;
+      subscribeError.textContent='Поставьте галочку после подписки';
+      unlockBtn.classList.add('bonus-btn-error');
+      return;
+    }
+    if(!gateUser.value.trim()){
+      subscribeError.hidden=false;
+      subscribeError.textContent='Укажите Telegram/VK username';
+      unlockBtn.classList.add('bonus-btn-error');
+      return;
+    }
     unlock();
   });
   if(localStorage.getItem(gateKey)){gate.hidden=true; dailySection.hidden=false; document.getElementById('dailyUser').value=localStorage.getItem(gateKey);}
   function show(data){prizeTitle.textContent='🎉 Ваш подарок: '+data.giftTitle;box.hidden=false;}
+  function resetAvailable(){
+    localStorage.removeItem(key);
+    box.hidden=true;
+    dailyBtn.disabled=false;
+    timer.textContent='Подарок снова доступен.';
+    if(!sessionStorage.getItem(readyPopupKey)){
+      sessionStorage.setItem(readyPopupKey,'1');
+      setTimeout(()=>alert('🎉 Ежедневный подарок снова доступен!'),200);
+    }
+  }
   function tick(){
     const raw=localStorage.getItem(key);
     if(!raw){timer.textContent='Подарок доступен сейчас.';dailyBtn.disabled=false;return;}
     const data=JSON.parse(raw); const left=data.next-Date.now();
-    if(left<=0){timer.textContent='Подарок снова доступен.';dailyBtn.disabled=false;return;}
+    if(left<=0){ resetAvailable(); return; }
+    sessionStorage.removeItem(readyPopupKey);
     dailyBtn.disabled=true; timer.textContent='Следующий подарок через: '+leftText(left); show(data);
   }
   dailyBtn.addEventListener('click',()=>{

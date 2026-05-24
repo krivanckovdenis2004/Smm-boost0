@@ -2526,3 +2526,37 @@ flex-direction:column;
   .wheel-wrap{width:min(350px, 86vw); height:min(350px, 86vw);}
   .fortune-wheel span{font-size:11px; width:104px; margin-left:-52px;}
 }
+
+
+/* Bonus subscribe validation + cleaner wheel labels */
+.bonus-error{
+  max-width:520px;
+  margin:10px auto 0;
+  padding:12px 14px;
+  border-radius:14px;
+  background:rgba(255,56,56,.16);
+  border:1px solid rgba(255,56,56,.55);
+  color:#ff7b7b;
+  font-weight:900;
+  text-align:center;
+  box-shadow:0 0 22px rgba(255,56,56,.16);
+}
+.bonus-btn-error{
+  background:linear-gradient(135deg,#ff3b3b,#b91c1c) !important;
+  box-shadow:0 0 25px rgba(255,56,56,.45) !important;
+}
+.fortune-wheel span{
+  width:96px !important;
+  height:44px !important;
+  margin-left:-48px !important;
+  margin-top:-22px !important;
+  padding:4px 6px;
+  border-radius:12px;
+  background:rgba(0,0,0,.18);
+  backdrop-filter:blur(3px);
+  font-size:11px !important;
+  line-height:1.12 !important;
+}
+@media (max-width: 760px){
+  .fortune-wheel span{font-size:10px !important;width:84px !important;margin-left:-42px !important;}
+}
