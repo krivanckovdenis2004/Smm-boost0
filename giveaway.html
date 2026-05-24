@@ -3,14 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Бесплатный подарок и розыгрыш 100.000 просмотров | SMM-Boost</title>
-  <meta name="description" content="Откройте колесо фортуны SMM-Boost, получите бесплатный подарок и участвуйте в розыгрыше 100.000 просмотров." />
+  <title>Бесплатные подписчики и розыгрыш 100.000 просмотров | SMM-Boost</title>
+  <meta name="description" content="Участвуйте в розыгрыше 100.000 просмотров и получите случайный подарок за подписку: 100 подписчиков, 10.000 просмотров или 1000 лайков." />
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="bg-animation"><span></span><span></span><span></span><span></span></div>
+<div class="bg-animation">
+  <span></span>
+  <span></span>
+  <span></span>
+  <span></span>
+</div>
 
 <nav class="navbar">
   <div class="nav-logo">SMM-Boost</div>
@@ -24,15 +29,26 @@
 <main class="giveaway-page">
   <section class="giveaway-hero-card">
     <div class="giveaway-status">🎆 Розыгрыш активен</div>
-    <h1>🎰 Колесо фортуны SMM-Boost</h1>
+    <h1>🎁 Бесплатные подписчики + розыгрыш 100.000 просмотров</h1>
     <p class="giveaway-lead">
-      Подпишитесь на Telegram-канал, участвуйте в розыгрыше 100.000 просмотров и заберите бесплатный подарок автоматически.
+      Подпишитесь на наш Telegram-канал, примите участие в розыгрыше и получите случайный подарок за подписку.
     </p>
-    <img class="giveaway-poster" src="giveaway-poster.jpg" alt="Розыгрыш 100000 просмотров от SMM-Boost" onerror="this.style.display='none'">
+
+    <img class="giveaway-poster" src="giveaway-poster.jpg" alt="Розыгрыш 100000 просмотров от SMM-Boost">
+
     <div class="giveaway-prize-grid">
-      <div class="giveaway-mini-card"><strong>🏆 Главный приз</strong><span>100.000 просмотров на любую соцсеть</span></div>
-      <div class="giveaway-mini-card"><strong>🎲 Подарок за подписку</strong><span>100 подписчиков / 10.000 просмотров / 1000 лайков</span></div>
-      <div class="giveaway-mini-card"><strong>🔀 Можно распределить</strong><span>на один профиль, разные посты, видео или каналы</span></div>
+      <div class="giveaway-mini-card">
+        <strong>🏆 Главный приз</strong>
+        <span>100.000 просмотров на любую соцсеть</span>
+      </div>
+      <div class="giveaway-mini-card">
+        <strong>🎲 Подарок за подписку</strong>
+        <span>100 подписчиков / 10.000 просмотров / 1000 лайков</span>
+      </div>
+      <div class="giveaway-mini-card">
+        <strong>🔀 Можно распределить</strong>
+        <span>на один профиль, разные посты, видео или каналы</span>
+      </div>
     </div>
   </section>
 
@@ -42,37 +58,26 @@
       <li>Подпишитесь на Telegram-канал <a href="https://t.me/smmboost_pro" target="_blank">@smmboost_pro</a></li>
       <li>Поставьте реакцию на пост с розыгрышем</li>
       <li>Напишите комментарий под постом</li>
-      <li>Откройте колесо фортуны и заполните ссылку на профиль, пост или видео</li>
+      <li>Сделайте скрин подписки и отправьте его в личные сообщения администрации канала. Контакты администрации указаны в описании канала.</li>
     </ol>
-    <div class="giveaway-actions">
-      <a class="hero-button" href="https://t.me/smmboost_pro" target="_blank">📲 Telegram канал</a>
-      <a class="hero-button vk-btn" href="https://vk.ru/smmboost_pro" target="_blank">💙 VK сообщество</a>
-    </div>
-  </section>
 
-  <section class="fortune-section card" id="fortune">
-    <div class="giveaway-status">🎁 Одноразовая акция</div>
-    <h2>Крутите колесо и получите подарок</h2>
-    <p class="form-hint">Подарок закрепляется за этим устройством. При обновлении страницы он не изменится.</p>
-    <div class="wheel-wrap">
-      <div class="wheel-pointer">▼</div>
-      <div class="fortune-wheel" id="fortuneWheel">
-        <div class="wheel-center">SMM<br>BOOST</div>
-      </div>
+    <div class="giveaway-actions">
+      <a class="hero-button" href="https://t.me/smmboost_pro" target="_blank" id="openChannelBtn">📲 Telegram канал</a>
+      <a class="hero-button vk-btn" href="https://vk.ru/smmboost_pro" target="_blank">💙 Наш VK</a>
+      <button class="hero-button secondary-gift-btn" id="claimGiftBtn">🎲 Получить подарок</button>
     </div>
-    <button class="order-btn spin-btn" id="spinBtn">🎰 Крутить колесо</button>
   </section>
 
   <section class="gift-result card" id="giftResult" hidden>
     <div class="giveaway-status">Ваш подарок</div>
     <h2 id="giftTitle">🎁</h2>
     <p id="giftText"></p>
-    <p class="gift-id">ID подарка: <span id="giftId"></span></p>
+    <p class="gift-id">ID заявки: <span id="giftId"></span></p>
   </section>
 
   <section class="giveaway-form card" id="giveawayForm" hidden>
-    <h2>📩 Автоматическая заявка на подарок</h2>
-    <p class="form-hint">Заполните данные. Заявка уйдёт в Telegram-бот администрации и будет автоматически отправлена в JAP, если выбранная соцсеть подходит под подарок.</p>
+    <h2>📩 Данные для бесплатного подарка</h2>
+    <p class="form-hint">Заполните форму и скопируйте заявку. После этого отправьте её вместе со скрином подписки администратору канала.</p>
 
     <label>Соцсеть</label>
     <select id="socialSelect">
@@ -89,111 +94,79 @@
     <label>Ваш Telegram username</label>
     <input id="telegramUser" type="text" placeholder="@username">
 
-    <button class="order-btn" id="sendGiftBtn">🚀 Отправить подарок автоматически</button>
-    <div class="social-action-buttons">
-      <a class="hero-button" href="https://t.me/smmboost_pro" target="_blank">📲 Telegram</a>
-      <a class="hero-button vk-btn" href="https://vk.ru/smmboost_pro" target="_blank">💙 VK</a>
-    </div>
-    <p class="form-hint small" id="giftNotice">Перед отправкой убедитесь, что вы подписаны на канал. За повторные заявки подарок может быть отменён.</p>
+    <button class="order-btn" id="copyRequestBtn">📋 Скопировать заявку</button>
+    <div class="social-action-buttons"><a class="hero-button" href="https://t.me/smmboost_pro" target="_blank">📲 Telegram</a><a class="hero-button vk-btn" href="https://vk.ru/smmboost_pro" target="_blank">💙 VK сообщество</a></div>
+
+    <p class="form-hint small">Акция одноразовая для одного устройства. При обновлении страницы подарок не меняется.</p>
   </section>
 </main>
 
 <script>
 (function(){
   const gifts = [
-    { key: 'followers', title: '👥 100 подписчиков', text: 'Бесплатные 100 подписчиков на выбранную соцсеть.' },
-    { key: 'views', title: '👁 10.000 просмотров', text: 'Бесплатные 10.000 просмотров на пост, видео или канал.' },
-    { key: 'likes', title: '❤️ 1000 лайков', text: 'Бесплатные 1000 лайков на выбранный пост или видео.' }
+    { title: '👥 100 подписчиков', text: 'Бесплатные 100 подписчиков на выбранную соцсеть.' },
+    { title: '👁 10.000 просмотров', text: 'Бесплатные 10.000 просмотров на пост, видео или канал.' },
+    { title: '❤️ 1000 лайков', text: 'Бесплатные 1000 лайков на выбранный пост или видео.' }
   ];
 
-  const wheel = document.getElementById('fortuneWheel');
-  const spinBtn = document.getElementById('spinBtn');
   const resultBox = document.getElementById('giftResult');
   const formBox = document.getElementById('giveawayForm');
   const giftTitle = document.getElementById('giftTitle');
   const giftText = document.getElementById('giftText');
   const giftIdEl = document.getElementById('giftId');
-  const sendGiftBtn = document.getElementById('sendGiftBtn');
-  const notice = document.getElementById('giftNotice');
+  const claimBtn = document.getElementById('claimGiftBtn');
 
-  function makeId(){ return 'FREE-' + Math.random().toString(36).slice(2, 8).toUpperCase(); }
-  function getDeviceId(){
-    let id = localStorage.getItem('smmBoostDeviceId');
-    if(!id){ id = 'DEV-' + Math.random().toString(36).slice(2, 12).toUpperCase(); localStorage.setItem('smmBoostDeviceId', id); }
-    return id;
+  function makeId(){
+    return 'FREE-' + Math.random().toString(36).slice(2, 8).toUpperCase();
   }
-  function savedGift(){
+
+  function loadGift(){
     const saved = localStorage.getItem('smmBoostFreeGift');
-    return saved ? JSON.parse(saved) : null;
+    if(saved){
+      return JSON.parse(saved);
+    }
+    const index = Math.floor(Math.random() * gifts.length);
+    const gift = { ...gifts[index], id: makeId(), createdAt: new Date().toISOString() };
+    localStorage.setItem('smmBoostFreeGift', JSON.stringify(gift));
+    return gift;
   }
-  function saveGift(gift){ localStorage.setItem('smmBoostFreeGift', JSON.stringify(gift)); }
+
   function showGift(gift){
     giftTitle.textContent = gift.title;
     giftText.textContent = gift.text;
     giftIdEl.textContent = gift.id;
     resultBox.hidden = false;
     formBox.hidden = false;
-    spinBtn.textContent = '✅ Подарок уже выбран';
-    spinBtn.disabled = true;
+    claimBtn.textContent = '✅ Подарок уже выбран';
   }
 
-  const existing = savedGift();
-  if(existing){ showGift(existing); }
-
-  spinBtn.addEventListener('click', function(){
-    const old = savedGift();
-    if(old){ showGift(old); return; }
-    const index = Math.floor(Math.random() * gifts.length);
-    const gift = { ...gifts[index], id: makeId(), deviceId: getDeviceId(), createdAt: new Date().toISOString() };
-    const rotations = 1440 + index * 120 + Math.floor(Math.random() * 60);
-    wheel.style.transform = `rotate(${rotations}deg)`;
-    spinBtn.disabled = true;
-    spinBtn.textContent = '🎰 Крутим...';
-    setTimeout(function(){ saveGift(gift); showGift(gift); }, 3200);
+  claimBtn.addEventListener('click', function(){
+    showGift(loadGift());
   });
 
-  function validSocialLink(social, link){
-    const rules = {
-      TikTok: /tiktok\.com|vm\.tiktok\.com/i,
-      Telegram: /t\.me|telegram\.me/i,
-      YouTube: /youtube\.com|youtu\.be/i,
-      VK: /vk\.com|vk\.ru/i,
-      Instagram: /instagram\.com/i
-    };
-    return rules[social] ? rules[social].test(link) : /^https?:\/\//i.test(link);
+  const existing = localStorage.getItem('smmBoostFreeGift');
+  if(existing){
+    showGift(JSON.parse(existing));
   }
 
-  sendGiftBtn.addEventListener('click', async function(){
-    const gift = savedGift();
-    if(!gift){ alert('Сначала покрутите колесо'); return; }
-    if(localStorage.getItem('smmBoostGiftSent')){ alert('Заявка уже отправлена с этого устройства'); return; }
-
+  document.getElementById('copyRequestBtn').addEventListener('click', async function(){
+    const gift = loadGift();
     const social = document.getElementById('socialSelect').value;
     const link = document.getElementById('targetLink').value.trim();
-    const telegramUser = document.getElementById('telegramUser').value.trim();
+    const tg = document.getElementById('telegramUser').value.trim();
 
-    if(!link || !telegramUser){ alert('Заполните ссылку и Telegram username'); return; }
-    if(!validSocialLink(social, link)){ alert('Ссылка не похожа на выбранную соцсеть'); return; }
+    if(!link || !tg){
+      alert('Заполните ссылку и Telegram username');
+      return;
+    }
 
-    const original = sendGiftBtn.textContent;
-    sendGiftBtn.disabled = true;
-    sendGiftBtn.textContent = 'Отправляем...';
+    const message = `Заявка на бесплатный подарок SMM-Boost\nID: ${gift.id}\nПодарок: ${gift.title}\nСоцсеть: ${social}\nСсылка: ${link}\nTelegram: ${tg}\nСкрин подписки прикрепляю ниже.`;
 
     try{
-      const response = await fetch('/api/free-gift', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ giftKey: gift.key, giftTitle: gift.title, giftId: gift.id, deviceId: gift.deviceId, social, link, telegramUser })
-      });
-      const data = await response.json();
-      if(!response.ok || !data.success){ throw new Error(data.error || 'Ошибка отправки'); }
-      localStorage.setItem('smmBoostGiftSent', JSON.stringify({ giftId: gift.id, sentAt: new Date().toISOString(), japOrder: data.japOrder || null }));
-      notice.textContent = data.japOrder ? `✅ Подарок отправлен автоматически. JAP ID: ${data.japOrder}` : '✅ Заявка отправлена администратору.';
-      alert(notice.textContent);
+      await navigator.clipboard.writeText(message);
+      alert('Заявка скопирована. Отправьте её администратору канала вместе со скрином подписки.');
     }catch(e){
-      alert(e.message || 'Ошибка отправки заявки');
-      sendGiftBtn.disabled = false;
-      sendGiftBtn.textContent = original;
+      alert(message);
     }
   });
 })();

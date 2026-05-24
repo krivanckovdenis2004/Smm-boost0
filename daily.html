@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ежедневная раздача SMM-Boost — бесплатный подарок каждые 24 часа</title>
+  <meta name="description" content="Ежедневная раздача SMM-Boost: получайте бесплатный подарок для продвижения соцсетей раз в 24 часа." />
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bg-animation"><span></span><span></span><span></span><span></span></div>
+
+<nav class="navbar">
+  <div class="nav-logo">SMM-Boost</div>
+  <div class="nav-links main-nav-links">
+    <a href="index.html#services">Услуги</a>
+    <a href="orders.html">Мои заказы</a>
+    <button class="menu-toggle" type="button" aria-label="Открыть меню" aria-expanded="false">☰ Меню</button>
+  </div>
+  <div class="nav-menu" id="navMenu">
+    <a href="giveaway.html">🎁 Розыгрыш</a>
+    <a href="fortune.html">🎡 Колесо фортуны</a>
+    <a href="daily.html">🎁 Ежедневная раздача</a>
+    <a href="index.html#reviews">Отзывы</a>
+    <a href="index.html#faq">FAQ</a>
+    <a href="contacts.html">Контакты</a>
+    <a href="privacy.html">Политика</a>
+  </div>
+</nav>
+
+<main class="bonus-page">
+  <section class="bonus-hero card">
+    <div class="giveaway-status">🎁 Ежедневный бонус</div>
+    <h1>Ежедневная раздача</h1>
+    <p>Получайте бесплатный подарок раз в 24 часа. Подпишитесь на канал и отправьте заявку администратору.</p>
+  </section>
+
+  <section class="daily-card card" id="dailyCard">
+    <div class="daily-gift-icon">🎁</div>
+    <h2 id="dailyTitle">Заберите подарок сегодня</h2>
+    <p id="dailyText">Нажмите кнопку — подарок закрепится за этим устройством на 24 часа.</p>
+    <button class="order-btn" id="dailyBtn">🎁 Получить подарок</button>
+    <p class="bonus-timer" id="dailyTimer"></p>
+  </section>
+
+  <section class="bonus-result card" id="dailyResult" hidden>
+    <h2 id="dailyPrizeTitle">Ваш подарок</h2>
+    <p>Заполните данные и скопируйте заявку. Отправьте её администратору вместе со скрином подписки.</p>
+    <div class="bonus-form-grid">
+      <select id="dailySocial"><option>TikTok</option><option>Telegram</option><option>VK</option><option>YouTube</option><option>Instagram</option></select>
+      <input id="dailyLink" type="url" placeholder="Ссылка на профиль / пост / видео">
+      <input id="dailyUser" type="text" placeholder="Ваш Telegram или VK username">
+    </div>
+    <button class="order-btn" id="copyDailyBtn">📋 Скопировать заявку</button>
+    <div class="bonus-actions">
+      <a class="hero-button" href="https://t.me/smmboost_pro" target="_blank">📲 Telegram канал</a>
+      <a class="hero-button vk-action" href="https://vk.ru/smmboost_pro" target="_blank">💙 VK сообщество</a>
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+  const btn=document.querySelector('.menu-toggle');
+  const menu=document.querySelector('.nav-menu');
+  if(btn&&menu){
+    btn.addEventListener('click',()=>{const opened=menu.classList.toggle('open');btn.setAttribute('aria-expanded',opened?'true':'false');});
+    document.addEventListener('click',(e)=>{if(!menu.contains(e.target)&&!btn.contains(e.target)){menu.classList.remove('open');btn.setAttribute('aria-expanded','false');}});
+  }
+
+  const gifts=['100 подписчиков','10.000 просмотров','1000 лайков','500 просмотров','200 лайков','50 подписчиков'];
+  const key='smmBoostDaily24h';
+  const day=24*60*60*1000;
+  const dailyBtn=document.getElementById('dailyBtn');
+  const timer=document.getElementById('dailyTimer');
+  const box=document.getElementById('dailyResult');
+  const prizeTitle=document.getElementById('dailyPrizeTitle');
+  function leftText(ms){const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000),s=Math.floor((ms%60000)/1000);return `${h}ч ${m}м ${s}с`;}
+  function show(data){prizeTitle.textContent='🎉 Ваш подарок: '+data.prize;box.hidden=false;}
+  function tick(){
+    const raw=localStorage.getItem(key);
+    if(!raw){timer.textContent='Подарок доступен сейчас.';dailyBtn.disabled=false;return;}
+    const data=JSON.parse(raw); const left=data.next-Date.now();
+    if(left<=0){timer.textContent='Подарок снова доступен.';dailyBtn.disabled=false;return;}
+    dailyBtn.disabled=true; timer.textContent='Следующий подарок через: '+leftText(left); show(data);
+  }
+  dailyBtn.addEventListener('click',()=>{
+    const raw=localStorage.getItem(key); if(raw){const data=JSON.parse(raw); if(data.next>Date.now()) return;}
+    const prize=gifts[Math.floor(Math.random()*gifts.length)];
+    const data={prize,id:'DAILY-'+Math.random().toString(36).slice(2,8).toUpperCase(),next:Date.now()+day};
+    localStorage.setItem(key,JSON.stringify(data)); show(data); tick();
+  });
+  document.getElementById('copyDailyBtn').addEventListener('click',async()=>{
+    const data=JSON.parse(localStorage.getItem(key)||'{}');
+    const social=document.getElementById('dailySocial').value;
+    const link=document.getElementById('dailyLink').value.trim();
+    const user=document.getElementById('dailyUser').value.trim();
+    if(!link||!user){alert('Заполните ссылку и username');return;}
+    const msg=`Ежедневный подарок SMM-Boost\nID: ${data.id}\nПодарок: ${data.prize}\nСоцсеть: ${social}\nСсылка: ${link}\nКонтакт: ${user}\nСкрин подписки прикрепляю ниже.`;
+    try{await navigator.clipboard.writeText(msg);alert('Заявка скопирована. Отправьте её администратору.');}catch(e){alert(msg);}
+  });
+  setInterval(tick,1000); tick();
+})();
+</script>
+</body>
+</html>
