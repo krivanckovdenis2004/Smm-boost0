@@ -263,6 +263,42 @@ export function validateOrderPayload(payload = {}) {
     return { ok: false, error: 'Invalid link' };
   }
 
+  const serviceName = String(service.name || '').toLowerCase();
+  const serviceId = String(service.id || '');
+  const linkLower = link.toLowerCase();
+
+  function linkFail(example) {
+    return {
+      ok: false,
+      error: `Ссылка не подходит для выбранной услуги. Нужна ссылка формата: ${example}`
+    };
+  }
+
+  // Защита от ситуации: пользователь оплатил Telegram услугу, но вставил Instagram/TikTok/VK ссылку.
+  // В таком случае JAP возвращает ошибку и заказ не создается. Блокируем это ДО оплаты.
+  if (serviceName.includes('telegram') || ['1165','8862','10298','8485','7411','8811'].includes(serviceId)) {
+    if (!/(t\.me|telegram\.me|telegram\.dog)/i.test(linkLower)) {
+      return linkFail('https://t.me/username или https://t.me/channel/123');
+    }
+  } else if (serviceName.includes('vk') || serviceName.includes('вк')) {
+    if (!/(vk\.com|vk\.ru)/i.test(linkLower)) {
+      return linkFail('https://vk.com/... или https://vk.ru/...');
+    }
+  } else if (serviceName.includes('youtube')) {
+    if (!/(youtube\.com|youtu\.be)/i.test(linkLower)) {
+      return linkFail('https://youtube.com/... или https://youtu.be/...');
+    }
+  } else if (serviceName.includes('tiktok')) {
+    if (!/tiktok\.com/i.test(linkLower)) {
+      return linkFail('https://www.tiktok.com/@username/...');
+    }
+  } else {
+    // Остальные услуги в каталоге относятся к Instagram.
+    if (!/instagram\.com/i.test(linkLower)) {
+      return linkFail('https://www.instagram.com/...');
+    }
+  }
+
   const priceRub = Number(calcServicePrice(service, quantity).toFixed(2));
   if (priceRub <= 0) {
     return { ok: false, error: 'Invalid price' };

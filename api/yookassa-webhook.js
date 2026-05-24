@@ -93,6 +93,7 @@ export default async function handler(req, res) {
 
     const japData = await japResponse.json();
     const japOrderId = japData.order || japData.id || japData.orderId || '';
+    const japErrorText = japData.error || japData.message || japData.description || '';
     const orderDocId = orderData.orderDocId;
 
     const orderPayload = {
@@ -102,10 +103,11 @@ export default async function handler(req, res) {
       amount: Number(quantity || 0),
       price: Number(priceRub || 0),
       link: String(link || ''),
-      status: japOrderId ? '🟡 В обработке' : '🔴 Ошибка JAP',
+      status: japOrderId ? '🟡 В обработке' : ('🔴 Ошибка JAP' + (japErrorText ? ': ' + String(japErrorText).slice(0, 80) : '')),
       paymentMethod: 'ЮKassa',
       paymentId: String(verifiedPayment.id || ''),
       japOrderId: String(japOrderId),
+      japError: String(japErrorText || ''),
       paidAt: serverTimestamp()
     };
 
