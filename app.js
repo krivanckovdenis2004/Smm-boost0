@@ -50,6 +50,10 @@ function calculateCardPrice(card, amount) {
     return amount * price;
   }
 
+  if (mode === "per3") {
+    return (amount / 3) * price;
+  }
+
   return (amount / 1000) * price;
 }
 
@@ -63,7 +67,8 @@ function updateCardTotal(card) {
 
   total.innerText = price.toFixed(2) + "₽";
 
-  if (amount > 0 && amount < min) {
+  const mode = card.dataset.priceMode || "per1000";
+  if (amount > 0 && (amount < min || (mode === "per3" && amount % 3 !== 0))) {
     error.style.display = "block";
   } else {
     error.style.display = "none";
@@ -75,8 +80,15 @@ function openOrderModal(card) {
   const amount = Number(input.value || 0);
   const min = Number(card.dataset.min || 1);
 
+  const mode = card.dataset.priceMode || "per1000";
+
   if (amount < min) {
     alert(`Минимальный заказ: ${min}`);
+    return;
+  }
+
+  if (mode === "per3" && amount % 3 !== 0) {
+    alert("Для этой услуги количество должно быть кратно 3");
     return;
   }
 
