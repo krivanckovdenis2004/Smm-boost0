@@ -2885,3 +2885,113 @@ flex-direction:column;
   .services-page-main{padding-top:135px;}
   .vk-support{bottom:88px;}
 }
+
+
+/* === Clean menu icons and services platform list === */
+.nav-menu a{
+  display:flex !important;
+  align-items:center !important;
+  gap:12px !important;
+  line-height:1.2 !important;
+}
+
+.menu-social-icon{
+  width:28px !important;
+  height:28px !important;
+  min-width:28px !important;
+  object-fit:contain !important;
+  border-radius:8px !important;
+  filter:none !important;
+}
+
+.menu-emoji{
+  width:28px;
+  min-width:28px;
+  height:28px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+}
+
+.social-logo{
+  width:30px !important;
+  height:30px !important;
+  min-width:30px !important;
+  object-fit:contain !important;
+  border-radius:8px !important;
+}
+
+.services-page-main .platform-tabs{
+  width:min(760px, calc(100% - 32px)) !important;
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  gap:14px !important;
+  margin:20px auto 34px !important;
+  padding:0 !important;
+}
+
+.services-page-main .platform-btn{
+  width:100% !important;
+  min-height:74px !important;
+  padding:16px 22px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:16px !important;
+  border-radius:22px !important;
+  font-size:22px !important;
+  text-align:left !important;
+  box-sizing:border-box !important;
+}
+
+.services-page-main .platform-btn::after{
+  content:'Открыть услуги';
+  margin-left:auto;
+  font-size:14px;
+  font-weight:700;
+  color:rgba(255,255,255,.62);
+}
+
+.services-page-main .platform-btn.active::after{
+  color:rgba(255,255,255,.9);
+}
+
+.services-page-main .services-grid{
+  width:min(900px, calc(100% - 32px)) !important;
+  grid-template-columns:1fr !important;
+  gap:18px !important;
+}
+
+.services-page-main .service-card{
+  border-radius:24px !important;
+  padding:22px !important;
+}
+
+.services-page-main .service-card h2{
+  font-size:24px !important;
+}
+
+.services-page-main .service-card ul{
+  min-height:0 !important;
+}
+
+@media (max-width: 760px){
+  .services-page-main .platform-tabs{
+    width:min(390px, calc(100% - 28px)) !important;
+  }
+
+  .services-page-main .platform-btn{
+    min-height:68px !important;
+    font-size:20px !important;
+    padding:14px 18px !important;
+  }
+
+  .services-page-main .platform-btn:nth-child(5){
+    grid-column:auto !important;
+  }
+
+  .services-page-main .platform-btn::after{
+    font-size:12px;
+  }
+}
