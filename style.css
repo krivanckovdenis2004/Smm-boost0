@@ -2801,35 +2801,87 @@ flex-direction:column;
 }
 
 
-.support-socials{
-position:fixed;
-right:20px;
-bottom:20px;
-display:flex;
-gap:12px;
-z-index:9999;
+/* === Restructure update: clean main page, menu-only pages, sales pages === */
+.hero-page-buttons{
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:12px;
+  margin-top:18px;
 }
-
-.support-socials img{
-width:54px;
-height:54px;
-border-radius:50%;
-box-shadow:0 0 20px rgba(122,92,255,.35);
+.hero-small-button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  padding:14px 18px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  text-decoration:none;
+  font-weight:800;
+  transition:.25s;
 }
-
-.menu-link{
-display:block;
-margin:10px 0;
-color:white;
-text-decoration:none;
-font-weight:700;
+.hero-small-button img{width:22px;height:22px;}
+.hero-small-button:hover{
+  transform:translateY(-2px);
+  border-color:rgba(157,123,255,.45);
+  box-shadow:0 0 24px rgba(157,123,255,.22);
 }
-
-.page-card{
-max-width:900px;
-margin:120px auto;
-padding:40px;
-border-radius:24px;
-background:rgba(255,255,255,.05);
-color:white;
+.services-page-main{
+  padding:150px 0 80px;
+}
+.services-page-heading h1{
+  font-size:clamp(36px,6vw,64px);
+  margin:0 0 14px;
+  color:#fff;
+}
+.sales-page{
+  min-height:100vh;
+  padding:150px 20px 80px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.sales-card{
+  width:min(760px,100%);
+  text-align:center;
+  padding:38px 26px;
+  border-radius:30px;
+  background:radial-gradient(circle at 50% 0%, rgba(157,123,255,.24), rgba(10,10,20,.92) 60%);
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow:0 0 50px rgba(157,123,255,.16);
+  color:#fff;
+}
+.sales-card h1{
+  font-size:clamp(34px,7vw,64px);
+  margin:10px 0 18px;
+}
+.sales-card p{
+  color:#cfcfcf;
+  font-size:18px;
+  line-height:1.6;
+}
+.sales-logo{
+  width:72px;
+  height:72px;
+  filter:drop-shadow(0 0 18px rgba(157,123,255,.55));
+}
+.telegram-support img,.vk-support img{
+  width:34px;
+  height:34px;
+  display:block;
+}
+.telegram-support,.vk-support{
+  font-size:0!important;
+}
+.vk-support{
+  bottom:92px;
+}
+@media(max-width:760px){
+  .hero-page-buttons{gap:10px;}
+  .hero-small-button{width:min(320px,86vw);box-sizing:border-box;}
+  .services-page-main{padding-top:135px;}
+  .vk-support{bottom:88px;}
 }

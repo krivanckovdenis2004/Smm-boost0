@@ -1,1 +1,130 @@
-<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="stylesheet" href="style.css"><title>SMM BOOST</title></head><body><div class="page-card"><h1>Страницы Instagram</h1><p>Раздел продажи Instagram страниц скоро будет доступен.</p></div></body></html>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
+<!-- Google tag (gtag.js) -->
+
+<script async
+src="https://www.googletagmanager.com/gtag/js?id=G-E6SRLXZW5V">
+</script>
+
+<script>
+
+window.dataLayer = window.dataLayer || [];
+
+function gtag(){
+
+dataLayer.push(arguments);
+
+}
+
+gtag('js', new Date());
+
+gtag('config', 'G-E6SRLXZW5V');
+
+</script>
+<link rel="icon"
+type="image/png"
+href="logo.png">
+<meta property="og:title"
+content="SMM-Boost">
+
+<meta property="og:description"
+content="Инструменты продвижения контента">
+
+<meta property="og:image"
+content="https://smm-boost.pro/preview.jpg">
+
+<meta property="og:url"
+content="https://smm-boost.pro">
+
+<meta name="twitter:card"
+content="summary_large_image">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Страницы Instagram | SMM-Boost</title>
+
+<meta name="description" content="Раздел продажи и подбора Instagram страниц скоро будет доступен. Здесь будут готовые аккаунты для блогов, проектов и рекламы.">
+
+<meta
+name="keywords"
+content="продвижение соцсетей, smm boost, рост аудитории, продвижение контента, страницы VK, страницы Instagram, купить страницу ВК, купить страницу Инстаграм, TikTok, YouTube, Telegram"
+>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bg-animation"><span></span><span></span><span></span><span></span></div>
+<nav class="navbar">
+
+  <div class="nav-logo">
+    SMM-Boost
+  </div>
+
+  <div class="nav-links main-nav-links">
+
+    <a href="services.html">
+      Услуги
+    </a>
+
+    <a href="orders.html">
+      Мои заказы
+    </a>
+
+    <button class="menu-toggle" type="button" aria-label="Открыть меню" aria-expanded="false">
+      ☰ Меню
+    </button>
+
+  </div>
+
+  <div class="nav-menu" id="navMenu">
+    <a href="services.html">🚀 Заказать услуги</a>
+    <a href="fortune.html">🎡 Колесо фортуны</a>
+    <a href="daily.html">🎁 Ежедневная раздача</a>
+    <a href="vk-pages.html">🔵 Страницы VK</a>
+    <a href="instagram-pages.html">🟣 Страницы Instagram</a>
+    <a href="index.html#reviews">Отзывы</a>
+    <a href="index.html#faq">FAQ</a>
+    <a href="contacts.html">Контакты</a>
+    <a href="privacy.html">Политика</a>
+  </div>
+
+</nav>
+<main class="sales-page">
+  <section class="sales-card">
+    <img class="sales-logo" src="https://cdn.simpleicons.org/instagram/E4405F" alt="Страницы Instagram">
+    <h1>🟣 Страницы Instagram</h1>
+    <p>Раздел продажи и подбора Instagram страниц скоро будет доступен. Здесь будут готовые аккаунты для блогов, проектов и рекламы.</p>
+    <p>Сейчас раздел готовится. Скоро здесь появятся предложения, фильтры, условия покупки и связь с администратором.</p>
+    <a href="services.html" class="hero-button">🚀 Заказать услугу пока здесь</a>
+  </section>
+</main>
+<script>
+(function(){
+  const btn = document.querySelector('.menu-toggle');
+  const menu = document.querySelector('.nav-menu');
+  if(!btn || !menu) return;
+
+  btn.addEventListener('click', function(e){
+    e.stopPropagation();
+    const opened = menu.classList.toggle('open');
+    btn.setAttribute('aria-expanded', opened ? 'true' : 'false');
+  });
+
+  document.addEventListener('click', function(e){
+    if(!menu.contains(e.target) && !btn.contains(e.target)){
+      menu.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  menu.querySelectorAll('a').forEach(function(link){
+    link.addEventListener('click', function(){
+      menu.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+    });
+  });
+})();
+</script>
+</body>
+</html>
