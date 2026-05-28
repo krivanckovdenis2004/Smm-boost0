@@ -1,45 +1,28 @@
-// Автоматически сформированный серверный каталог услуг.
-// Цена считается только на сервере, чтобы нельзя было подменить сумму из браузера.
+// Серверный каталог услуг. Цена считается только на сервере, чтобы нельзя было подменить сумму из браузера.
 
 export const SERVICE_CATALOG = [
   {
-    "id": "8841",
-    "name": "Рост аудитории",
-    "price": 150.0,
+    "id": "10242",
+    "name": "Instagram подписчики",
+    "price": 50.0,
     "mode": "per1000",
     "min": 100,
     "max": 1000000
   },
   {
-    "id": "6074",
-    "name": "Премиум аудитория",
-    "price": 2190.0,
-    "mode": "per1000",
-    "min": 50,
-    "max": 1000000
-  },
-  {
-    "id": "10130",
-    "name": "Вовлеченность",
-    "price": 49.0,
-    "mode": "per1000",
-    "min": 50,
-    "max": 1000000
-  },
-  {
-    "id": "6454",
-    "name": "Просмотры",
+    "id": "10237",
+    "name": "Instagram лайки",
     "price": 7.0,
     "mode": "per1000",
-    "min": 100,
+    "min": 50,
     "max": 1000000
   },
   {
-    "id": "10175",
-    "name": "Репосты",
-    "price": 70.0,
+    "id": "5994",
+    "name": "Instagram просмотры",
+    "price": 1.0,
     "mode": "per1000",
-    "min": 10,
+    "min": 100,
     "max": 1000000
   },
   {
@@ -51,129 +34,57 @@ export const SERVICE_CATALOG = [
     "max": 1000000
   },
   {
-    "id": "10020",
-    "name": "Просмотры TikTok",
-    "price": 9.0,
+    "id": "8777",
+    "name": "TikTok подписчики",
+    "price": 112.0,
+    "mode": "per1000",
+    "min": 10,
+    "max": 1000000
+  },
+  {
+    "id": "10019",
+    "name": "TikTok просмотры",
+    "price": 2.0,
     "mode": "per1000",
     "min": 100,
     "max": 1000000
   },
   {
-    "id": "8101",
-    "name": "Лайки TikTok",
-    "price": 5.0,
-    "mode": "per1000",
-    "min": 10,
-    "max": 1000000
-  },
-  {
-    "id": "10174",
-    "name": "Премиум лайки TikTok",
-    "price": 15.0,
-    "mode": "per1000",
-    "min": 10,
-    "max": 1000000
-  },
-  {
-    "id": "10137",
-    "name": "Подписчики TikTok",
-    "price": 244.0,
-    "mode": "per1000",
-    "min": 10,
-    "max": 1000000
-  },
-  {
-    "id": "10239",
-    "name": "Премиум подписчики TikTok",
-    "price": 569.0,
-    "mode": "per1000",
-    "min": 10,
-    "max": 1000000
-  },
-  {
-    "id": "8040",
-    "name": "Просмотры YouTube",
-    "price": 59.0,
-    "mode": "per1000",
-    "min": 100,
-    "max": 1000000
-  },
-  {
-    "id": "6682",
-    "name": "Премиум просмотры YouTube",
-    "price": 119.0,
-    "mode": "per1000",
-    "min": 100,
-    "max": 1000000
-  },
-  {
-    "id": "3519",
-    "name": "Подписчики YouTube",
-    "price": 1390.0,
-    "mode": "per1000",
-    "min": 5,
-    "max": 1000000
-  },
-  {
-    "id": "8236",
-    "name": "Премиум подписчики YouTube",
-    "price": 1990.0,
-    "mode": "per1000",
-    "min": 50,
-    "max": 1000000
-  },
-  {
-    "id": "8668",
-    "name": "Лайки YouTube",
-    "price": 109.0,
-    "mode": "per1000",
-    "min": 10,
-    "max": 1000000
-  },
-  {
-    "id": "8694",
-    "name": "Премиум лайки YouTube",
-    "price": 299.0,
-    "mode": "per1000",
-    "min": 20,
-    "max": 1000000
-  },
-  {
-    "id": "10300",
-    "name": "VK видео просмотры",
-    "price": 9.0,
-    "mode": "per1000",
-    "min": 100,
-    "max": 1000000
-  },
-  {
-    "id": "3769",
-    "name": "VK просмотры поста",
+    "id": "10022",
+    "name": "TikTok лайки",
     "price": 3.0,
     "mode": "per1000",
+    "min": 10,
+    "max": 1000000
+  },
+  {
+    "id": "1978",
+    "name": "TikTok комментарии",
+    "price": 70.0,
+    "mode": "per3",
+    "min": 3,
+    "max": 1000000
+  },
+  {
+    "id": "1543",
+    "name": "VK подписчики",
+    "price": 40.0,
+    "mode": "per1000",
     "min": 100,
     "max": 1000000
   },
   {
-    "id": "8486",
+    "id": "3757",
     "name": "VK лайки",
-    "price": 49.0,
+    "price": 52.0,
     "mode": "per1000",
     "min": 10,
     "max": 1000000
   },
   {
-    "id": "4186",
-    "name": "VK друзья",
-    "price": 209.0,
-    "mode": "per1000",
-    "min": 100,
-    "max": 1000000
-  },
-  {
-    "id": "4184",
-    "name": "VK подписчики в группу",
-    "price": 199.0,
+    "id": "7737",
+    "name": "VK просмотры",
+    "price": 1.0,
     "mode": "per1000",
     "min": 100,
     "max": 1000000
@@ -181,9 +92,17 @@ export const SERVICE_CATALOG = [
   {
     "id": "3761",
     "name": "VK репосты",
-    "price": 1290.0,
+    "price": 1000.0,
     "mode": "per1000",
     "min": 5,
+    "max": 1000000
+  },
+  {
+    "id": "4186",
+    "name": "VK друзья",
+    "price": 152.0,
+    "mode": "per1000",
+    "min": 100,
     "max": 1000000
   },
   {
@@ -244,6 +163,7 @@ export function calcServicePrice(service, quantity) {
   const qty = Number(quantity || 0);
   if (!service || !Number.isFinite(qty)) return 0;
   if (service.mode === 'per1') return qty * Number(service.price || 0);
+  if (service.mode === 'per3') return (qty / 3) * Number(service.price || 0);
   return (qty / 1000) * Number(service.price || 0);
 }
 
@@ -256,6 +176,10 @@ export function validateOrderPayload(payload = {}) {
   const quantity = Math.floor(Number(payload.quantity || 0));
   if (!Number.isFinite(quantity) || quantity < service.min || quantity > service.max) {
     return { ok: false, error: `Invalid quantity. Min: ${service.min}, max: ${service.max}` };
+  }
+
+  if (service.mode === 'per3' && quantity % 3 !== 0) {
+    return { ok: false, error: 'Для этой услуги количество должно быть кратно 3' };
   }
 
   const link = String(payload.link || '').trim();
@@ -274,26 +198,19 @@ export function validateOrderPayload(payload = {}) {
     };
   }
 
-  // Защита от ситуации: пользователь оплатил Telegram услугу, но вставил Instagram/TikTok/VK ссылку.
-  // В таком случае JAP возвращает ошибку и заказ не создается. Блокируем это ДО оплаты.
   if (serviceName.includes('telegram') || ['1165','8862','10298','8485','7411','8811'].includes(serviceId)) {
     if (!/(t\.me|telegram\.me|telegram\.dog)/i.test(linkLower)) {
       return linkFail('https://t.me/username или https://t.me/channel/123');
     }
-  } else if (serviceName.includes('vk') || serviceName.includes('вк')) {
+  } else if (serviceName.includes('vk') || serviceName.includes('вк') || ['1543','3757','7737','3761','4186'].includes(serviceId)) {
     if (!/(vk\.com|vk\.ru)/i.test(linkLower)) {
       return linkFail('https://vk.com/... или https://vk.ru/...');
     }
-  } else if (serviceName.includes('youtube')) {
-    if (!/(youtube\.com|youtu\.be)/i.test(linkLower)) {
-      return linkFail('https://youtube.com/... или https://youtu.be/...');
-    }
-  } else if (serviceName.includes('tiktok')) {
+  } else if (serviceName.includes('tiktok') || ['8777','10019','10022','1978'].includes(serviceId)) {
     if (!/tiktok\.com/i.test(linkLower)) {
       return linkFail('https://www.tiktok.com/@username/...');
     }
   } else {
-    // Остальные услуги в каталоге относятся к Instagram.
     if (!/instagram\.com/i.test(linkLower)) {
       return linkFail('https://www.instagram.com/...');
     }
