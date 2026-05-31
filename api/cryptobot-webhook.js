@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, doc, updateDoc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { validateOrderPayload } from './service-catalog.js';
 
 const firebaseConfig = {
@@ -67,6 +67,40 @@ export default async function handler(req, res) {
     const eventInvoice = update.payload;
     const verifiedInvoice = await verifyCryptoBotInvoice(eventInvoice.invoice_id);
     const orderData = JSON.parse(verifiedInvoice.payload || eventInvoice.payload || '{}');
+
+    if (String(orderData.type || '') === 'balance_topup') {
+      const userId = String(orderData.userId || '');
+      const email = String(orderData.email || '');
+      const amountRub = Number(orderData.amountRub || 0);
+
+      if (!userId || !email || !Number.isFinite(amountRub) || amountRub < 1) {
+        throw new Error('Invalid balance topup payload');
+      }
+
+      const userRef = doc(db, 'users', userId);
+      const userSnap = await getDoc(userRef);
+      const oldBalance = userSnap.exists() ? Number(userSnap.data().balance || 0) : 0;
+
+      await setDoc(userRef, {
+        userId,
+        email,
+        balance: Number((oldBalance + amountRub).toFixed(2)),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+
+      await setDoc(doc(db, 'topups', String(verifiedInvoice.invoice_id || eventInvoice.invoice_id)), {
+        userId,
+        email,
+        amount: amountRub,
+        paymentMethod: 'CryptoBot',
+        invoiceId: String(verifiedInvoice.invoice_id || eventInvoice.invoice_id || ''),
+        status: 'paid',
+        createdAt: serverTimestamp()
+      }, { merge: true });
+
+      await sendTelegram(`💰 Пополнение баланса через CryptoBot\n\nEmail: ${email}\nСумма: ${amountRub}₽\nInvoice ID: ${verifiedInvoice.invoice_id || eventInvoice.invoice_id}`);
+      return res.status(200).json({ success: true, topup: true });
+    }
 
     const validated = validateOrderPayload(orderData);
     if (!validated.ok) {

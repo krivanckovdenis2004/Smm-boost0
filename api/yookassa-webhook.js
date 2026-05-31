@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, doc, updateDoc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { validateOrderPayload } from './service-catalog.js';
 
 const firebaseConfig = {
@@ -67,6 +67,45 @@ export default async function handler(req, res) {
     const eventPayment = event.object;
     const verifiedPayment = await verifyYooKassaPayment(eventPayment.id);
     const orderData = verifiedPayment.metadata || eventPayment.metadata || {};
+
+    if (String(orderData.type || '') === 'balance_topup') {
+      const userId = String(orderData.userId || '');
+      const email = String(orderData.email || '');
+      const amountRub = Number(orderData.amountRub || verifiedPayment.amount?.value || 0);
+      const paidAmount = Number(verifiedPayment.amount?.value || 0);
+
+      if (!userId || !email || !Number.isFinite(amountRub) || amountRub < 1) {
+        throw new Error('Invalid balance topup metadata');
+      }
+
+      if (paidAmount + 0.001 < amountRub) {
+        throw new Error(`Paid amount is too low. Paid: ${paidAmount}, required: ${amountRub}`);
+      }
+
+      const userRef = doc(db, 'users', userId);
+      const userSnap = await getDoc(userRef);
+      const oldBalance = userSnap.exists() ? Number(userSnap.data().balance || 0) : 0;
+
+      await setDoc(userRef, {
+        userId,
+        email,
+        balance: Number((oldBalance + amountRub).toFixed(2)),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+
+      await setDoc(doc(db, 'topups', verifiedPayment.id), {
+        userId,
+        email,
+        amount: amountRub,
+        paymentMethod: 'ЮKassa',
+        paymentId: String(verifiedPayment.id || ''),
+        status: 'paid',
+        createdAt: serverTimestamp()
+      }, { merge: true });
+
+      await sendTelegram(`💰 Пополнение баланса через ЮKassa\n\nEmail: ${email}\nСумма: ${amountRub}₽\nPayment ID: ${verifiedPayment.id}`);
+      return res.status(200).json({ success: true, topup: true });
+    }
 
     const validated = validateOrderPayload(orderData);
     if (!validated.ok) {
