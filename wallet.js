@@ -90,3 +90,57 @@ async function createTopup(type) {
 
 document.getElementById('topupYookassa')?.addEventListener('click', () => createTopup('yookassa'));
 document.getElementById('topupCrypto')?.addEventListener('click', () => createTopup('crypto'));
+
+
+async function claimSocialBonus(platform) {
+  const user = getUser();
+
+  if (!user?.userId || !user?.sessionToken) {
+    window.location.href = 'auth.html';
+    return;
+  }
+
+  const links = {
+    telegram: 'https://t.me/smmboost_pro',
+    vk: 'https://vk.ru/smmboost_pro'
+  };
+
+  if (links[platform]) {
+    window.open(links[platform], '_blank');
+  }
+
+  const button = platform === 'telegram'
+    ? document.getElementById('claimTelegramBonus')
+    : document.getElementById('claimVkBonus');
+
+  const oldText = button.innerHTML;
+  button.disabled = true;
+
+  try {
+    const res = await fetch('/api/social-bonus', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: user.userId,
+        sessionToken: user.sessionToken,
+        platform
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Ошибка начисления бонуса');
+    }
+
+    alert(data.message || 'Бонус начислен');
+  } catch (e) {
+    alert(e.message);
+  }
+
+  button.disabled = false;
+  button.innerHTML = oldText;
+}
+
+document.getElementById('claimTelegramBonus')?.addEventListener('click', () => claimSocialBonus('telegram'));
+document.getElementById('claimVkBonus')?.addEventListener('click', () => claimSocialBonus('vk'));
