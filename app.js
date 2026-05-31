@@ -42,6 +42,25 @@ function saveMyOrder(orderDocId) {
   }
 }
 
+
+function getSbUser() {
+  try {
+    return JSON.parse(localStorage.getItem("sb_user") || "null");
+  } catch {
+    return null;
+  }
+}
+
+function requireSbUser() {
+  const user = getSbUser();
+  if (!user || !user.userId || !user.sessionToken) {
+    alert("Сначала войдите или зарегистрируйтесь. После регистрации получите бонус 70₽.");
+    window.location.href = "auth.html";
+    return null;
+  }
+  return user;
+}
+
 function calculateCardPrice(card, amount) {
   const price = Number(card.dataset.price || 0);
   const mode = card.dataset.priceMode || "per1000";
@@ -127,6 +146,62 @@ document.querySelectorAll(".service-card").forEach(card => {
 
 showPlatform("Instagram");
 
+
+async function createBalanceOrder() {
+  const user = requireSbUser();
+  if (!user) return;
+
+  const link = document.getElementById("instagramLink").value.trim();
+  const socialRegex = /instagram\.com|tiktok\.com|youtube\.com|youtu\.be|vk\.com|vk\.ru|t\.me|telegram\.me/i;
+
+  if (!socialRegex.test(link)) {
+    alert("Введите корректную ссылку на соцсеть");
+    return;
+  }
+
+  if (!currentServiceId) {
+    alert("Выберите услугу заново");
+    return;
+  }
+
+  const button = document.getElementById("balancePayButton");
+  const originalText = button.innerText;
+  button.disabled = true;
+  button.innerText = "Создание заказа...";
+
+  try {
+    const response = await fetch("/api/balance-order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: user.userId,
+        email: user.email,
+        sessionToken: user.sessionToken,
+        service: currentService,
+        serviceId: String(currentServiceId),
+        quantity: currentAmount,
+        link
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || "Ошибка заказа с баланса");
+    }
+
+    saveMyOrder(data.orderDocId);
+    alert("Заказ создан и отправлен в работу");
+    window.location.href = "orders.html?order=" + encodeURIComponent(data.orderDocId);
+    return;
+  } catch (e) {
+    alert(e.message);
+  }
+
+  button.disabled = false;
+  button.innerText = originalText;
+}
+
 async function createPayment(type) {
   const link = document.getElementById("instagramLink").value.trim();
   const socialRegex = /instagram\.com|tiktok\.com|youtube\.com|youtu\.be|vk\.com|vk\.ru|t\.me|telegram\.me/i;
@@ -162,6 +237,8 @@ async function createPayment(type) {
       status: "🕓 Ожидает оплаты",
       paymentMethod: type === "crypto" ? "CryptoBot" : "ЮKassa",
       japOrderId: "",
+      userId: getSbUser()?.userId || "",
+      userEmail: getSbUser()?.email || "",
       createdAt: serverTimestamp()
     });
 
@@ -212,8 +289,13 @@ async function createPayment(type) {
   button.innerText = originalText;
 }
 
+const balancePayButton = document.getElementById("balancePayButton");
 const cryptoPayButton = document.getElementById("cryptoPayButton");
 const yookassaPayButton = document.getElementById("yookassaPayButton");
+
+if (balancePayButton) {
+  balancePayButton.addEventListener("click", () => createBalanceOrder());
+}
 
 if (cryptoPayButton) {
   cryptoPayButton.addEventListener("click", () => createPayment("crypto"));
