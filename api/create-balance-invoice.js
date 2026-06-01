@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     const email = String(req.body?.email || '').trim().toLowerCase();
 
     if (!userId || !email) return json(res, 401, { error: 'Сначала войдите в аккаунт' });
-    if (!Number.isFinite(amount) || amount < 50) return json(res, 400, { error: 'Минимальное пополнение 50₽' });
+    if (!Number.isFinite(amount) || amount < 100) return json(res, 400, { error: 'Минимальное пополнение 100₽' });
 
     if (!process.env.CRYPTOBOT_TOKEN) {
       return json(res, 500, { error: 'CryptoBot token is not configured' });
