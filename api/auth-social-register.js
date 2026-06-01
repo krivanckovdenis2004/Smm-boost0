@@ -16,7 +16,7 @@ const firebaseApp = getApps().length ? getApps()[0] : initializeApp(firebaseConf
 const db = getFirestore(firebaseApp);
 
 function cleanLogin(value = '') {
-  return String(value).trim().replace(/^https?:\/\//i, '').replace(/^@+/, '@').slice(0, 80);
+  return String(value).trim().replace(/^https?:\/\//i, '').slice(0, 80);
 }
 
 function normalizePlatform(platform = '') {
@@ -40,7 +40,7 @@ export default async function handler(req, res) {
     const socialLogin = cleanLogin(req.body?.socialLogin);
 
     if (!platform) return res.status(400).json({ error: 'Выберите Telegram или VK' });
-    if (!socialLogin || socialLogin.length < 3) return res.status(400).json({ error: 'Введите корректный username' });
+    if (!socialLogin) return res.status(400).json({ error: 'Введите любой Telegram/VK username или ID' });
 
     const userId = uidFromSocial(platform, socialLogin);
     const sessionToken = newToken();
