@@ -52,8 +52,8 @@ async function createTopup(type) {
   }
 
   const amount = Number(document.getElementById('topupAmount').value || 0);
-  if (!Number.isFinite(amount) || amount < 50) {
-    alert('Минимальное пополнение 50₽');
+  if (!Number.isFinite(amount) || amount < 100) {
+    alert('Минимальное пополнение 100₽');
     return;
   }
 

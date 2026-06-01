@@ -8,43 +8,79 @@
   }
 
   function userTitle(user) {
-    return user.displayName || user.socialLogin || user.username || 'Профиль';
+    return user.displayName || user.username || 'Профиль';
+  }
+
+  function compactTopNav(loggedIn, user) {
+    var nav = document.querySelector('.main-nav-links');
+    if (!nav) return;
+
+    Array.from(nav.querySelectorAll('a')).forEach(function (link) {
+      link.remove();
+    });
+
+    var authLink = document.createElement('a');
+    authLink.setAttribute('data-top-auth-link', '1');
+    authLink.href = loggedIn ? 'wallet.html' : 'auth.html';
+    authLink.className = loggedIn ? 'nav-user-badge' : 'nav-register-link';
+    authLink.textContent = loggedIn ? ('👤 ' + userTitle(user)) : 'Зарегистрироваться';
+
+    var menuBtn = nav.querySelector('.menu-toggle');
+    if (menuBtn) nav.insertBefore(authLink, menuBtn);
+    else nav.appendChild(authLink);
+  }
+
+  function updateMenuAuth(loggedIn, user) {
+    var menu = document.querySelector('.nav-menu');
+    if (!menu) return;
+
+    var hasOrders = Array.from(menu.querySelectorAll('a')).some(function (a) { return a.getAttribute('href') === 'orders.html'; });
+    if (!hasOrders) {
+      var wallet = menu.querySelector('a[href="wallet.html"]');
+      var orders = document.createElement('a');
+      orders.href = 'orders.html';
+      orders.innerHTML = '<span class="menu-emoji">📦</span><span>Мои заказы</span>';
+      if (wallet && wallet.nextSibling) menu.insertBefore(orders, wallet.nextSibling);
+      else menu.insertBefore(orders, menu.firstChild);
+    }
+
+    var authLinks = menu.querySelectorAll('a[href="auth.html"], a[href="/auth.html"], .sb-menu-auth-link');
+    if (!authLinks.length) {
+      var link = document.createElement('a');
+      link.className = 'sb-menu-auth-link';
+      menu.insertBefore(link, menu.firstChild);
+      authLinks = [link];
+    }
+
+    authLinks.forEach(function (link) {
+      link.classList.add('sb-menu-auth-link');
+      if (loggedIn) {
+        link.href = 'wallet.html';
+        link.innerHTML = '<span class="menu-emoji">👤</span><span>' + userTitle(user) + '</span>';
+      } else {
+        link.href = 'auth.html';
+        link.innerHTML = '<span class="menu-emoji">🎁</span><span>Зарегистрироваться / войти</span>';
+      }
+    });
+  }
+
+  function updateHeroButtons(loggedIn, user) {
+    document.querySelectorAll('a[href="auth.html"].hero-register-button, a[href="/auth.html"].hero-register-button').forEach(function (link) {
+      if (loggedIn) {
+        link.href = 'wallet.html';
+        link.textContent = '👤 ' + userTitle(user);
+      } else {
+        link.textContent = '🎁 Зарегистрироваться';
+      }
+    });
   }
 
   function updateAuthLinks() {
     var user = getUser();
     var loggedIn = isLoggedIn(user);
-    var authLinks = document.querySelectorAll('a[href="auth.html"], a[href="/auth.html"]');
-
-    authLinks.forEach(function (link) {
-      var text = (link.textContent || '').toLowerCase();
-      var isAuthButton = text.indexOf('зарегистр') !== -1 || text.indexOf('вход') !== -1 || link.classList.contains('hero-register-button');
-      if (!isAuthButton) return;
-
-      if (loggedIn) {
-        link.href = 'wallet.html';
-        link.classList.add('sb-logged-link');
-        if (link.classList.contains('hero-register-button')) {
-          link.textContent = '💰 Мой баланс';
-        } else {
-          var span = link.querySelector('span:last-child');
-          if (span) span.textContent = 'Профиль / баланс';
-          else link.textContent = 'Профиль / баланс';
-        }
-      } else {
-        link.classList.remove('sb-logged-link');
-      }
-    });
-
-    var nav = document.querySelector('.main-nav-links');
-    if (nav && loggedIn && !nav.querySelector('[data-user-state-badge]')) {
-      var badge = document.createElement('a');
-      badge.href = 'wallet.html';
-      badge.setAttribute('data-user-state-badge', '1');
-      badge.className = 'nav-user-badge';
-      badge.textContent = '👤 ' + userTitle(user);
-      nav.insertBefore(badge, nav.querySelector('.menu-toggle'));
-    }
+    compactTopNav(loggedIn, user || {});
+    updateMenuAuth(loggedIn, user || {});
+    updateHeroButtons(loggedIn, user || {});
   }
 
   window.SBUserState = { getUser: getUser, refresh: updateAuthLinks };

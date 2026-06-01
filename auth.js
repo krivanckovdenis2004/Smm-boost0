@@ -1,5 +1,3 @@
-const TELEGRAM_BOT_URL = 'https://t.me/Smmboost_reg_bot';
-
 function setMessage(text, ok = false) {
   const el = document.getElementById('authMessage');
   if (!el) return;
@@ -10,6 +8,7 @@ function setMessage(text, ok = false) {
 function saveUser(user) {
   localStorage.setItem('sb_user', JSON.stringify({
     ...user,
+    loggedAt: new Date().toISOString(),
     registeredAt: user.registeredAt || new Date().toISOString()
   }));
   window.SBUserState?.refresh?.();
@@ -19,52 +18,32 @@ function getUser() {
   try { return JSON.parse(localStorage.getItem('sb_user') || 'null'); } catch { return null; }
 }
 
-function randomState() {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+function validateUsername(username) {
+  return /^[a-zA-Z0-9_а-яА-ЯёЁ.-]{3,32}$/.test(username);
 }
 
-function encodeStartPayload() {
-  const state = randomState();
-  localStorage.setItem('sb_tg_state', state);
-  return encodeURIComponent(`site_${state}`);
+function toggleBusy(form, busy, busyText) {
+  const submit = form.querySelector('button[type="submit"]');
+  if (!submit) return () => {};
+  const oldText = submit.textContent;
+  submit.disabled = busy;
+  if (busy) submit.textContent = busyText;
+  return () => {
+    submit.disabled = false;
+    submit.textContent = oldText;
+  };
 }
 
-function readPayloadFromUrl() {
-  const params = new URLSearchParams(window.location.search);
-  const encoded = params.get('auth_payload');
-  if (!encoded) return null;
-  try { return JSON.parse(atob(encoded.replace(/-/g, '+').replace(/_/g, '/'))); } catch {}
-  try { return JSON.parse(decodeURIComponent(escape(atob(encoded)))); } catch {}
-  try { return JSON.parse(atob(encoded)); } catch { return null; }
-}
-
-function cleanupUrl() {
-  window.history.replaceState({}, document.title, window.location.pathname);
-}
-
-function handleAuthReturn() {
-  const params = new URLSearchParams(window.location.search);
-  const error = params.get('auth_error');
-  if (error) {
-    setMessage(error);
-    cleanupUrl();
-    return;
-  }
-
-  const payload = readPayloadFromUrl();
-  if (payload?.ok && payload.user?.userId && payload.user?.sessionToken) {
-    saveUser(payload.user);
-    setMessage('Вы успешно вошли. Начислен приветственный бонус 70₽.', true);
-    cleanupUrl();
-    setTimeout(() => { window.location.href = 'wallet.html'; }, 900);
-  }
-}
-
-function openTelegramBot() {
-  const start = encodeStartPayload();
-  window.location.href = `${TELEGRAM_BOT_URL}?start=${start}`;
+async function submitAuth(payload) {
+  const res = await fetch('/api/auth-social-register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.ok || !data.user) throw new Error(data.error || 'Ошибка авторизации');
+  saveUser(data.user);
+  return data.user;
 }
 
 async function registerWithLoginPassword(event) {
@@ -74,7 +53,7 @@ async function registerWithLoginPassword(event) {
   const password = form.password.value;
   const passwordConfirm = form.passwordConfirm.value;
 
-  if (!/^[a-zA-Z0-9_а-яА-ЯёЁ.-]{3,32}$/.test(username)) {
+  if (!validateUsername(username)) {
     setMessage('Логин должен быть от 3 до 32 символов: буквы, цифры, _, . или -');
     return;
   }
@@ -87,40 +66,60 @@ async function registerWithLoginPassword(event) {
     return;
   }
 
-  const submit = form.querySelector('button[type="submit"]');
-  const oldText = submit?.textContent;
-  if (submit) {
-    submit.disabled = true;
-    submit.textContent = 'Регистрируем...';
-  }
-
+  const restore = toggleBusy(form, true, 'Регистрируем...');
   try {
-    const res = await fetch('/api/auth-social-register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ platform: 'password', username, password, passwordConfirm })
-    });
-    const data = await res.json();
-    if (!res.ok || !data.ok || !data.user) throw new Error(data.error || 'Не удалось зарегистрироваться');
-    saveUser(data.user);
+    await submitAuth({ action: 'register', username, password, passwordConfirm });
     setMessage('Вы успешно зарегистрированы. Начислен приветственный бонус 70₽.', true);
     setTimeout(() => { window.location.href = 'wallet.html'; }, 900);
   } catch (e) {
     setMessage(e.message || 'Ошибка регистрации');
   } finally {
-    if (submit) {
-      submit.disabled = false;
-      submit.textContent = oldText;
-    }
+    restore();
   }
 }
 
-handleAuthReturn();
+async function loginWithPassword(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const username = form.username.value.trim();
+  const password = form.password.value;
+
+  if (!validateUsername(username) || !password) {
+    setMessage('Введите логин и пароль');
+    return;
+  }
+
+  const restore = toggleBusy(form, true, 'Входим...');
+  try {
+    const user = await submitAuth({ action: 'login', username, password });
+    setMessage(`Вы успешно вошли как ${user.displayName || user.username}.`, true);
+    setTimeout(() => { window.location.href = 'wallet.html'; }, 700);
+  } catch (e) {
+    setMessage(e.message || 'Ошибка входа');
+  } finally {
+    restore();
+  }
+}
+
+function switchTab(tabName) {
+  document.querySelectorAll('[data-auth-tab]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.authTab === tabName);
+  });
+  document.querySelectorAll('[data-auth-panel]').forEach(panel => {
+    panel.classList.toggle('hidden', panel.dataset.authPanel !== tabName);
+  });
+  setMessage('', false);
+  const el = document.getElementById('authMessage');
+  if (el) el.className = 'auth-message';
+}
 
 const existing = getUser();
 if (existing?.userId && existing?.sessionToken) {
-  setMessage(`Вы уже вошли как ${existing.displayName || existing.socialLogin || existing.username || 'пользователь'}.`, true);
+  setMessage(`Вы уже вошли как ${existing.displayName || existing.username || 'пользователь'}.`, true);
 }
 
-document.getElementById('telegramRegisterBtn')?.addEventListener('click', openTelegramBot);
+document.querySelectorAll('[data-auth-tab]').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.authTab));
+});
 document.getElementById('registerForm')?.addEventListener('submit', registerWithLoginPassword);
+document.getElementById('loginForm')?.addEventListener('submit', loginWithPassword);

@@ -13,19 +13,15 @@
 <nav class="navbar">
   <div class="nav-logo">SMM-Boost</div>
   <div class="nav-links main-nav-links">
-    <a href="services.html">Услуги</a>
-    <a href="orders.html">Мои заказы</a>
-    <a href="wallet.html">Баланс</a>
+    <a href="auth.html">Зарегистрироваться</a>
     <button class="menu-toggle" type="button" aria-label="Открыть меню" aria-expanded="false">☰ Меню</button>
   </div>
   <div class="nav-menu" id="navMenu">
     <a href="services.html"><span class="menu-emoji">🚀</span><span>Заказать услуги</span></a>
     <a href="wallet.html"><span class="menu-emoji">💰</span><span>Баланс</span></a>
+    <a href="orders.html"><span class="menu-emoji">📦</span><span>Мои заказы</span></a>
     <a href="auth.html"><span class="menu-emoji">🎁</span><span>Зарегистрироваться</span></a>
-    <a href="fortune.html"><span class="menu-emoji">🎡</span><span>Колесо фортуны</span></a>
     <a href="daily.html"><span class="menu-emoji">🎁</span><span>Ежедневная раздача</span></a>
-    <a href="vk-pages.html"><img class="menu-social-icon" src="https://cdn.simpleicons.org/vk/0077FF" alt="VK"><span>Страницы VK</span></a>
-    <a href="instagram-pages.html"><img class="menu-social-icon" src="https://cdn.simpleicons.org/instagram/E4405F" alt="Instagram"><span>Страницы Instagram</span></a>
     <a href="index.html#reviews"><span class="menu-emoji">⭐</span><span>Отзывы</span></a>
     <a href="index.html#faq"><span class="menu-emoji">❔</span><span>FAQ</span></a>
     <a href="contacts.html"><span class="menu-emoji">💬</span><span>Контакты</span></a>
@@ -36,14 +32,18 @@
   <section class="auth-card">
     <div class="auth-badge">🎁 Приветственный бонус</div>
     <h1>Вход / регистрация</h1>
-    <p>Создайте аккаунт по логину и паролю или зарегистрируйтесь через Telegram-бота.</p>
+    <p>Аккаунт сохраняется в базе. После регистрации можно войти с другого устройства по логину и паролю.</p>
 
-    <div class="welcome-bonus-list">
+    <div class="welcome-bonus-list one-bonus">
       <div><b>+70₽</b><span>за регистрацию</span></div>
-      <div><b>+15₽</b><span>за подписку на Telegram</span></div>
     </div>
 
-    <form id="registerForm" class="auth-form" autocomplete="on">
+    <div class="auth-tabs" role="tablist">
+      <button class="auth-tab active" type="button" data-auth-tab="register">Регистрация</button>
+      <button class="auth-tab" type="button" data-auth-tab="login">Войти</button>
+    </div>
+
+    <form id="registerForm" class="auth-form" autocomplete="on" data-auth-panel="register">
       <label for="registerLogin">Логин</label>
       <input id="registerLogin" name="username" type="text" autocomplete="username" placeholder="Придумайте логин" required minlength="3" maxlength="32">
 
@@ -56,25 +56,20 @@
       <button class="primary-wide-btn" type="submit">Зарегистрироваться</button>
     </form>
 
-    <div class="auth-divider"><span>или</span></div>
+    <form id="loginForm" class="auth-form hidden" autocomplete="on" data-auth-panel="login">
+      <label for="loginName">Логин</label>
+      <input id="loginName" name="username" type="text" autocomplete="username" placeholder="Ваш логин" required minlength="3" maxlength="32">
 
-    <button id="telegramRegisterBtn" class="primary-wide-btn auth-social-btn telegram-auth" type="button">
-      <img src="https://cdn.simpleicons.org/telegram/26A5E4" alt="Telegram">
-      Регистрация через Telegram-бота
-    </button>
+      <label for="loginPassword">Пароль</label>
+      <input id="loginPassword" name="password" type="password" autocomplete="current-password" placeholder="Ваш пароль" required>
 
-    <div class="auth-provider-note">
-      <b>Telegram:</b> откроется бот <b>@Smmboost_reg_bot</b>. После регистрации в боте вернитесь на сайт по ссылке из бота.
-    </div>
-
-    <div class="bonus-subscribe-links">
-      <a href="https://t.me/smmboost_pro" target="_blank" rel="noopener">Подписаться на Telegram +15₽</a>
-    </div>
+      <button class="primary-wide-btn" type="submit">Войти</button>
+    </form>
 
     <div id="authMessage" class="auth-message"></div>
 
     <div class="auth-note">
-      После успешной регистрации появится внутренний баланс, бонусный баланс и возможность оплачивать заказы с баланса.
+      После входа на верхней панели будет показан только ваш логин. Баланс, заказы и остальные разделы находятся в меню.
     </div>
   </section>
 </main>

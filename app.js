@@ -54,7 +54,7 @@ function getSbUser() {
 function requireSbUser() {
   const user = getSbUser();
   if (!user || !user.userId || !user.sessionToken) {
-    alert("Сначала зарегистрируйтесь через Telegram или VK. После регистрации получите бонус 70₽.");
+    alert("Чтобы заказать услугу, сначала зарегистрируйтесь или войдите в аккаунт.");
     window.location.href = "auth.html";
     return null;
   }
@@ -95,6 +95,9 @@ function updateCardTotal(card) {
 }
 
 function openOrderModal(card) {
+  const user = requireSbUser();
+  if (!user) return;
+
   const input = card.querySelector(".service-amount");
   const amount = Number(input.value || 0);
   const min = Number(card.dataset.min || 1);
@@ -203,6 +206,9 @@ async function createBalanceOrder() {
 }
 
 async function createPayment(type) {
+  const user = requireSbUser();
+  if (!user) return;
+
   const link = document.getElementById("instagramLink").value.trim();
   const socialRegex = /instagram\.com|tiktok\.com|youtube\.com|youtu\.be|vk\.com|vk\.ru|t\.me|telegram\.me/i;
 
@@ -237,8 +243,8 @@ async function createPayment(type) {
       status: "🕓 Ожидает оплаты",
       paymentMethod: type === "crypto" ? "CryptoBot" : "ЮKassa",
       japOrderId: "",
-      userId: getSbUser()?.userId || "",
-      userEmail: getSbUser()?.email || "",
+      userId: user.userId,
+      userEmail: user.email || "",
       createdAt: serverTimestamp()
     });
 
