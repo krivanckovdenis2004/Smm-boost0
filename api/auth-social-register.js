@@ -21,17 +21,12 @@ function siteUrl(req) {
   return process.env.PUBLIC_SITE_URL || `${proto}://${host}`;
 }
 
-function redirect(res, url) {
-  res.writeHead(302, { Location: url });
-  res.end();
-}
-
 function safeText(value = '', max = 80) {
   return String(value || '').trim().slice(0, max);
 }
 
-function uidFromSocial(platform, id) {
-  return crypto.createHash('sha256').update(`${platform}:${String(id).toLowerCase()}`).digest('hex').slice(0, 32);
+function uidFromKey(key) {
+  return crypto.createHash('sha256').update(String(key).toLowerCase()).digest('hex').slice(0, 32);
 }
 
 function newToken() {
@@ -46,12 +41,29 @@ function authReturnUrl(req, payload) {
   return `${siteUrl(req)}/auth.html?auth_payload=${encodeURIComponent(encodePayload(payload))}`;
 }
 
-function authErrorUrl(req, message) {
-  return `${siteUrl(req)}/auth.html?auth_error=${encodeURIComponent(message)}`;
+function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
+  const hash = crypto.pbkdf2Sync(String(password), salt, 120000, 64, 'sha512').toString('hex');
+  return { salt, hash };
 }
 
-async function upsertSocialUser({ platform, externalId, username, displayName }) {
-  const userId = uidFromSocial(platform, externalId);
+function publicUser(user) {
+  return {
+    userId: user.userId,
+    socialPlatform: user.socialPlatform || user.authType || 'password',
+    externalId: user.externalId || user.username || user.userId,
+    socialLogin: user.socialLogin || user.username || user.displayName,
+    username: user.username || user.socialLogin,
+    displayName: user.displayName || user.username || user.socialLogin || 'Пользователь',
+    email: user.email || `${user.userId}@smmboost.local`,
+    balance: Number(user.balance || 0),
+    bonusBalance: Number(user.bonusBalance || 0),
+    registrationBonus: Number(user.registrationBonus || 0),
+    sessionToken: user.sessionToken
+  };
+}
+
+async function upsertTelegramUser({ telegramId, username, displayName }) {
+  const userId = uidFromKey(`telegram:${telegramId}`);
   const sessionToken = newToken();
   const userRef = doc(db, 'users', userId);
   const userSnap = await getDoc(userRef);
@@ -60,11 +72,12 @@ async function upsertSocialUser({ platform, externalId, username, displayName })
   if (!userSnap.exists()) {
     user = {
       userId,
-      socialPlatform: platform,
-      externalId: String(externalId),
-      socialLogin: username || String(externalId),
-      displayName: displayName || `${platform === 'telegram' ? 'Telegram' : 'VK'}: ${username || externalId}`,
-      email: `${platform}_${userId}@smmboost.local`,
+      authType: 'telegram',
+      socialPlatform: 'telegram',
+      externalId: String(telegramId),
+      socialLogin: username || String(telegramId),
+      displayName: displayName || `Telegram: ${username || telegramId}`,
+      email: `telegram_${userId}@smmboost.local`,
       balance: 0,
       bonusBalance: 70,
       registrationBonus: 70,
@@ -76,100 +89,64 @@ async function upsertSocialUser({ platform, externalId, username, displayName })
   } else {
     const old = userSnap.data();
     user = {
+      ...old,
       userId,
-      socialPlatform: old.socialPlatform || platform,
-      externalId: old.externalId || String(externalId),
-      socialLogin: old.socialLogin || username || String(externalId),
-      displayName: old.displayName || displayName || `${platform === 'telegram' ? 'Telegram' : 'VK'}: ${username || externalId}`,
-      email: old.email || `${platform}_${userId}@smmboost.local`,
+      authType: old.authType || 'telegram',
+      socialPlatform: old.socialPlatform || 'telegram',
+      externalId: old.externalId || String(telegramId),
+      socialLogin: old.socialLogin || username || String(telegramId),
+      displayName: old.displayName || displayName || `Telegram: ${username || telegramId}`,
+      email: old.email || `telegram_${userId}@smmboost.local`,
       balance: Number(old.balance || 0),
       bonusBalance: Number(old.bonusBalance || 0),
       registrationBonus: Number(old.registrationBonus || 0),
-      telegramBonusClaimed: Boolean(old.telegramBonusClaimed),
-      vkBonusClaimed: Boolean(old.vkBonusClaimed),
       sessionToken,
       updatedAt: serverTimestamp()
     };
     await setDoc(userRef, user, { merge: true });
   }
 
-  return {
-    userId,
-    socialPlatform: user.socialPlatform,
-    externalId: user.externalId,
-    socialLogin: user.socialLogin,
-    displayName: user.displayName,
-    email: user.email,
-    balance: Number(user.balance || 0),
-    bonusBalance: Number(user.bonusBalance || 0),
-    sessionToken
-  };
+  return publicUser(user);
 }
 
-async function startVk(req, res) {
-  const clientId = process.env.VK_CLIENT_ID;
-  if (!clientId) return res.status(500).json({ error: 'VK-вход не настроен: добавьте VK_CLIENT_ID в Vercel Environment Variables' });
+async function registerPasswordUser(req, res) {
+  const usernameRaw = safeText(req.body?.username, 32);
+  const password = String(req.body?.password || '');
+  const passwordConfirm = String(req.body?.passwordConfirm || '');
+  const username = usernameRaw.replace(/\s+/g, '');
+  const usernameLower = username.toLowerCase();
 
-  const state = crypto.randomBytes(16).toString('hex');
-  const redirectUri = `${siteUrl(req)}/api/auth-social-register?provider=vk-callback`;
-  const url = new URL('https://oauth.vk.com/authorize');
-  url.searchParams.set('client_id', clientId);
-  url.searchParams.set('redirect_uri', redirectUri);
-  url.searchParams.set('display', 'mobile');
-  url.searchParams.set('scope', 'email');
-  url.searchParams.set('response_type', 'code');
-  url.searchParams.set('state', state);
-  url.searchParams.set('v', '5.199');
-
-  return res.status(200).json({ ok: true, url: url.toString() });
-}
-
-async function finishVk(req, res) {
-  try {
-    const code = safeText(req.query?.code, 500);
-    if (!code) return redirect(res, authErrorUrl(req, 'VK не вернул код авторизации'));
-
-    const clientId = process.env.VK_CLIENT_ID;
-    const clientSecret = process.env.VK_CLIENT_SECRET;
-    if (!clientId || !clientSecret) return redirect(res, authErrorUrl(req, 'VK-вход не настроен на сервере'));
-
-    const redirectUri = `${siteUrl(req)}/api/auth-social-register?provider=vk-callback`;
-    const tokenUrl = new URL('https://oauth.vk.com/access_token');
-    tokenUrl.searchParams.set('client_id', clientId);
-    tokenUrl.searchParams.set('client_secret', clientSecret);
-    tokenUrl.searchParams.set('redirect_uri', redirectUri);
-    tokenUrl.searchParams.set('code', code);
-
-    const tokenRes = await fetch(tokenUrl.toString());
-    const tokenData = await tokenRes.json();
-    if (!tokenRes.ok || tokenData.error || !tokenData.user_id) {
-      return redirect(res, authErrorUrl(req, tokenData.error_description || 'VK не подтвердил вход'));
-    }
-
-    let displayName = `VK ID ${tokenData.user_id}`;
-    try {
-      const userUrl = new URL('https://api.vk.com/method/users.get');
-      userUrl.searchParams.set('user_ids', String(tokenData.user_id));
-      userUrl.searchParams.set('access_token', tokenData.access_token);
-      userUrl.searchParams.set('v', '5.199');
-      const userRes = await fetch(userUrl.toString());
-      const userData = await userRes.json();
-      const vkUser = userData?.response?.[0];
-      if (vkUser) displayName = [vkUser.first_name, vkUser.last_name].filter(Boolean).join(' ') || displayName;
-    } catch {}
-
-    const user = await upsertSocialUser({
-      platform: 'vk',
-      externalId: tokenData.user_id,
-      username: `id${tokenData.user_id}`,
-      displayName
-    });
-
-    return redirect(res, authReturnUrl(req, { ok: true, user }));
-  } catch (e) {
-    console.error(e);
-    return redirect(res, authErrorUrl(req, 'Ошибка VK-входа'));
+  if (!/^[a-zA-Z0-9_а-яА-ЯёЁ.-]{3,32}$/.test(username)) {
+    return res.status(400).json({ error: 'Логин должен быть от 3 до 32 символов: буквы, цифры, _, . или -' });
   }
+  if (password.length < 6) return res.status(400).json({ error: 'Пароль должен быть минимум 6 символов' });
+  if (password !== passwordConfirm) return res.status(400).json({ error: 'Пароли не совпадают' });
+
+  const userId = uidFromKey(`password:${usernameLower}`);
+  const userRef = doc(db, 'users', userId);
+  const userSnap = await getDoc(userRef);
+  if (userSnap.exists()) return res.status(409).json({ error: 'Такой логин уже зарегистрирован' });
+
+  const { salt, hash } = hashPassword(password);
+  const sessionToken = newToken();
+  const user = {
+    userId,
+    authType: 'password',
+    username,
+    usernameLower,
+    displayName: username,
+    email: `login_${userId}@smmboost.local`,
+    balance: 0,
+    bonusBalance: 70,
+    registrationBonus: 70,
+    passwordSalt: salt,
+    passwordHash: hash,
+    sessionToken,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  };
+  await setDoc(userRef, user);
+  return res.status(200).json({ ok: true, user: publicUser(user) });
 }
 
 async function registerFromTelegramBot(req, res) {
@@ -187,9 +164,8 @@ async function registerFromTelegramBot(req, res) {
   const lastName = safeText(req.body?.lastName || req.body?.last_name, 40);
   const displayName = [firstName, lastName].filter(Boolean).join(' ') || (username ? `@${username}` : `Telegram ID ${telegramId}`);
 
-  const user = await upsertSocialUser({
-    platform: 'telegram',
-    externalId: telegramId,
+  const user = await upsertTelegramUser({
+    telegramId,
     username: username ? `@${username}` : String(telegramId),
     displayName
   });
@@ -204,16 +180,14 @@ async function registerFromTelegramBot(req, res) {
 export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
-      const provider = safeText(req.query?.provider, 40);
-      if (provider === 'vk-start') return startVk(req, res);
-      if (provider === 'vk-callback') return finishVk(req, res);
-      return res.status(400).json({ error: 'Неизвестный способ входа' });
+      return res.status(400).json({ error: 'VK-вход удалён. Доступна регистрация по логину/паролю или через Telegram-бота.' });
     }
 
     if (req.method === 'POST') {
       const platform = safeText(req.body?.platform, 40).toLowerCase();
       if (platform === 'telegram') return registerFromTelegramBot(req, res);
-      return res.status(403).json({ error: 'Ручная регистрация отключена. Telegram — только через бота, VK — только через разрешение VK.' });
+      if (platform === 'password') return registerPasswordUser(req, res);
+      return res.status(403).json({ error: 'Доступна регистрация по логину/паролю или через Telegram-бота.' });
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
