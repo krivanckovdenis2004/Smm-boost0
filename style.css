@@ -3323,3 +3323,14 @@ flex-direction:column;
     grid-template-columns:1fr;
   }
 }
+
+.nav-user-badge {
+  max-width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-logged-link {
+  border-color: rgba(140, 100, 255, 0.5) !important;
+}

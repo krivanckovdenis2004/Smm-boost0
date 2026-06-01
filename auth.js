@@ -5,7 +5,11 @@ function setMessage(text, ok = false) {
 }
 
 function saveUser(user) {
-  localStorage.setItem('sb_user', JSON.stringify(user));
+  localStorage.setItem('sb_user', JSON.stringify({
+    ...user,
+    registeredAt: user.registeredAt || new Date().toISOString()
+  }));
+  window.SBUserState?.refresh?.();
 }
 
 function getUser() {
@@ -13,7 +17,7 @@ function getUser() {
 }
 
 function normalizeLogin(value) {
-  return String(value || '').trim().replace(/^https?:\/\//i, '').replace(/^@+/, '@');
+  return String(value || '').trim().replace(/^https?:\/\//i, '').slice(0, 80);
 }
 
 const existing = getUser();
@@ -28,7 +32,7 @@ async function registerSocial(platform) {
     ? document.getElementById('telegramRegisterBtn')
     : document.getElementById('vkRegisterBtn');
 
-  if (!socialLogin) return setMessage('Введите ваш Telegram или VK username');
+  if (!socialLogin) return setMessage('Введите любой Telegram/VK username или ID');
 
   const links = {
     telegram: 'https://t.me/Smmboost_reg_bot',
@@ -52,7 +56,7 @@ async function registerSocial(platform) {
 
     if (links[platform]) window.open(links[platform], '_blank');
 
-    setMessage(`Готово! Начислен бонус за регистрацию: 70₽. Бонусный баланс: ${Number(data.user.bonusBalance || 0).toFixed(2)}₽`, true);
+    setMessage(`Готово! Вы зарегистрированы как ${data.user.socialLogin}. Начислен бонус 70₽. Бонусный баланс: ${Number(data.user.bonusBalance || 0).toFixed(2)}₽`, true);
 
     setTimeout(() => {
       window.location.href = 'wallet.html';
