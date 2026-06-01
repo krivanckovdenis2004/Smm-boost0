@@ -1,1 +1,0 @@
-// updated create-yookassa.js
