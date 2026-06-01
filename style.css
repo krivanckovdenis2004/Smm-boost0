@@ -3334,3 +3334,16 @@ flex-direction:column;
 .sb-logged-link {
   border-color: rgba(140, 100, 255, 0.5) !important;
 }
+
+.auth-social-grid-only {
+  margin-top: 22px;
+}
+.auth-provider-note {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  border-radius: 18px;
+  background: rgba(139, 92, 246, 0.12);
+  color: rgba(255,255,255,0.86);
+  line-height: 1.45;
+}

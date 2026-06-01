@@ -1,5 +1,8 @@
+const TELEGRAM_BOT_URL = 'https://t.me/Smmboost_reg_bot';
+
 function setMessage(text, ok = false) {
   const el = document.getElementById('authMessage');
+  if (!el) return;
   el.textContent = text;
   el.className = 'auth-message ' + (ok ? 'ok' : 'error');
 }
@@ -16,58 +19,84 @@ function getUser() {
   try { return JSON.parse(localStorage.getItem('sb_user') || 'null'); } catch { return null; }
 }
 
-function normalizeLogin(value) {
-  return String(value || '').trim().replace(/^https?:\/\//i, '').slice(0, 80);
+function randomState() {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-const existing = getUser();
-if (existing?.userId) {
-  setMessage(`Вы уже вошли как ${existing.displayName || existing.socialLogin || existing.email || 'пользователь'}. Можно перейти в баланс.`, true);
+function encodeStartPayload() {
+  const state = randomState();
+  localStorage.setItem('sb_tg_state', state);
+  return encodeURIComponent(`site_${state}`);
 }
 
-async function registerSocial(platform) {
-  const loginInput = document.getElementById('socialLogin');
-  const socialLogin = normalizeLogin(loginInput?.value);
-  const button = platform === 'telegram'
-    ? document.getElementById('telegramRegisterBtn')
-    : document.getElementById('vkRegisterBtn');
-
-  if (!socialLogin) return setMessage('Введите любой Telegram/VK username или ID');
-
-  const links = {
-    telegram: 'https://t.me/Smmboost_reg_bot',
-    vk: 'https://vk.ru/smmboost_pro'
-  };
-
-  const oldText = button.textContent;
-  button.disabled = true;
-  button.textContent = 'Регистрируем...';
-
+function readPayloadFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const encoded = params.get('auth_payload');
+  if (!encoded) return null;
   try {
-    const res = await fetch('/api/auth-social-register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ platform, socialLogin })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Ошибка регистрации');
+    return JSON.parse(decodeURIComponent(escape(atob(encoded))));
+  } catch {
+    try { return JSON.parse(atob(encoded)); } catch { return null; }
+  }
+}
 
-    saveUser(data.user);
+function cleanupUrl() {
+  window.history.replaceState({}, document.title, window.location.pathname);
+}
 
-    if (links[platform]) window.open(links[platform], '_blank');
-
-    setMessage(`Готово! Вы зарегистрированы как ${data.user.socialLogin}. Начислен бонус 70₽. Бонусный баланс: ${Number(data.user.bonusBalance || 0).toFixed(2)}₽`, true);
-
-    setTimeout(() => {
-      window.location.href = 'wallet.html';
-    }, 900);
-  } catch (e) {
-    setMessage(e.message);
+function handleAuthReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const error = params.get('auth_error');
+  if (error) {
+    setMessage(error);
+    cleanupUrl();
+    return;
   }
 
-  button.disabled = false;
-  button.textContent = oldText;
+  const payload = readPayloadFromUrl();
+  if (payload?.ok && payload.user?.userId && payload.user?.sessionToken) {
+    saveUser(payload.user);
+    setMessage('Вы успешно вошли. Начислен приветственный бонус 70₽.', true);
+    cleanupUrl();
+    setTimeout(() => { window.location.href = 'wallet.html'; }, 900);
+  }
 }
 
-document.getElementById('telegramRegisterBtn')?.addEventListener('click', () => registerSocial('telegram'));
-document.getElementById('vkRegisterBtn')?.addEventListener('click', () => registerSocial('vk'));
+function openTelegramBot() {
+  const start = encodeStartPayload();
+  window.location.href = `${TELEGRAM_BOT_URL}?start=${start}`;
+}
+
+async function startVkAuth() {
+  const button = document.getElementById('vkRegisterBtn');
+  const oldText = button?.textContent;
+  if (button) {
+    button.disabled = true;
+    button.textContent = 'Открываем VK...';
+  }
+
+  try {
+    const res = await fetch('/api/auth-social-register?provider=vk-start', { method: 'GET' });
+    const data = await res.json();
+    if (!res.ok || !data.url) throw new Error(data.error || 'VK-вход пока не настроен');
+    window.location.href = data.url;
+  } catch (e) {
+    setMessage(e.message || 'Не удалось открыть VK-вход');
+    if (button) {
+      button.disabled = false;
+      button.textContent = oldText;
+    }
+  }
+}
+
+handleAuthReturn();
+
+const existing = getUser();
+if (existing?.userId && existing?.sessionToken) {
+  setMessage(`Вы уже вошли как ${existing.displayName || existing.socialLogin || existing.email || 'пользователь'}.`, true);
+}
+
+document.getElementById('telegramRegisterBtn')?.addEventListener('click', openTelegramBot);
+document.getElementById('vkRegisterBtn')?.addEventListener('click', startVkAuth);

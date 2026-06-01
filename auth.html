@@ -35,8 +35,8 @@
 <main class="auth-page">
   <section class="auth-card">
     <div class="auth-badge">🎁 Приветственный бонус</div>
-    <h1>Регистрация</h1>
-    <p>Зарегистрируйтесь через Telegram или VK и получите <b>70₽</b> на первый заказ.</p>
+    <h1>Вход / регистрация</h1>
+    <p>Выберите способ входа. Регистрироваться вручную по username или ссылке больше нельзя.</p>
 
     <div class="welcome-bonus-list">
       <div><b>+70₽</b><span>за регистрацию</span></div>
@@ -44,23 +44,23 @@
       <div><b>+15₽</b><span>за подписку на Telegram</span></div>
     </div>
 
-    <label>Ваш Telegram или VK username</label>
-    <input id="socialLogin" type="text" placeholder="@username или vk.com/id" autocomplete="username">
-
-    <div class="auth-social-grid">
+    <div class="auth-social-grid auth-social-grid-only">
       <button id="telegramRegisterBtn" class="primary-wide-btn auth-social-btn telegram-auth" type="button">
         <img src="https://cdn.simpleicons.org/telegram/26A5E4" alt="Telegram">
-        Регистрация через Telegram
+        Регистрация через Telegram-бота
       </button>
       <button id="vkRegisterBtn" class="primary-wide-btn auth-social-btn vk-auth" type="button">
         <img src="https://cdn.simpleicons.org/vk/0077FF" alt="VK">
-        Регистрация через VK
+        Войти через VK
       </button>
     </div>
 
-    <a class="bot-register-link" href="https://t.me/Smmboost_reg_bot" target="_blank" rel="noopener">
-      🤖 Регистрация через Telegram-бота @Smmboost_reg_bot
-    </a>
+    <div class="auth-provider-note">
+      <b>Telegram:</b> откроется бот <b>@Smmboost_reg_bot</b>. После регистрации в боте вернитесь на сайт по ссылке из бота.
+    </div>
+    <div class="auth-provider-note">
+      <b>VK:</b> откроется приложение VK. Нажмите «Разрешить», после этого VK вернёт вас на сайт.
+    </div>
 
     <div class="bonus-subscribe-links">
       <a href="https://vk.ru/smmboost_pro" target="_blank" rel="noopener">Подписаться на VK +15₽</a>
@@ -70,7 +70,7 @@
     <div id="authMessage" class="auth-message"></div>
 
     <div class="auth-note">
-      После регистрации появится внутренний баланс, бонусный баланс и возможность оплачивать заказы с баланса.
+      После успешной регистрации появится внутренний баланс, бонусный баланс и возможность оплачивать заказы с баланса.
     </div>
   </section>
 </main>
