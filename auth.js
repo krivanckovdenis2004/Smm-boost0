@@ -35,11 +35,9 @@ function readPayloadFromUrl() {
   const params = new URLSearchParams(window.location.search);
   const encoded = params.get('auth_payload');
   if (!encoded) return null;
-  try {
-    return JSON.parse(decodeURIComponent(escape(atob(encoded))));
-  } catch {
-    try { return JSON.parse(atob(encoded)); } catch { return null; }
-  }
+  try { return JSON.parse(atob(encoded.replace(/-/g, '+').replace(/_/g, '/'))); } catch {}
+  try { return JSON.parse(decodeURIComponent(escape(atob(encoded)))); } catch {}
+  try { return JSON.parse(atob(encoded)); } catch { return null; }
 }
 
 function cleanupUrl() {
@@ -69,24 +67,50 @@ function openTelegramBot() {
   window.location.href = `${TELEGRAM_BOT_URL}?start=${start}`;
 }
 
-async function startVkAuth() {
-  const button = document.getElementById('vkRegisterBtn');
-  const oldText = button?.textContent;
-  if (button) {
-    button.disabled = true;
-    button.textContent = 'Открываем VK...';
+async function registerWithLoginPassword(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const username = form.username.value.trim();
+  const password = form.password.value;
+  const passwordConfirm = form.passwordConfirm.value;
+
+  if (!/^[a-zA-Z0-9_а-яА-ЯёЁ.-]{3,32}$/.test(username)) {
+    setMessage('Логин должен быть от 3 до 32 символов: буквы, цифры, _, . или -');
+    return;
+  }
+  if (password.length < 6) {
+    setMessage('Пароль должен быть минимум 6 символов');
+    return;
+  }
+  if (password !== passwordConfirm) {
+    setMessage('Пароли не совпадают');
+    return;
+  }
+
+  const submit = form.querySelector('button[type="submit"]');
+  const oldText = submit?.textContent;
+  if (submit) {
+    submit.disabled = true;
+    submit.textContent = 'Регистрируем...';
   }
 
   try {
-    const res = await fetch('/api/auth-social-register?provider=vk-start', { method: 'GET' });
+    const res = await fetch('/api/auth-social-register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ platform: 'password', username, password, passwordConfirm })
+    });
     const data = await res.json();
-    if (!res.ok || !data.url) throw new Error(data.error || 'VK-вход пока не настроен');
-    window.location.href = data.url;
+    if (!res.ok || !data.ok || !data.user) throw new Error(data.error || 'Не удалось зарегистрироваться');
+    saveUser(data.user);
+    setMessage('Вы успешно зарегистрированы. Начислен приветственный бонус 70₽.', true);
+    setTimeout(() => { window.location.href = 'wallet.html'; }, 900);
   } catch (e) {
-    setMessage(e.message || 'Не удалось открыть VK-вход');
-    if (button) {
-      button.disabled = false;
-      button.textContent = oldText;
+    setMessage(e.message || 'Ошибка регистрации');
+  } finally {
+    if (submit) {
+      submit.disabled = false;
+      submit.textContent = oldText;
     }
   }
 }
@@ -95,8 +119,8 @@ handleAuthReturn();
 
 const existing = getUser();
 if (existing?.userId && existing?.sessionToken) {
-  setMessage(`Вы уже вошли как ${existing.displayName || existing.socialLogin || existing.email || 'пользователь'}.`, true);
+  setMessage(`Вы уже вошли как ${existing.displayName || existing.socialLogin || existing.username || 'пользователь'}.`, true);
 }
 
 document.getElementById('telegramRegisterBtn')?.addEventListener('click', openTelegramBot);
-document.getElementById('vkRegisterBtn')?.addEventListener('click', startVkAuth);
+document.getElementById('registerForm')?.addEventListener('submit', registerWithLoginPassword);

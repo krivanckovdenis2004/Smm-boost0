@@ -3347,3 +3347,47 @@ flex-direction:column;
   color: rgba(255,255,255,0.86);
   line-height: 1.45;
 }
+
+.auth-form {
+  display: grid;
+  gap: 14px;
+  margin: 24px 0;
+}
+
+.auth-form label {
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.auth-form input {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  font-size: 18px;
+  padding: 18px 20px;
+  outline: none;
+}
+
+.auth-form input:focus {
+  border-color: rgba(142, 104, 255, 0.9);
+  box-shadow: 0 0 0 4px rgba(142, 104, 255, 0.16);
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 24px 0;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 800;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+}

@@ -36,34 +36,38 @@
   <section class="auth-card">
     <div class="auth-badge">🎁 Приветственный бонус</div>
     <h1>Вход / регистрация</h1>
-    <p>Выберите способ входа. Регистрироваться вручную по username или ссылке больше нельзя.</p>
+    <p>Создайте аккаунт по логину и паролю или зарегистрируйтесь через Telegram-бота.</p>
 
     <div class="welcome-bonus-list">
       <div><b>+70₽</b><span>за регистрацию</span></div>
-      <div><b>+15₽</b><span>за подписку на VK</span></div>
       <div><b>+15₽</b><span>за подписку на Telegram</span></div>
     </div>
 
-    <div class="auth-social-grid auth-social-grid-only">
-      <button id="telegramRegisterBtn" class="primary-wide-btn auth-social-btn telegram-auth" type="button">
-        <img src="https://cdn.simpleicons.org/telegram/26A5E4" alt="Telegram">
-        Регистрация через Telegram-бота
-      </button>
-      <button id="vkRegisterBtn" class="primary-wide-btn auth-social-btn vk-auth" type="button">
-        <img src="https://cdn.simpleicons.org/vk/0077FF" alt="VK">
-        Войти через VK
-      </button>
-    </div>
+    <form id="registerForm" class="auth-form" autocomplete="on">
+      <label for="registerLogin">Логин</label>
+      <input id="registerLogin" name="username" type="text" autocomplete="username" placeholder="Придумайте логин" required minlength="3" maxlength="32">
+
+      <label for="registerPassword">Пароль</label>
+      <input id="registerPassword" name="password" type="password" autocomplete="new-password" placeholder="Минимум 6 символов" required minlength="6">
+
+      <label for="registerPasswordConfirm">Подтверждение пароля</label>
+      <input id="registerPasswordConfirm" name="passwordConfirm" type="password" autocomplete="new-password" placeholder="Повторите пароль" required minlength="6">
+
+      <button class="primary-wide-btn" type="submit">Зарегистрироваться</button>
+    </form>
+
+    <div class="auth-divider"><span>или</span></div>
+
+    <button id="telegramRegisterBtn" class="primary-wide-btn auth-social-btn telegram-auth" type="button">
+      <img src="https://cdn.simpleicons.org/telegram/26A5E4" alt="Telegram">
+      Регистрация через Telegram-бота
+    </button>
 
     <div class="auth-provider-note">
       <b>Telegram:</b> откроется бот <b>@Smmboost_reg_bot</b>. После регистрации в боте вернитесь на сайт по ссылке из бота.
     </div>
-    <div class="auth-provider-note">
-      <b>VK:</b> откроется приложение VK. Нажмите «Разрешить», после этого VK вернёт вас на сайт.
-    </div>
 
     <div class="bonus-subscribe-links">
-      <a href="https://vk.ru/smmboost_pro" target="_blank" rel="noopener">Подписаться на VK +15₽</a>
       <a href="https://t.me/smmboost_pro" target="_blank" rel="noopener">Подписаться на Telegram +15₽</a>
     </div>
 
