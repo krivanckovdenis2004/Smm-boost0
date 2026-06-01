@@ -9,9 +9,9 @@ export default async function handler(req, res) {
   try {
     const amount = Number(req.body?.amount || 0);
     const userId = String(req.body?.userId || '').trim();
-    const email = String(req.body?.email || '').trim().toLowerCase();
+const login = String(req.body?.login || req.body?.username || '').trim();
 
-    if (!userId || !email) return json(res, 401, { error: 'Сначала войдите в аккаунт' });
+if (!userId || !login) return json(res, 401, { error: 'Сначала войдите в аккаунт' });
     if (!Number.isFinite(amount) || amount < 100) return json(res, 400, { error: 'Минимальное пополнение 100₽' });
 
     if (!process.env.YOOKASSA_SHOP_ID || !process.env.YOOKASSA_SECRET_KEY) {
@@ -35,11 +35,11 @@ export default async function handler(req, res) {
           type: 'redirect',
           return_url: 'https://smm-boost.pro/wallet.html?topup=1'
         },
-        description: `Пополнение баланса SMM-BOOST — ${amount.toFixed(2)}₽`.slice(0, 128),
+        description: `Пополнение баланса SMM-BOOST — ${login} — ${amount.toFixed(2)}₽`.slice(0, 128),
         metadata: {
           type: 'balance_topup',
           userId,
-          email,
+          login,
           amountRub: String(amount.toFixed(2))
         }
       })
