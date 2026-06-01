@@ -70,11 +70,11 @@ export default async function handler(req, res) {
 
     if (String(orderData.type || '') === 'balance_topup') {
       const userId = String(orderData.userId || '');
-      const email = String(orderData.email || '');
+      const login = String(orderData.login || orderData.email || '');
       const amountRub = Number(orderData.amountRub || verifiedPayment.amount?.value || 0);
       const paidAmount = Number(verifiedPayment.amount?.value || 0);
 
-      if (!userId || !email || !Number.isFinite(amountRub) || amountRub < 1) {
+      if (!userId || !login || !Number.isFinite(amountRub) || amountRub < 1) {
         throw new Error('Invalid balance topup metadata');
       }
 
@@ -88,14 +88,14 @@ export default async function handler(req, res) {
 
       await setDoc(userRef, {
         userId,
-        email,
+        login,
         balance: Number((oldBalance + amountRub).toFixed(2)),
         updatedAt: serverTimestamp()
       }, { merge: true });
 
       await setDoc(doc(db, 'topups', verifiedPayment.id), {
         userId,
-        email,
+        login,
         amount: amountRub,
         paymentMethod: 'ЮKassa',
         paymentId: String(verifiedPayment.id || ''),
@@ -103,7 +103,7 @@ export default async function handler(req, res) {
         createdAt: serverTimestamp()
       }, { merge: true });
 
-      await sendTelegram(`💰 Пополнение баланса через ЮKassa\n\nEmail: ${email}\nСумма: ${amountRub}₽\nPayment ID: ${verifiedPayment.id}`);
+      await sendTelegram(`💰 Пополнение баланса через ЮKassa\n\nЛогин: ${login}\nСумма: ${amountRub}₽\nPayment ID: ${verifiedPayment.id}`);
       return res.status(200).json({ success: true, topup: true });
     }
 

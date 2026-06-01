@@ -1,4 +1,20 @@
 
+import { initializeApp, getApps } from 'firebase/app';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
+
+const firebaseConfig = {
+  apiKey: 'AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8',
+  authDomain: 'smm-boost-905d5.firebaseapp.com',
+  projectId: 'smm-boost-905d5',
+  storageBucket: 'smm-boost-905d5.firebasestorage.app',
+  messagingSenderId: '554912523069',
+  appId: '1:554912523069:web:26d405b696b9d45e5edb54',
+  measurementId: 'G-E6SRLXZW5V'
+};
+
+const firebaseApp = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+
 function json(res, status, payload) {
   return res.status(status).json(payload);
 }
@@ -9,10 +25,18 @@ export default async function handler(req, res) {
   try {
     const amount = Number(req.body?.amount || 0);
     const userId = String(req.body?.userId || '').trim();
-    const email = String(req.body?.email || '').trim().toLowerCase();
+    const sessionToken = String(req.body?.sessionToken || '').trim();
+    const login = String(req.body?.login || req.body?.username || '').trim();
 
-    if (!userId || !email) return json(res, 401, { error: 'Сначала войдите в аккаунт' });
+    if (!userId || !sessionToken) return json(res, 401, { error: 'Сначала войдите в аккаунт' });
     if (!Number.isFinite(amount) || amount < 100) return json(res, 400, { error: 'Минимальное пополнение 100₽' });
+
+    const userRef = doc(db, 'users', userId);
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) return json(res, 401, { error: 'Аккаунт не найден. Войдите заново.' });
+    const user = userSnap.data();
+    if (String(user.sessionToken || '') !== sessionToken) return json(res, 401, { error: 'Сессия устарела. Войдите заново.' });
+    const userLogin = login || user.username || user.displayName || 'user';
 
     if (!process.env.CRYPTOBOT_TOKEN) {
       return json(res, 500, { error: 'CryptoBot token is not configured' });
@@ -27,11 +51,11 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         asset: 'USDT',
         amount: String(((amount * 1.12) / 70).toFixed(2)),
-        description: `Пополнение баланса SMM-BOOST — ${amount.toFixed(2)}₽`.slice(0, 128),
+        description: `Пополнение баланса SMM-BOOST — ${userLogin} — ${amount.toFixed(2)}₽`.slice(0, 128),
         payload: JSON.stringify({
           type: 'balance_topup',
           userId,
-          email,
+          login: userLogin,
           amountRub: String(amount.toFixed(2))
         })
       })

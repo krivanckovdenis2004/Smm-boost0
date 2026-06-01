@@ -70,10 +70,10 @@ export default async function handler(req, res) {
 
     if (String(orderData.type || '') === 'balance_topup') {
       const userId = String(orderData.userId || '');
-      const email = String(orderData.email || '');
+      const login = String(orderData.login || orderData.email || '');
       const amountRub = Number(orderData.amountRub || 0);
 
-      if (!userId || !email || !Number.isFinite(amountRub) || amountRub < 1) {
+      if (!userId || !login || !Number.isFinite(amountRub) || amountRub < 1) {
         throw new Error('Invalid balance topup payload');
       }
 
@@ -83,14 +83,14 @@ export default async function handler(req, res) {
 
       await setDoc(userRef, {
         userId,
-        email,
+        login,
         balance: Number((oldBalance + amountRub).toFixed(2)),
         updatedAt: serverTimestamp()
       }, { merge: true });
 
       await setDoc(doc(db, 'topups', String(verifiedInvoice.invoice_id || eventInvoice.invoice_id)), {
         userId,
-        email,
+        login,
         amount: amountRub,
         paymentMethod: 'CryptoBot',
         invoiceId: String(verifiedInvoice.invoice_id || eventInvoice.invoice_id || ''),
@@ -98,7 +98,7 @@ export default async function handler(req, res) {
         createdAt: serverTimestamp()
       }, { merge: true });
 
-      await sendTelegram(`💰 Пополнение баланса через CryptoBot\n\nEmail: ${email}\nСумма: ${amountRub}₽\nInvoice ID: ${verifiedInvoice.invoice_id || eventInvoice.invoice_id}`);
+      await sendTelegram(`💰 Пополнение баланса через CryptoBot\n\nЛогин: ${login}\nСумма: ${amountRub}₽\nInvoice ID: ${verifiedInvoice.invoice_id || eventInvoice.invoice_id}`);
       return res.status(200).json({ success: true, topup: true });
     }
 

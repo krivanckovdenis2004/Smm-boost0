@@ -82,7 +82,7 @@ export default async function handler(req, res) {
     if (!japOrderId) {
       await addDoc(collection(db, 'orders'), {
         userId,
-        userEmail: String(user.email || ''),
+        userLogin: String(user.username || user.displayName || user.email || ''),
         publicOrderId,
         service: String(service.name || ''),
         serviceId: String(service.id || ''),
@@ -125,7 +125,7 @@ export default async function handler(req, res) {
 
     const orderDoc = await addDoc(collection(db, 'orders'), {
       userId,
-      userEmail: String(user.email || ''),
+      userLogin: String(user.username || user.displayName || user.email || ''),
       publicOrderId,
       service: String(service.name || ''),
       serviceId: String(service.id || ''),
@@ -141,7 +141,7 @@ export default async function handler(req, res) {
       createdAt: serverTimestamp()
     });
 
-    await sendTelegram(`🔥 Новый заказ с баланса\n\nID: ${publicOrderId}\nEmail: ${user.email || '—'}\nУслуга: ${service.name}\nКоличество: ${quantity}\nСумма: ${priceRub}₽\nБонусами: ${spentBonus.toFixed(2)}₽\nБалансом: ${spentBalance.toFixed(2)}₽\nСсылка: ${link}\n\nJAP ID:\n${japOrderId}`);
+    await sendTelegram(`🔥 Новый заказ с баланса\n\nID: ${publicOrderId}\nЛогин: ${user.username || user.displayName || user.email || '—'}\nУслуга: ${service.name}\nКоличество: ${quantity}\nСумма: ${priceRub}₽\nБонусами: ${spentBonus.toFixed(2)}₽\nБалансом: ${spentBalance.toFixed(2)}₽\nСсылка: ${link}\n\nJAP ID:\n${japOrderId}`);
 
     return res.status(200).json({ ok: true, orderDocId: orderDoc.id, publicOrderId, japOrderId });
   } catch (e) {
