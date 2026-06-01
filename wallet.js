@@ -18,15 +18,33 @@ function getUser() {
   try { return JSON.parse(localStorage.getItem('sb_user') || 'null'); } catch { return null; }
 }
 
+function isLoggedIn(user) {
+  return Boolean(user && user.userId && user.sessionToken);
+}
+
+function clearBrokenSession(user) {
+  if (user && user.userId && !user.sessionToken) {
+    localStorage.removeItem('sb_user');
+    return true;
+  }
+  return false;
+}
+
 function setBalances(balance = 0, bonus = 0) {
   document.getElementById('mainBalance').textContent = Number(balance || 0).toFixed(2) + '₽';
   document.getElementById('bonusBalance').textContent = Number(bonus || 0).toFixed(2) + '₽';
 }
 
 const user = getUser();
+const hadBrokenSession = clearBrokenSession(user);
 
-if (!user?.userId) {
-  document.getElementById('walletUser').innerHTML = 'Вы не вошли. <a href="auth.html">Войти / зарегистрироваться</a>';
+if (!isLoggedIn(user)) {
+  setBalances(0, 0);
+  document.getElementById('walletUser').innerHTML = (hadBrokenSession ? 'Сессия устарела. ' : 'Вы не вошли. ') + '<a href="auth.html">Войти / зарегистрироваться</a>';
+  const yBtn = document.getElementById('topupYookassa');
+  const cBtn = document.getElementById('topupCrypto');
+  if (yBtn) yBtn.textContent = 'Войти для пополнения';
+  if (cBtn) cBtn.textContent = 'Войти для пополнения CryptoBot';
 } else {
   document.getElementById('walletUser').textContent = user.displayName || user.username || user.login || 'Пользователь';
   onSnapshot(doc(db, 'users', user.userId), (snap) => {
@@ -46,7 +64,8 @@ if (!user?.userId) {
 
 async function createTopup(type) {
   const user = getUser();
-  if (!user?.userId) {
+  if (!isLoggedIn(user)) {
+    alert('Сначала войдите в аккаунт');
     window.location.href = 'auth.html';
     return;
   }
@@ -69,8 +88,14 @@ async function createTopup(type) {
       body: JSON.stringify({ amount, userId: user.userId, sessionToken: user.sessionToken, login: user.username || user.displayName || user.email || '' })
     });
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || data.description || 'Ошибка создания оплаты');
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      if (res.status === 401) {
+        localStorage.removeItem('sb_user');
+        window.SBUserState?.refresh?.();
+      }
+      throw new Error(data.error || data.description || 'Ошибка создания оплаты');
+    }
 
     if (type === 'crypto' && data.ok && data.result?.pay_url) {
       window.location.href = data.result.pay_url;

@@ -77,6 +77,10 @@
 
   function updateAuthLinks() {
     var user = getUser();
+    if (user && user.userId && !user.sessionToken) {
+      localStorage.removeItem('sb_user');
+      user = null;
+    }
     var loggedIn = isLoggedIn(user);
     compactTopNav(loggedIn, user || {});
     updateMenuAuth(loggedIn, user || {});

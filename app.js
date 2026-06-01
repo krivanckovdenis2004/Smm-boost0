@@ -57,6 +57,11 @@ function isSbLoggedIn(user) {
 
 function requireSbUser() {
   const user = getSbUser();
+  if (user && user.userId && !user.sessionToken) {
+    localStorage.removeItem('sb_user');
+    window.SBUserState?.refresh?.();
+    return null;
+  }
   return isSbLoggedIn(user) ? user : null;
 }
 
@@ -172,7 +177,10 @@ showPlatform("Instagram");
 
 async function createBalanceOrder() {
   const user = requireSbUser();
-  if (!user) return;
+  if (!user) {
+    showAuthRequiredModal();
+    return;
+  }
 
   const link = document.getElementById("instagramLink").value.trim();
   const socialRegex = /instagram\.com|tiktok\.com|youtube\.com|youtu\.be|vk\.com|vk\.ru|t\.me|telegram\.me/i;
