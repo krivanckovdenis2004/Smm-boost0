@@ -28,13 +28,16 @@ const user = getUser();
 if (!user?.userId) {
   document.getElementById('walletUser').innerHTML = 'Вы не вошли. <a href="auth.html">Войти / зарегистрироваться</a>';
 } else {
-  document.getElementById('walletUser').textContent = user.email;
+  document.getElementById('walletUser').textContent = user.displayName || user.socialLogin || user.email;
   onSnapshot(doc(db, 'users', user.userId), (snap) => {
     if (!snap.exists()) return;
     const data = snap.data();
     setBalances(data.balance, data.bonusBalance);
     localStorage.setItem('sb_user', JSON.stringify({
       ...user,
+      displayName: data.displayName || user.displayName,
+      socialLogin: data.socialLogin || user.socialLogin,
+      socialPlatform: data.socialPlatform || user.socialPlatform,
       balance: Number(data.balance || 0),
       bonusBalance: Number(data.bonusBalance || 0)
     }));

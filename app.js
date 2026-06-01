@@ -54,7 +54,7 @@ function getSbUser() {
 function requireSbUser() {
   const user = getSbUser();
   if (!user || !user.userId || !user.sessionToken) {
-    alert("Сначала войдите или зарегистрируйтесь. После регистрации получите бонус 70₽.");
+    alert("Сначала зарегистрируйтесь через Telegram или VK. После регистрации получите бонус 70₽.");
     window.location.href = "auth.html";
     return null;
   }

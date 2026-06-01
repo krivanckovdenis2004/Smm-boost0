@@ -21,7 +21,7 @@
   <div class="nav-menu" id="navMenu">
     <a href="services.html"><span class="menu-emoji">🚀</span><span>Заказать услуги</span></a>
     <a href="wallet.html"><span class="menu-emoji">💰</span><span>Баланс</span></a>
-    <a href="auth.html"><span class="menu-emoji">🔐</span><span>Вход / регистрация</span></a>
+    <a href="auth.html"><span class="menu-emoji">🎁</span><span>Зарегистрироваться</span></a>
     <a href="fortune.html"><span class="menu-emoji">🎡</span><span>Колесо фортуны</span></a>
     <a href="daily.html"><span class="menu-emoji">🎁</span><span>Ежедневная раздача</span></a>
     <a href="vk-pages.html"><img class="menu-social-icon" src="https://cdn.simpleicons.org/vk/0077FF" alt="VK"><span>Страницы VK</span></a>
@@ -34,25 +34,43 @@
 
 <main class="auth-page">
   <section class="auth-card">
-    <div class="auth-badge">🎁 Бонус новым клиентам</div>
-    <h1>Вход / регистрация</h1>
-    <p>Введите email, получите код подтверждения и заберите бонус <b>70₽</b> на первый заказ.</p>
+    <div class="auth-badge">🎁 Приветственный бонус</div>
+    <h1>Регистрация</h1>
+    <p>Зарегистрируйтесь через Telegram или VK и получите <b>70₽</b> на первый заказ.</p>
 
-    <label>Email</label>
-    <input id="authEmail" type="email" placeholder="your@email.com" autocomplete="email">
+    <div class="welcome-bonus-list">
+      <div><b>+70₽</b><span>за регистрацию</span></div>
+      <div><b>+15₽</b><span>за подписку на VK</span></div>
+      <div><b>+15₽</b><span>за подписку на Telegram</span></div>
+    </div>
 
-    <button id="sendCodeBtn" class="primary-wide-btn">Получить код</button>
+    <label>Ваш Telegram или VK username</label>
+    <input id="socialLogin" type="text" placeholder="@username или vk.com/id" autocomplete="username">
 
-    <div id="codeStep" class="code-step">
-      <label>Код из письма</label>
-      <input id="authCode" type="text" maxlength="6" placeholder="000000" inputmode="numeric">
-      <button id="verifyCodeBtn" class="primary-wide-btn">Подтвердить</button>
+    <div class="auth-social-grid">
+      <button id="telegramRegisterBtn" class="primary-wide-btn auth-social-btn telegram-auth" type="button">
+        <img src="https://cdn.simpleicons.org/telegram/26A5E4" alt="Telegram">
+        Регистрация через Telegram
+      </button>
+      <button id="vkRegisterBtn" class="primary-wide-btn auth-social-btn vk-auth" type="button">
+        <img src="https://cdn.simpleicons.org/vk/0077FF" alt="VK">
+        Регистрация через VK
+      </button>
+    </div>
+
+    <a class="bot-register-link" href="https://t.me/Smmboost_reg_bot" target="_blank" rel="noopener">
+      🤖 Регистрация через Telegram-бота @Smmboost_reg_bot
+    </a>
+
+    <div class="bonus-subscribe-links">
+      <a href="https://vk.ru/smmboost_pro" target="_blank" rel="noopener">Подписаться на VK +15₽</a>
+      <a href="https://t.me/smmboost_pro" target="_blank" rel="noopener">Подписаться на Telegram +15₽</a>
     </div>
 
     <div id="authMessage" class="auth-message"></div>
 
     <div class="auth-note">
-      После входа появится внутренний баланс, бонусный баланс и возможность оплачивать заказы с баланса.
+      После регистрации появится внутренний баланс, бонусный баланс и возможность оплачивать заказы с баланса.
     </div>
   </section>
 </main>

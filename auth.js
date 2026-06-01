@@ -12,58 +12,47 @@ function getUser() {
   try { return JSON.parse(localStorage.getItem('sb_user') || 'null'); } catch { return null; }
 }
 
-const existing = getUser();
-if (existing?.email) {
-  setMessage(`Вы уже вошли как ${existing.email}. Можно перейти в баланс.`, true);
+function normalizeLogin(value) {
+  return String(value || '').trim().replace(/^https?:\/\//i, '').replace(/^@+/, '@');
 }
 
-document.getElementById('sendCodeBtn')?.addEventListener('click', async () => {
-  const email = document.getElementById('authEmail').value.trim().toLowerCase();
-  const btn = document.getElementById('sendCodeBtn');
-  if (!email) return setMessage('Введите email');
+const existing = getUser();
+if (existing?.userId) {
+  setMessage(`Вы уже вошли как ${existing.displayName || existing.socialLogin || existing.email || 'пользователь'}. Можно перейти в баланс.`, true);
+}
 
-  btn.disabled = true;
-  btn.textContent = 'Отправляем код...';
+async function registerSocial(platform) {
+  const loginInput = document.getElementById('socialLogin');
+  const socialLogin = normalizeLogin(loginInput?.value);
+  const button = platform === 'telegram'
+    ? document.getElementById('telegramRegisterBtn')
+    : document.getElementById('vkRegisterBtn');
 
-  try {
-    const res = await fetch('/api/auth-send-code', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Ошибка отправки кода');
+  if (!socialLogin) return setMessage('Введите ваш Telegram или VK username');
 
-    document.getElementById('codeStep').style.display = 'block';
-    setMessage('Код отправлен на email. Проверьте почту.', true);
-  } catch (e) {
-    setMessage(e.message);
-  }
+  const links = {
+    telegram: 'https://t.me/Smmboost_reg_bot',
+    vk: 'https://vk.ru/smmboost_pro'
+  };
 
-  btn.disabled = false;
-  btn.textContent = 'Получить код';
-});
-
-document.getElementById('verifyCodeBtn')?.addEventListener('click', async () => {
-  const email = document.getElementById('authEmail').value.trim().toLowerCase();
-  const code = document.getElementById('authCode').value.trim();
-  const btn = document.getElementById('verifyCodeBtn');
-  if (!email || !code) return setMessage('Введите email и код');
-
-  btn.disabled = true;
-  btn.textContent = 'Проверяем...';
+  const oldText = button.textContent;
+  button.disabled = true;
+  button.textContent = 'Регистрируем...';
 
   try {
-    const res = await fetch('/api/auth-verify-code', {
+    const res = await fetch('/api/auth-social-register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, code })
+      body: JSON.stringify({ platform, socialLogin })
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Ошибка подтверждения');
+    if (!res.ok) throw new Error(data.error || 'Ошибка регистрации');
 
     saveUser(data.user);
-    setMessage(`Готово! Бонусный баланс: ${Number(data.user.bonusBalance || 0).toFixed(2)}₽`, true);
+
+    if (links[platform]) window.open(links[platform], '_blank');
+
+    setMessage(`Готово! Начислен бонус за регистрацию: 70₽. Бонусный баланс: ${Number(data.user.bonusBalance || 0).toFixed(2)}₽`, true);
 
     setTimeout(() => {
       window.location.href = 'wallet.html';
@@ -72,6 +61,9 @@ document.getElementById('verifyCodeBtn')?.addEventListener('click', async () => 
     setMessage(e.message);
   }
 
-  btn.disabled = false;
-  btn.textContent = 'Подтвердить';
-});
+  button.disabled = false;
+  button.textContent = oldText;
+}
+
+document.getElementById('telegramRegisterBtn')?.addEventListener('click', () => registerSocial('telegram'));
+document.getElementById('vkRegisterBtn')?.addEventListener('click', () => registerSocial('vk'));
