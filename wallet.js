@@ -28,7 +28,7 @@ const user = getUser();
 if (!user?.userId) {
   document.getElementById('walletUser').innerHTML = 'Вы не вошли. <a href="auth.html">Войти / зарегистрироваться</a>';
 } else {
-  document.getElementById('walletUser').textContent = user.displayName || user.socialLogin || user.email;
+  document.getElementById('walletUser').textContent = user.displayName || user.username || user.login || 'Пользователь';
   onSnapshot(doc(db, 'users', user.userId), (snap) => {
     if (!snap.exists()) return;
     const data = snap.data();
@@ -66,7 +66,7 @@ async function createTopup(type) {
     const res = await fetch(type === 'crypto' ? '/api/create-balance-invoice' : '/api/create-balance-yookassa', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount, userId: user.userId, email: user.email })
+      body: JSON.stringify({ amount, userId: user.userId, sessionToken: user.sessionToken, login: user.username || user.displayName || user.email || '' })
     });
 
     const data = await res.json();
@@ -84,7 +84,7 @@ async function createTopup(type) {
 
     throw new Error(data.error || data.description || 'Не найдена ссылка оплаты');
   } catch (e) {
-    alert(e.message);
+    alert(e.message || 'Ошибка создания оплаты');
   }
 
   button.disabled = false;
@@ -138,7 +138,7 @@ async function claimSocialBonus(platform) {
 
     alert(data.message || 'Бонус начислен');
   } catch (e) {
-    alert(e.message);
+    alert(e.message || 'Ошибка создания оплаты');
   }
 
   button.disabled = false;

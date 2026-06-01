@@ -582,54 +582,42 @@ content="продвижение соцсетей, smm boost, рост аудит
 
     <h2>Оформление заказа</h2>
 
-<div class="payment-notice">
-  ⚡ Выберите удобный способ оплаты:
-  ЮKassa (СБП / карта) или CryptoBot.
-</div>
-
-    <div class="order-info">
-
-      <p id="serviceName"></p>
-      <p id="serviceAmount"></p>
-      <p id="servicePrice"></p>
-
+    <div id="authRequiredBox" class="auth-required-box" style="display:none;">
+      <h3>Нужно войти в аккаунт</h3>
+      <p>Чтобы заказать услугу, сначала зарегистрируйтесь или войдите. После входа заказ можно оплатить с основного или бонусного баланса.</p>
+      <a class="auth-required-btn" href="auth.html">Зарегистрироваться / войти</a>
     </div>
 
-    <input
-  type="text"
-  id="instagramLink"
-  placeholder="Ссылка на профиль или публикацию"
-  inputmode="url"
-  autocomplete="off"
-  autocorrect="off"
-  autocapitalize="off"
-  spellcheck="false"
-/>
+    <div id="orderFormBox">
+      <div class="payment-notice">
+        💰 Оплата услуги доступна только с баланса. Бонусный баланс можно использовать сразу.
+      </div>
 
-<div class="payment-buttons">
+      <div class="order-info">
+        <p id="serviceName"></p>
+        <p id="serviceAmount"></p>
+        <p id="servicePrice"></p>
+      </div>
 
-  <button id="balancePayButton"
-  class="payment-method-btn balance-btn">
+      <input
+        type="text"
+        id="instagramLink"
+        placeholder="Ссылка на профиль или публикацию"
+        inputmode="url"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+      />
 
-    💰 Оплатить с баланса
+      <div class="payment-buttons">
+        <button id="balancePayButton" class="payment-method-btn balance-btn">
+          💰 Оплатить с баланса
+        </button>
+      </div>
 
-  </button>
-
-  <button id="yookassaPayButton"
-  class="payment-method-btn">
-
-    🏦 ЮKassa / СБП
-
-  </button>
-
-  <button id="cryptoPayButton"
-  class="payment-method-btn crypto-btn">
-
-    💎 CryptoBot
-
-  </button>
-
-</div>
+      <a class="modal-topup-link" href="wallet.html">Пополнить баланс от 100₽</a>
+    </div>
 
   </div>
 <div id="live-orders"></div>

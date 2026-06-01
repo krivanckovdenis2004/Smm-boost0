@@ -51,14 +51,31 @@ function getSbUser() {
   }
 }
 
+function isSbLoggedIn(user) {
+  return Boolean(user && user.userId && user.sessionToken);
+}
+
 function requireSbUser() {
   const user = getSbUser();
-  if (!user || !user.userId || !user.sessionToken) {
-    alert("Чтобы заказать услугу, сначала зарегистрируйтесь или войдите в аккаунт.");
-    window.location.href = "auth.html";
-    return null;
-  }
-  return user;
+  return isSbLoggedIn(user) ? user : null;
+}
+
+function showAuthRequiredModal() {
+  const modal = document.getElementById("orderModal");
+  const authBox = document.getElementById("authRequiredBox");
+  const orderBox = document.getElementById("orderFormBox");
+  if (authBox) authBox.style.display = "block";
+  if (orderBox) orderBox.style.display = "none";
+  if (modal) modal.style.display = "flex";
+}
+
+function showOrderFormModal() {
+  const modal = document.getElementById("orderModal");
+  const authBox = document.getElementById("authRequiredBox");
+  const orderBox = document.getElementById("orderFormBox");
+  if (authBox) authBox.style.display = "none";
+  if (orderBox) orderBox.style.display = "block";
+  if (modal) modal.style.display = "flex";
 }
 
 function calculateCardPrice(card, amount) {
@@ -96,7 +113,10 @@ function updateCardTotal(card) {
 
 function openOrderModal(card) {
   const user = requireSbUser();
-  if (!user) return;
+  if (!user) {
+    showAuthRequiredModal();
+    return;
+  }
 
   const input = card.querySelector(".service-amount");
   const amount = Number(input.value || 0);
@@ -122,7 +142,7 @@ function openOrderModal(card) {
   document.getElementById("serviceName").innerText = "Услуга: " + currentService;
   document.getElementById("serviceAmount").innerText = "Количество: " + currentAmount;
   document.getElementById("servicePrice").innerText = "Сумма: " + currentPrice.toFixed(2) + "₽";
-  document.getElementById("orderModal").style.display = "flex";
+  showOrderFormModal();
 }
 
 function showPlatform(platform) {
@@ -178,7 +198,7 @@ async function createBalanceOrder() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         userId: user.userId,
-        email: user.email,
+        login: user.username || user.displayName || user.email || '',
         sessionToken: user.sessionToken,
         service: currentService,
         serviceId: String(currentServiceId),
@@ -205,110 +225,11 @@ async function createBalanceOrder() {
   button.innerText = originalText;
 }
 
-async function createPayment(type) {
-  const user = requireSbUser();
-  if (!user) return;
-
-  const link = document.getElementById("instagramLink").value.trim();
-  const socialRegex = /instagram\.com|tiktok\.com|youtube\.com|youtu\.be|vk\.com|vk\.ru|t\.me|telegram\.me/i;
-
-  if (!socialRegex.test(link)) {
-    alert("Введите корректную ссылку на соцсеть");
-    return;
-  }
-
-  if (!currentServiceId) {
-    alert("Выберите услугу заново");
-    return;
-  }
-
-  const button = type === "crypto"
-    ? document.getElementById("cryptoPayButton")
-    : document.getElementById("yookassaPayButton");
-
-  const originalText = button.innerText;
-  button.disabled = true;
-  button.innerText = "Создание оплаты...";
-
-  try {
-    const publicOrderId = generateOrderId();
-
-    const docRef = await addDoc(collection(db, "orders"), {
-      publicOrderId,
-      service: currentService,
-      serviceId: String(currentServiceId),
-      amount: Number(currentAmount),
-      price: Number(currentPrice.toFixed(2)),
-      link,
-      status: "🕓 Ожидает оплаты",
-      paymentMethod: type === "crypto" ? "CryptoBot" : "ЮKassa",
-      japOrderId: "",
-      userId: user.userId,
-      userEmail: user.email || "",
-      createdAt: serverTimestamp()
-    });
-
-    saveMyOrder(docRef.id);
-
-    const response = await fetch(
-      type === "crypto" ? "/api/create-invoice" : "/api/create-yookassa",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          amount: Number(currentPrice.toFixed(2)),
-          description: `${currentService} — ${currentAmount}`,
-          service: currentService,
-          serviceId: String(currentServiceId),
-          quantity: currentAmount,
-          link,
-          orderDocId: docRef.id,
-          publicOrderId
-        })
-      }
-    );
-
-    const data = await response.json();
-    console.log(data);
-
-    if (type === "crypto") {
-      if (data.ok && data.result && data.result.pay_url) {
-        window.location.href = data.result.pay_url;
-        return;
-      }
-    } else {
-      if (data.confirmation && data.confirmation.confirmation_url) {
-        window.location.href = data.confirmation.confirmation_url;
-        return;
-      }
-    }
-
-    alert(data.description || data.error || "Ошибка создания оплаты");
-  } catch (e) {
-    console.error(e);
-    alert("Ошибка создания оплаты");
-  }
-
-  button.disabled = false;
-  button.innerText = originalText;
-}
+// Прямая оплата услуги отключена. Заказы создаются только после входа и только с баланса.
 
 const balancePayButton = document.getElementById("balancePayButton");
-const cryptoPayButton = document.getElementById("cryptoPayButton");
-const yookassaPayButton = document.getElementById("yookassaPayButton");
-
 if (balancePayButton) {
   balancePayButton.addEventListener("click", () => createBalanceOrder());
-}
-
-if (cryptoPayButton) {
-  cryptoPayButton.addEventListener("click", () => createPayment("crypto"));
-}
-
-if (yookassaPayButton) {
-  yookassaPayButton.addEventListener("click", () => createPayment("yookassa"));
 }
 
 const liveContainer = document.getElementById("live-orders");
