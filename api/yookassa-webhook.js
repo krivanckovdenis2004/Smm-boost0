@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, doc, updateDoc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { validateOrderPayload } from './service-catalog.js';
 
@@ -12,7 +12,7 @@ const firebaseConfig = {
   measurementId: 'G-E6SRLXZW5V'
 };
 
-const firebaseApp = initializeApp(firebaseConfig);
+const firebaseApp = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
 
 const JAP_API_KEY = process.env.JAP_API_KEY || '0561e44b45942392a866871516ab7036';

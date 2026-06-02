@@ -1,4 +1,4 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
 
 import {
   getFirestore,
@@ -18,7 +18,7 @@ const firebaseConfig = {
   measurementId: "G-E6SRLXZW5V"
 };
 
-const firebaseApp = initializeApp(firebaseConfig);
+const firebaseApp = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
 
 function clamp(value, min, max) {
