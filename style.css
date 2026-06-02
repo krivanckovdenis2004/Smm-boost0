@@ -3408,3 +3408,76 @@ flex-direction:column;
   color:#d8c9ff;
   background:rgba(139,92,246,.12);
 }
+
+
+/* === Social subscription bonuses === */
+.social-bonus-box{
+  margin-top:25px;
+  padding:24px;
+  border-radius:24px;
+  background:rgba(255,255,255,.055);
+  border:1px solid rgba(255,255,255,.08);
+}
+
+.social-bonus-box h2{
+  margin:0 0 10px;
+}
+
+.social-bonus-box p{
+  margin:0 0 18px;
+  color:rgba(255,255,255,.68);
+  font-size:15px;
+}
+
+.social-bonus-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+.social-bonus-btn{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:16px;
+  border:none;
+  border-radius:18px;
+  color:white;
+  cursor:pointer;
+  font-weight:900;
+  box-shadow:0 0 22px rgba(122,92,255,.22);
+}
+
+.social-bonus-btn img{
+  width:30px;
+  height:30px;
+  object-fit:contain;
+}
+
+.social-bonus-btn span{
+  flex:1;
+  text-align:left;
+}
+
+.social-bonus-btn b{
+  font-size:20px;
+}
+
+.telegram-bonus{
+  background:linear-gradient(135deg,#1e293b,#26A5E4);
+}
+
+.vk-bonus{
+  background:linear-gradient(135deg,#1e293b,#0077FF);
+}
+
+.social-bonus-btn:disabled{
+  opacity:.65;
+  cursor:not-allowed;
+}
+
+@media(max-width:640px){
+  .social-bonus-grid{
+    grid-template-columns:1fr;
+  }
+}
