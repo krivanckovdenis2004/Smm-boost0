@@ -14,6 +14,17 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+(function trackTopupReturn(){
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('topup') === '1' && !sessionStorage.getItem('sb_goal_balance_topup_sent')) {
+      sessionStorage.setItem('sb_goal_balance_topup_sent', '1');
+      window.sbGoal?.('balance_topup');
+    }
+  } catch (e) {}
+})();
+
+
 function getUser() {
   try { return JSON.parse(localStorage.getItem('sb_user') || 'null'); } catch { return null; }
 }
@@ -118,57 +129,3 @@ async function createTopup(type) {
 
 document.getElementById('topupYookassa')?.addEventListener('click', () => createTopup('yookassa'));
 document.getElementById('topupCrypto')?.addEventListener('click', () => createTopup('crypto'));
-
-
-async function claimSocialBonus(platform) {
-  const user = getUser();
-
-  if (!user?.userId || !user?.sessionToken) {
-    window.location.href = 'auth.html';
-    return;
-  }
-
-  const links = {
-    telegram: 'https://t.me/smmboost_pro',
-    vk: 'https://vk.ru/smmboost_pro'
-  };
-
-  if (links[platform]) {
-    window.open(links[platform], '_blank');
-  }
-
-  const button = platform === 'telegram'
-    ? document.getElementById('claimTelegramBonus')
-    : document.getElementById('claimVkBonus');
-
-  const oldText = button.innerHTML;
-  button.disabled = true;
-
-  try {
-    const res = await fetch('/api/social-bonus', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: user.userId,
-        sessionToken: user.sessionToken,
-        platform
-      })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || 'Ошибка начисления бонуса');
-    }
-
-    alert(data.message || 'Бонус начислен');
-  } catch (e) {
-    alert(e.message || 'Ошибка создания оплаты');
-  }
-
-  button.disabled = false;
-  button.innerHTML = oldText;
-}
-
-document.getElementById('claimTelegramBonus')?.addEventListener('click', () => claimSocialBonus('telegram'));
-document.getElementById('claimVkBonus')?.addEventListener('click', () => claimSocialBonus('vk'));

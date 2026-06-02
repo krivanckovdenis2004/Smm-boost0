@@ -222,6 +222,7 @@ async function createBalanceOrder() {
     }
 
     saveMyOrder(data.orderDocId);
+    window.sbGoal?.('order_created', { order_id: data.publicOrderId || data.orderDocId, value: Number(currentPrice || 0) });
     alert("Заказ создан и отправлен в работу");
     window.location.href = "orders.html?order=" + encodeURIComponent(data.orderDocId);
     return;

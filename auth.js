@@ -69,6 +69,7 @@ async function registerWithLoginPassword(event) {
   const restore = toggleBusy(form, true, 'Регистрируем...');
   try {
     await submitAuth({ action: 'register', username, password, passwordConfirm });
+    window.sbGoal?.('registration', { login: username });
     setMessage('Вы успешно зарегистрированы. Начислен приветственный бонус 70₽.', true);
     setTimeout(() => { window.location.href = 'wallet.html'; }, 900);
   } catch (e) {
@@ -92,6 +93,7 @@ async function loginWithPassword(event) {
   const restore = toggleBusy(form, true, 'Входим...');
   try {
     const user = await submitAuth({ action: 'login', username, password });
+    window.sbGoal?.('login', { login: user.username || username });
     setMessage(`Вы успешно вошли как ${user.displayName || user.username}.`, true);
     setTimeout(() => { window.location.href = 'wallet.html'; }, 700);
   } catch (e) {

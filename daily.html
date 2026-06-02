@@ -7,6 +7,7 @@
   <meta name="description" content="Ежедневная раздача SMM-Boost: получайте бесплатный подарок для продвижения соцсетей раз в 24 часа." />
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="style.css">
+<script src="metrika-goals.js"></script>
 </head>
 <body>
 <div class="bg-animation"><span></span><span></span><span></span><span></span></div>
@@ -176,6 +177,7 @@
       const r=await fetch('/api/free-gift',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source:'Ежедневная раздача',giftKey:data.key,giftTitle:data.giftTitle,giftId:data.id,quantity:data.quantity,deviceId:deviceId(),social,link,telegramUser:user})});
       const json=await r.json();
       if(!r.ok) throw new Error(json.error||'Ошибка отправки');
+      window.sbGoal?.('daily_bonus', { gift: data.giftTitle || '', social: social || '' });
       status.textContent=json.autoCreated?'✅ Бонус отправлен автоматически. JAP ID: '+json.japOrder:'⚠️ Заявка ушла администратору, нужна ручная проверка.';
     }catch(e){status.textContent='❌ '+e.message;}
   });
