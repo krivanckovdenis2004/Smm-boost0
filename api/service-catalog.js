@@ -39,7 +39,7 @@ export const SERVICE_CATALOG = [
     "price": 112.0,
     "mode": "per1000",
     "min": 10,
-    "max": 1000000
+    "max": 10000
   },
   {
     "id": "10019",
@@ -156,7 +156,16 @@ export const SERVICE_CATALOG = [
 ];
 
 export function getServiceById(serviceId) {
-  return SERVICE_CATALOG.find(item => String(item.id) === String(serviceId));
+  const rawId = String(serviceId || '').trim();
+
+  // Старые страницы/кэш браузера могли отправлять прежний ID TikTok-подписчиков.
+  // Маппим его на актуальную услугу JAP, чтобы заказ не падал с "Unknown service".
+  const aliases = {
+    '8777': '10136'
+  };
+
+  const normalizedId = aliases[rawId] || rawId;
+  return SERVICE_CATALOG.find(item => String(item.id) === String(normalizedId));
 }
 
 export function calcServicePrice(service, quantity) {
@@ -170,7 +179,7 @@ export function calcServicePrice(service, quantity) {
 export function validateOrderPayload(payload = {}) {
   const service = getServiceById(payload.serviceId);
   if (!service) {
-    return { ok: false, error: 'Unknown service' };
+    return { ok: false, error: `Услуга не найдена. Обновите страницу и выберите услугу заново. ID: ${String(payload.serviceId || '—')}` };
   }
 
   const quantity = Math.floor(Number(payload.quantity || 0));
