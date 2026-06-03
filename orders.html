@@ -31,19 +31,21 @@
 </div>
 
 <nav class="navbar">
-
-  <div class="nav-logo">
-    SMM-Boost
+  <div class="nav-logo">SMM-Boost</div>
+  <div class="nav-links main-nav-links">
+    <a href="auth.html" class="nav-register-link">Зарегистрироваться</a>
+    <button class="menu-toggle" type="button" aria-label="Открыть меню" aria-expanded="false"><span></span><span></span><span></span></button>
   </div>
-
-  <div class="nav-links">
-
-    <a href="index.html">
-      Главная
-    </a>
-
+  <div class="nav-menu" id="navMenu">
+    <a href="services.html"><span class="menu-emoji">🚀</span><span>Заказать услуги</span></a>
+    <a href="wallet.html"><span class="menu-emoji">💰</span><span>Баланс</span></a>
+    <a href="orders.html"><span class="menu-emoji">📦</span><span>Мои заказы</span></a>
+    <a href="auth.html"><span class="menu-emoji">🎁</span><span>Зарегистрироваться</span></a>
+    <a href="daily.html"><span class="menu-emoji">🎁</span><span>Ежедневная раздача</span></a>
+    <a href="index.html#reviews"><span class="menu-emoji">⭐</span><span>Отзывы</span></a>
+    <a href="index.html#faq"><span class="menu-emoji">❔</span><span>FAQ</span></a>
+    <a href="contacts.html"><span class="menu-emoji">💬</span><span>Контакты</span></a>
   </div>
-
 </nav>
 
 <section class="my-orders-page">
@@ -65,6 +67,31 @@
 <script type="module"
 src="orders.js"></script>
 
+
+<script>
+(function(){
+  const btn = document.querySelector('.menu-toggle');
+  const menu = document.querySelector('.nav-menu');
+  if(!btn || !menu) return;
+  btn.addEventListener('click', function(e){
+    e.stopPropagation();
+    const opened = menu.classList.toggle('open');
+    btn.setAttribute('aria-expanded', opened ? 'true' : 'false');
+  });
+  document.addEventListener('click', function(e){
+    if(!menu.contains(e.target) && !btn.contains(e.target)){
+      menu.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+    }
+  });
+  menu.querySelectorAll('a').forEach(function(link){
+    link.addEventListener('click', function(){
+      menu.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+    });
+  });
+})();
+</script>
 <script src="user-state.js"></script>
 </body>
 

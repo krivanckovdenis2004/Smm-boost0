@@ -75,7 +75,46 @@
     });
   }
 
+
+
+  function normalizeMenuButton() {
+    document.querySelectorAll('.menu-toggle').forEach(function(btn){
+      if (btn.querySelectorAll('span').length < 3) {
+        btn.textContent = '';
+        btn.innerHTML = '<span></span><span></span><span></span>';
+      }
+      btn.setAttribute('aria-label', 'Открыть меню');
+      if (!btn.hasAttribute('aria-expanded')) btn.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  function bindMenu() {
+    normalizeMenuButton();
+    var btn = document.querySelector('.menu-toggle');
+    var menu = document.querySelector('.nav-menu');
+    if (!btn || !menu || btn.dataset.sbMenuBound === '1') return;
+    btn.dataset.sbMenuBound = '1';
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      var opened = menu.classList.toggle('open');
+      btn.setAttribute('aria-expanded', opened ? 'true' : 'false');
+    });
+    document.addEventListener('click', function(e){
+      if (!menu.contains(e.target) && !btn.contains(e.target)) {
+        menu.classList.remove('open');
+        btn.setAttribute('aria-expanded', 'false');
+      }
+    });
+    menu.querySelectorAll('a').forEach(function(link){
+      link.addEventListener('click', function(){
+        menu.classList.remove('open');
+        btn.setAttribute('aria-expanded', 'false');
+      });
+    });
+  }
+
   function updateAuthLinks() {
+    bindMenu();
     var user = getUser();
     if (user && user.userId && !user.sessionToken) {
       localStorage.removeItem('sb_user');

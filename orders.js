@@ -1,13 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
-import {
-  getFirestore,
-  doc,
-  collection,
-  query,
-  where,
-  onSnapshot
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8",
@@ -25,7 +17,7 @@ const db = getFirestore(app);
 const shownStatuses = {};
 const lastStatusChecks = {};
 const unsubscribeById = {};
-let userOrdersUnsubscribe = null;
+let refreshTimer = null;
 
 function getUser() {
   try { return JSON.parse(localStorage.getItem('sb_user') || 'null'); } catch { return null; }
@@ -55,24 +47,12 @@ function saveOrderFromUrl() {
   const params = new URLSearchParams(window.location.search);
   const orderId = params.get('order');
   if (!orderId) return null;
-  const myOrders = JSON.parse(localStorage.getItem('myOrders')) || [];
+  const myOrders = JSON.parse(localStorage.getItem('myOrders') || '[]');
   if (!myOrders.includes(orderId)) {
     myOrders.unshift(orderId);
     localStorage.setItem('myOrders', JSON.stringify(myOrders));
   }
   return orderId;
-}
-
-function getProgress(order) {
-  const status = order.status || '';
-  if (typeof order.progress === 'number') return Math.min(100, Math.max(0, order.progress));
-  if (!status) return 10;
-  if (status.includes('🕓')) return 15;
-  if (status.includes('🟡')) return 60;
-  if (status.includes('🟠')) return 80;
-  if (status.includes('🟢')) return 100;
-  if (status.includes('🔴')) return 100;
-  return 50;
 }
 
 function getStatusClass(status) {
@@ -85,42 +65,54 @@ function getStatusClass(status) {
 }
 
 function getLinkTitle(link) {
-  if (!link) return 'Открыть ссылку';
+  if (!link) return 'Ссылка';
   const url = link.toLowerCase();
-  if (url.includes('t.me') || url.includes('telegram.me')) return 'Открыть Telegram';
-  if (url.includes('tiktok.com')) return 'Открыть TikTok';
-  if (url.includes('youtube.com') || url.includes('youtu.be')) return 'Открыть YouTube';
-  if (url.includes('vk.com') || url.includes('vk.ru')) return 'Открыть VK';
-  if (url.includes('instagram.com')) return 'Открыть Instagram';
-  return 'Открыть ссылку';
+  if (url.includes('t.me') || url.includes('telegram.me')) return 'Telegram';
+  if (url.includes('tiktok.com')) return 'TikTok';
+  if (url.includes('youtube.com') || url.includes('youtu.be')) return 'YouTube';
+  if (url.includes('vk.com') || url.includes('vk.ru')) return 'VK';
+  if (url.includes('instagram.com')) return 'Instagram';
+  return 'Ссылка';
+}
+
+function money(value) {
+  return Number(value || 0).toFixed(2).replace('.00', '') + '₽';
+}
+
+function escapeHtml(value) {
+  return String(value || '').replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 }
 
 function renderOrder(orderId, order) {
   const ordersList = document.getElementById('ordersList');
   if (!ordersList) return;
-  const status = order.status || '🕓 Ожидает оплаты';
+
+  const status = order.status || '🟡 В обработке';
   if (shownStatuses[orderId] && shownStatuses[orderId] !== status) showToast(status);
   shownStatuses[orderId] = status;
   if (shouldCheckJapStatus(order)) syncJapStatus(orderId);
 
   const statusClass = getStatusClass(status);
-  const progress = getProgress(order);
   const publicOrderId = order.publicOrderId || orderId.slice(0, 8).toUpperCase();
+  const service = escapeHtml(order.service || 'Заказ');
+  const link = escapeHtml(order.link || '#');
+  const linkTitle = escapeHtml(getLinkTitle(order.link || ''));
+
   const cardHTML = `
     <div class="order-card compact-order-card" id="${orderId}">
       <div class="order-card-top">
-        <span class="order-id">ID: ${publicOrderId}</span>
-        <span class="statusBadge ${statusClass}">${status}</span>
+        <span class="order-id">${escapeHtml(publicOrderId)}</span>
+        <span class="statusBadge ${statusClass}">${escapeHtml(status)}</span>
       </div>
-      <h2>${order.service || 'Заказ'}</h2>
-      <div class="order-meta">
-        <p><b>Количество:</b> ${order.amount || 0}</p>
-        <p><b>Сумма:</b> ${order.price || 0}₽</p>
-        <p><b>Оплата:</b> ${order.paymentMethod || '—'}</p>
-        ${order.japStatus ? `<p><b>JAP:</b> ${order.japStatus}</p>` : ''}
+      <div class="compact-order-main">
+        <h2>${service}</h2>
+        <div class="order-quick-meta">
+          <span>× ${Number(order.amount || 0)}</span>
+          <span>${money(order.price)}</span>
+          <span>${escapeHtml(order.paymentMethod || 'Баланс')}</span>
+        </div>
       </div>
-      <a href="${order.link || '#'}" target="_blank" class="order-link">${getLinkTitle(order.link || '')}</a>
-      <div class="progressBar small-progress"><div class="progressFill" style="width:${progress}%"></div></div>
+      <a href="${link}" target="_blank" rel="noopener" class="order-link">Открыть ${linkTitle}</a>
     </div>`;
 
   const existingCard = document.getElementById(orderId);
@@ -131,59 +123,76 @@ function renderOrder(orderId, order) {
 function renderEmpty(message) {
   const ordersList = document.getElementById('ordersList');
   if (!ordersList) return;
-  ordersList.innerHTML = `<p class="emptyOrders">${message}</p>`;
+  ordersList.innerHTML = `<p class="emptyOrders">${escapeHtml(message)}</p>`;
+}
+
+function renderOrders(orders) {
+  const ordersList = document.getElementById('ordersList');
+  if (!ordersList) return;
+  ordersList.innerHTML = '';
+  if (!orders.length) {
+    renderEmpty('У вас пока нет заказов');
+    return;
+  }
+  orders.forEach(order => renderOrder(order.id, order));
 }
 
 function subscribeSingleOrder(orderId) {
   if (!orderId || unsubscribeById[orderId]) return;
   unsubscribeById[orderId] = onSnapshot(doc(db, 'orders', orderId), (orderSnap) => {
     if (!orderSnap.exists()) return;
-    renderOrder(orderId, orderSnap.data());
-  });
+    renderOrder(orderId, { id: orderSnap.id, ...orderSnap.data() });
+  }, (err) => console.error('Order subscribe error:', err));
 }
 
-function loadOrders() {
+async function loadOrdersOnce() {
+  const user = getUser();
+  if (!isLoggedIn(user)) {
+    const urlOrderId = saveOrderFromUrl();
+    if (urlOrderId) {
+      document.getElementById('ordersList').innerHTML = '';
+      subscribeSingleOrder(urlOrderId);
+      return;
+    }
+    renderEmpty('Войдите в аккаунт, чтобы видеть свои заказы с любого устройства.');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/list-orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user.userId, sessionToken: user.sessionToken })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401) {
+      localStorage.removeItem('sb_user');
+      window.SBUserState?.refresh?.();
+      renderEmpty(data.error || 'Сессия устарела. Войдите заново.');
+      return;
+    }
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Не удалось загрузить заказы');
+    renderOrders(Array.isArray(data.orders) ? data.orders : []);
+  } catch (e) {
+    console.error(e);
+    renderEmpty(e.message || 'Не удалось загрузить заказы. Обновите страницу.');
+  }
+}
+
+function initOrdersPage() {
   const urlOrderId = saveOrderFromUrl();
   const params = new URLSearchParams(window.location.search);
-  const user = getUser();
-
   if (params.get('paid') === '1') {
     showToast('✅ Оплата прошла. Заказ создан.');
     window.history.replaceState({}, document.title, 'orders.html');
   }
 
-  const ordersList = document.getElementById('ordersList');
-  if (!ordersList) return;
-  ordersList.innerHTML = '';
-
-  if (isLoggedIn(user)) {
-    const q = query(collection(db, 'orders'), where('userId', '==', user.userId));
-    userOrdersUnsubscribe = onSnapshot(q, (snapshot) => {
-      ordersList.innerHTML = '';
-      if (snapshot.empty) {
-        renderEmpty('У вас пока нет заказов');
-        return;
-      }
-      const docs = snapshot.docs.map(d => ({ id: d.id, data: d.data() }));
-      docs.sort((a, b) => {
-        const ta = a.data.createdAt?.seconds || 0;
-        const tb = b.data.createdAt?.seconds || 0;
-        return tb - ta;
-      });
-      docs.forEach(item => renderOrder(item.id, item.data));
-    });
-    return;
-  }
-
-  if (urlOrderId) {
-    subscribeSingleOrder(urlOrderId);
-    return;
-  }
-
-  renderEmpty('Войдите в аккаунт, чтобы видеть свои заказы с любого устройства.');
+  loadOrdersOnce();
+  if (urlOrderId) subscribeSingleOrder(urlOrderId);
+  refreshTimer = setInterval(loadOrdersOnce, 20000);
 }
 
-loadOrders();
+initOrdersPage();
 
 function showToast(status) {
   const container = document.getElementById('toastContainer');
@@ -198,3 +207,8 @@ function showToast(status) {
   container.appendChild(toast);
   setTimeout(() => toast.remove(), 4000);
 }
+
+window.addEventListener('beforeunload', () => {
+  if (refreshTimer) clearInterval(refreshTimer);
+  Object.values(unsubscribeById).forEach(fn => { try { fn(); } catch {} });
+});
