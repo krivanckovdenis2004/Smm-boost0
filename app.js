@@ -200,7 +200,7 @@ function linkMatchesSelectedService(link) {
   const value = String(link || '').toLowerCase();
   if (name.includes('telegram') || ['1165','8862','10298','8485','7411','8811'].includes(id)) return /(t\.me|telegram\.me|telegram\.dog)/i.test(value);
   if (name.includes('vk') || name.includes('вк') || ['1543','3757','7737','3761','4186'].includes(id)) return /(vk\.com|vk\.ru)/i.test(value);
-  if (name.includes('tiktok') || ['10136','10019','8101','1978'].includes(id)) return /tiktok\.com/i.test(value);
+  if (name.includes('tiktok') || ['10136','8526','8101','1978'].includes(id)) return /tiktok\.com/i.test(value);
   if (name.includes('youtube') || /youtube|youtu/.test(name)) return /(youtube\.com|youtu\.be)/i.test(value);
   return /instagram\.com/i.test(value);
 }
