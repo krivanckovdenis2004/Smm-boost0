@@ -42,7 +42,7 @@ export const SERVICE_CATALOG = [
     "max": 10000
   },
   {
-    "id": "10019",
+    "id": "2260",
     "name": "TikTok просмотры",
     "price": 2.0,
     "mode": "per1000",
