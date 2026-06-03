@@ -161,7 +161,8 @@ export function getServiceById(serviceId) {
   // Старые страницы/кэш браузера могли отправлять прежний ID TikTok-подписчиков.
   // Маппим его на актуальную услугу JAP, чтобы заказ не падал с "Unknown service".
   const aliases = {
-    '8777': '10136'
+    '8777': '10136',
+    '10022': '8101'
   };
 
   const normalizedId = aliases[rawId] || rawId;
