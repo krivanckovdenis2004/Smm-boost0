@@ -38,7 +38,7 @@ export const SERVICE_CATALOG = [
     "name": "TikTok подписчики",
     "price": 112.0,
     "mode": "per1000",
-    "min": 10,
+    "min": 100,
     "max": 10000
   },
   {
@@ -50,7 +50,7 @@ export const SERVICE_CATALOG = [
     "max": 1000000
   },
   {
-    "id": "10022",
+    "id": "8101",
     "name": "TikTok лайки",
     "price": 3.0,
     "mode": "per1000",
@@ -224,7 +224,7 @@ export function validateOrderPayload(payload = {}) {
     if (!/(vk\.com|vk\.ru)/i.test(linkLower)) {
       return linkFail('https://vk.com/... или https://vk.ru/...');
     }
-  } else if (serviceName.includes('tiktok') || ['10136','10019','10022','1978'].includes(serviceId)) {
+  } else if (serviceName.includes('tiktok') || ['10136','10019','8101','1978'].includes(serviceId)) {
     if (!/tiktok\.com/i.test(linkLower)) {
       return linkFail('https://www.tiktok.com/@username/...');
     }
