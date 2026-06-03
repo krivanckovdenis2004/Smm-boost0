@@ -34,7 +34,7 @@ export const SERVICE_CATALOG = [
     "max": 1000000
   },
   {
-    "id": "8777",
+    "id": "10136",
     "name": "TikTok подписчики",
     "price": 112.0,
     "mode": "per1000",
@@ -182,9 +182,18 @@ export function validateOrderPayload(payload = {}) {
     return { ok: false, error: 'Для этой услуги количество должно быть кратно 3' };
   }
 
-  const link = String(payload.link || '').trim();
+  let link = String(payload.link || '').trim();
+  if (!link) {
+    return { ok: false, error: 'Введите ссылку на профиль, пост или видео' };
+  }
+
+  // Пользователи часто вставляют ссылку без https://. Делаем её корректной автоматически.
   if (!/^https?:\/\//i.test(link)) {
-    return { ok: false, error: 'Invalid link' };
+    if (/^(www\.|instagram\.com|tiktok\.com|vk\.com|vk\.ru|t\.me|telegram\.me|telegram\.dog|youtube\.com|youtu\.be)/i.test(link)) {
+      link = 'https://' + link.replace(/^\/\/+/, '');
+    } else {
+      return { ok: false, error: 'Введите полную ссылку, например https://www.tiktok.com/@username' };
+    }
   }
 
   const serviceName = String(service.name || '').toLowerCase();
@@ -206,7 +215,7 @@ export function validateOrderPayload(payload = {}) {
     if (!/(vk\.com|vk\.ru)/i.test(linkLower)) {
       return linkFail('https://vk.com/... или https://vk.ru/...');
     }
-  } else if (serviceName.includes('tiktok') || ['8777','10019','10022','1978'].includes(serviceId)) {
+  } else if (serviceName.includes('tiktok') || ['10136','10019','10022','1978'].includes(serviceId)) {
     if (!/tiktok\.com/i.test(linkLower)) {
       return linkFail('https://www.tiktok.com/@username/...');
     }

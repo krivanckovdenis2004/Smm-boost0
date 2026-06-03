@@ -17,7 +17,7 @@ const firebaseApp = getApps().length ? getApps()[0] : initializeApp(firebaseConf
 const db = getFirestore(firebaseApp);
 
 
-const JAP_API_KEY = process.env.JAP_API_KEY || '0561e44b45942392a866871516ab7036';
+const JAP_API_KEY = process.env.JAP_API_KEY || '';
 
 async function sendTelegram(text) {
   if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.TELEGRAM_CHAT_ID) return;
@@ -40,6 +40,7 @@ export default async function handler(req, res) {
     const sessionToken = String(req.body?.sessionToken || '').trim();
 
     if (!userId || !sessionToken) return res.status(401).json({ error: 'Сначала войдите в аккаунт' });
+    if (!JAP_API_KEY) return res.status(500).json({ error: 'JAP_API_KEY не настроен в Vercel' });
 
     const validated = validateOrderPayload(req.body || {});
     if (!validated.ok) return res.status(400).json({ error: validated.error });
@@ -63,19 +64,30 @@ export default async function handler(req, res) {
     const publicOrderId = generatePublicOrderId();
 
     // Сначала создаем заказ в JAP. Деньги списываем только после успешного ответа JAP.
-    const japResponse = await fetch('https://justanotherpanel.com/api/v2', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        key: JAP_API_KEY,
-        action: 'add',
-        service: String(service.id),
-        link,
-        quantity: String(quantity)
-      })
-    });
+    const japController = new AbortController();
+    const japTimeout = setTimeout(() => japController.abort(), 25000);
+    let japData = {};
 
-    const japData = await japResponse.json();
+    try {
+      const japResponse = await fetch('https://justanotherpanel.com/api/v2', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        signal: japController.signal,
+        body: new URLSearchParams({
+          key: JAP_API_KEY,
+          action: 'add',
+          service: String(service.id),
+          link,
+          quantity: String(quantity)
+        })
+      });
+
+      const japText = await japResponse.text();
+      try { japData = JSON.parse(japText); }
+      catch { japData = { error: japText || 'Некорректный ответ JAP' }; }
+    } finally {
+      clearTimeout(japTimeout);
+    }
     const japOrderId = japData.order || japData.id || japData.orderId || '';
     const japErrorText = japData.error || japData.message || japData.description || '';
 
@@ -147,6 +159,6 @@ export default async function handler(req, res) {
   } catch (e) {
     console.error(e);
     try { await sendTelegram(`❌ Ошибка заказа с баланса:\n${e.message}`); } catch {}
-    return res.status(500).json({ error: e.message });
+    return res.status(500).json({ error: e.name === 'AbortError' ? 'JAP долго не отвечает. Попробуйте позже.' : e.message });
   }
 }
