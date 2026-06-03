@@ -103,13 +103,14 @@ function updateCardTotal(card) {
   const total = card.querySelector(".service-total");
   const error = card.querySelector(".input-error");
   const min = Number(card.dataset.min || 1);
+  const max = Number(card.dataset.max || 1000000);
   const amount = Number(input.value || 0);
   const price = calculateCardPrice(card, amount);
 
   total.innerText = price.toFixed(2) + "₽";
 
   const mode = card.dataset.priceMode || "per1000";
-  if (amount > 0 && (amount < min || (mode === "per3" && amount % 3 !== 0))) {
+  if (amount > 0 && (amount < min || amount > max || (mode === "per3" && amount % 3 !== 0))) {
     error.style.display = "block";
   } else {
     error.style.display = "none";
@@ -126,11 +127,17 @@ function openOrderModal(card) {
   const input = card.querySelector(".service-amount");
   const amount = Number(input.value || 0);
   const min = Number(card.dataset.min || 1);
+  const max = Number(card.dataset.max || 1000000);
 
   const mode = card.dataset.priceMode || "per1000";
 
   if (amount < min) {
     alert(`Минимальный заказ: ${min}`);
+    return;
+  }
+
+  if (amount > max) {
+    alert(`Максимальный заказ: ${max}`);
     return;
   }
 
@@ -259,7 +266,7 @@ async function createBalanceOrder() {
     }
 
     if (!response.ok || !data.ok) {
-      throw new Error(data.error || "Ошибка заказа с баланса");
+      throw new Error(data.error || ("Ошибка заказа с баланса. ID услуги: " + String(currentServiceId || "—")));
     }
 
     saveMyOrder(data.orderDocId);
