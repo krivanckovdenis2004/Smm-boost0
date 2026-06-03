@@ -249,7 +249,7 @@ async function createBalanceOrder() {
         login: user.username || user.displayName || user.email || '',
         sessionToken: user.sessionToken,
         service: currentService,
-        serviceId: String(currentServiceId),
+        serviceId: String(({ '10019':'8526', '2260':'8526', '10022':'8101', '8777':'10136' }[String(currentServiceId)] || currentServiceId)),
         quantity: currentAmount,
         link
       })
