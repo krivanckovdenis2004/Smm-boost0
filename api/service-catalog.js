@@ -42,7 +42,7 @@ export const SERVICE_CATALOG = [
     "max": 10000
   },
   {
-    "id": "2260",
+    "id": "8526",
     "name": "TikTok просмотры",
     "price": 2.0,
     "mode": "per1000",
@@ -54,7 +54,7 @@ export const SERVICE_CATALOG = [
     "name": "TikTok лайки",
     "price": 3.0,
     "mode": "per1000",
-    "min": 10,
+    "min": 50,
     "max": 1000000
   },
   {
@@ -162,7 +162,9 @@ export function getServiceById(serviceId) {
   // Маппим его на актуальную услугу JAP, чтобы заказ не падал с "Unknown service".
   const aliases = {
     '8777': '10136',
-    '10022': '8101'
+    '10022': '8101',
+    '10019': '8526',
+    '2260': '8526'
   };
 
   const normalizedId = aliases[rawId] || rawId;
