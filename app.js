@@ -175,6 +175,29 @@ document.querySelectorAll(".service-card").forEach(card => {
 showPlatform("Instagram");
 
 
+
+function normalizeSocialLink(raw) {
+  let link = String(raw || '').trim();
+  if (!link) return '';
+  if (!/^https?:\/\//i.test(link)) {
+    if (/^(www\.|instagram\.com|tiktok\.com|vk\.com|vk\.ru|t\.me|telegram\.me|telegram\.dog|youtube\.com|youtu\.be)/i.test(link)) {
+      link = 'https://' + link.replace(/^\/\/+/, '');
+    }
+  }
+  return link;
+}
+
+function linkMatchesSelectedService(link) {
+  const name = String(currentService || '').toLowerCase();
+  const id = String(currentServiceId || '');
+  const value = String(link || '').toLowerCase();
+  if (name.includes('telegram') || ['1165','8862','10298','8485','7411','8811'].includes(id)) return /(t\.me|telegram\.me|telegram\.dog)/i.test(value);
+  if (name.includes('vk') || name.includes('вк') || ['1543','3757','7737','3761','4186'].includes(id)) return /(vk\.com|vk\.ru)/i.test(value);
+  if (name.includes('tiktok') || ['10136','10019','10022','1978'].includes(id)) return /tiktok\.com/i.test(value);
+  if (name.includes('youtube') || /youtube|youtu/.test(name)) return /(youtube\.com|youtu\.be)/i.test(value);
+  return /instagram\.com/i.test(value);
+}
+
 async function createBalanceOrder() {
   const user = requireSbUser();
   if (!user) {
@@ -182,11 +205,17 @@ async function createBalanceOrder() {
     return;
   }
 
-  const link = document.getElementById("instagramLink").value.trim();
-  const socialRegex = /instagram\.com|tiktok\.com|youtube\.com|youtu\.be|vk\.com|vk\.ru|t\.me|telegram\.me/i;
+  const linkInput = document.getElementById("instagramLink");
+  const link = normalizeSocialLink(linkInput?.value || '');
+  if (linkInput) linkInput.value = link;
 
-  if (!socialRegex.test(link)) {
-    alert("Введите корректную ссылку на соцсеть");
+  if (!link || !/^https?:\/\//i.test(link)) {
+    alert("Введите полную ссылку на профиль, пост или видео");
+    return;
+  }
+
+  if (!linkMatchesSelectedService(link)) {
+    alert("Ссылка не подходит для выбранной услуги. Выберите правильную платформу или вставьте нужную ссылку.");
     return;
   }
 
@@ -201,9 +230,13 @@ async function createBalanceOrder() {
   button.innerText = "Создание заказа...";
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
     const response = await fetch("/api/balance-order", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
       body: JSON.stringify({
         userId: user.userId,
         login: user.username || user.displayName || user.email || '',
@@ -215,7 +248,15 @@ async function createBalanceOrder() {
       })
     });
 
-    const data = await response.json();
+    clearTimeout(timeoutId);
+    const data = await response.json().catch(() => ({}));
+
+    if (response.status === 401) {
+      localStorage.removeItem('sb_user');
+      window.SBUserState?.refresh?.();
+      showAuthRequiredModal();
+      throw new Error(data.error || "Сначала войдите в аккаунт");
+    }
 
     if (!response.ok || !data.ok) {
       throw new Error(data.error || "Ошибка заказа с баланса");
@@ -227,11 +268,12 @@ async function createBalanceOrder() {
     window.location.href = "orders.html?order=" + encodeURIComponent(data.orderDocId);
     return;
   } catch (e) {
-    alert(e.message);
+    const message = e.name === 'AbortError' ? 'Сервер долго не отвечает. Попробуйте ещё раз через минуту.' : (e.message || 'Ошибка заказа');
+    alert(message);
+  } finally {
+    button.disabled = false;
+    button.innerText = originalText;
   }
-
-  button.disabled = false;
-  button.innerText = originalText;
 }
 
 // Прямая оплата услуги отключена. Заказы создаются только после входа и только с баланса.

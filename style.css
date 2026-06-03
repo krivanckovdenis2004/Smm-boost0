@@ -4103,3 +4103,51 @@ body.trust-ui,
     font-size:14.5px !important;
   }
 }
+
+
+/* === FINAL FIX: compact menu and reliable order modal === */
+.menu-toggle{
+  width:52px !important;
+  height:52px !important;
+  min-width:52px !important;
+  border-radius:17px !important;
+  gap:4px !important;
+}
+.menu-toggle span,
+.menu-toggle::before,
+.menu-toggle::after{
+  width:20px !important;
+  height:2px !important;
+}
+.nav-menu{
+  position:absolute !important;
+  top:calc(100% + 10px) !important;
+  right:0 !important;
+  left:auto !important;
+  width:270px !important;
+  max-width:calc(100vw - 32px) !important;
+  display:none !important;
+  grid-template-columns:1fr !important;
+  gap:6px !important;
+  padding:10px !important;
+  border-radius:18px !important;
+  background:rgba(10,10,20,.97) !important;
+  backdrop-filter:blur(20px) !important;
+  z-index:9999 !important;
+}
+.nav-menu.open{display:grid !important;}
+.nav-menu a{
+  padding:10px 12px !important;
+  border-radius:13px !important;
+  font-size:15px !important;
+  line-height:1.15 !important;
+  gap:10px !important;
+}
+.nav-menu .menu-emoji{
+  width:24px !important;
+  min-width:24px !important;
+  height:24px !important;
+  font-size:20px !important;
+}
+.modal{z-index:10000 !important;}
+.modal-content{max-width:520px;}
