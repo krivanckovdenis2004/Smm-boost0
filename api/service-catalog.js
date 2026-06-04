@@ -34,25 +34,25 @@ export const SERVICE_CATALOG = [
     "max": 1000000
   },
   {
-    "id": "10136",
+    "id": "10238",
     "name": "TikTok подписчики",
-    "price": 112.0,
+    "price": 320.0,
     "mode": "per1000",
     "min": 100,
     "max": 10000
   },
   {
-    "id": "8526",
+    "id": "10019",
     "name": "TikTok просмотры",
-    "price": 2.0,
+    "price": 5.0,
     "mode": "per1000",
     "min": 100,
     "max": 1000000
   },
   {
-    "id": "8101",
+    "id": "10122",
     "name": "TikTok лайки",
-    "price": 3.0,
+    "price": 11.0,
     "mode": "per1000",
     "min": 50,
     "max": 1000000
@@ -66,9 +66,9 @@ export const SERVICE_CATALOG = [
     "max": 1000000
   },
   {
-    "id": "1543",
-    "name": "VK подписчики",
-    "price": 40.0,
+    "id": "3752",
+    "name": "VK подписчики в группу",
+    "price": 129.0,
     "mode": "per1000",
     "min": 100,
     "max": 1000000
@@ -100,7 +100,7 @@ export const SERVICE_CATALOG = [
   {
     "id": "4186",
     "name": "VK друзья",
-    "price": 152.0,
+    "price": 159.0,
     "mode": "per1000",
     "min": 100,
     "max": 1000000
@@ -161,10 +161,13 @@ export function getServiceById(serviceId) {
   // Старые страницы/кэш браузера могли отправлять прежний ID TikTok-подписчиков.
   // Маппим его на актуальную услугу JAP, чтобы заказ не падал с "Unknown service".
   const aliases = {
-    '8777': '10136',
-    '10022': '8101',
-    '10019': '8526',
-    '2260': '8526'
+    '8777': '10238',
+    '10136': '10238',
+    '10022': '10122',
+    '8101': '10122',
+    '8526': '10019',
+    '2260': '10019',
+    '1543': '3752'
   };
 
   const normalizedId = aliases[rawId] || rawId;
@@ -223,11 +226,11 @@ export function validateOrderPayload(payload = {}) {
     if (!/(t\.me|telegram\.me|telegram\.dog)/i.test(linkLower)) {
       return linkFail('https://t.me/username или https://t.me/channel/123');
     }
-  } else if (serviceName.includes('vk') || serviceName.includes('вк') || ['1543','3757','7737','3761','4186'].includes(serviceId)) {
+  } else if (serviceName.includes('vk') || serviceName.includes('вк') || ['3752','1543','3757','7737','3761','4186'].includes(serviceId)) {
     if (!/(vk\.com|vk\.ru)/i.test(linkLower)) {
       return linkFail('https://vk.com/... или https://vk.ru/...');
     }
-  } else if (serviceName.includes('tiktok') || ['10136','8526','8101','1978'].includes(serviceId)) {
+  } else if (serviceName.includes('tiktok') || ['10238','10136','10019','8526','2260','10122','8101','10022','1978'].includes(serviceId)) {
     if (!/tiktok\.com/i.test(linkLower)) {
       return linkFail('https://www.tiktok.com/@username/...');
     }
