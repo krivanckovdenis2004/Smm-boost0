@@ -199,8 +199,8 @@ function linkMatchesSelectedService(link) {
   const id = String(currentServiceId || '');
   const value = String(link || '').toLowerCase();
   if (name.includes('telegram') || ['1165','8862','10298','8485','7411','8811'].includes(id)) return /(t\.me|telegram\.me|telegram\.dog)/i.test(value);
-  if (name.includes('vk') || name.includes('вк') || ['1543','3757','7737','3761','4186'].includes(id)) return /(vk\.com|vk\.ru)/i.test(value);
-  if (name.includes('tiktok') || ['10136','8526','8101','1978'].includes(id)) return /tiktok\.com/i.test(value);
+  if (name.includes('vk') || name.includes('вк') || ['3752','1543','3757','7737','3761','4186'].includes(id)) return /(vk\.com|vk\.ru)/i.test(value);
+  if (name.includes('tiktok') || ['10238','10136','10019','8526','2260','10122','8101','10022','1978'].includes(id)) return /tiktok\.com/i.test(value);
   if (name.includes('youtube') || /youtube|youtu/.test(name)) return /(youtube\.com|youtu\.be)/i.test(value);
   return /instagram\.com/i.test(value);
 }
@@ -249,7 +249,7 @@ async function createBalanceOrder() {
         login: user.username || user.displayName || user.email || '',
         sessionToken: user.sessionToken,
         service: currentService,
-        serviceId: String(({ '10019':'8526', '2260':'8526', '10022':'8101', '8777':'10136' }[String(currentServiceId)] || currentServiceId)),
+        serviceId: String(({ '8777':'10238', '10136':'10238', '8526':'10019', '2260':'10019', '10022':'10122', '8101':'10122', '1543':'3752' }[String(currentServiceId)] || currentServiceId)),
         quantity: currentAmount,
         link
       })
