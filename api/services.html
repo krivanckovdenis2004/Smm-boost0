@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
+<!-- Google tag (gtag.js) -->
+
+<script async
+src="https://www.googletagmanager.com/gtag/js?id=G-E6SRLXZW5V">
+</script>
+
+<script>
+
+window.dataLayer = window.dataLayer || [];
+
+function gtag(){
+
+dataLayer.push(arguments);
+
+}
+
+gtag('js', new Date());
+
+gtag('config', 'G-E6SRLXZW5V');
+
+</script>
+<link rel="icon"
+type="image/png"
+href="logo.png">
+<meta property="og:title"
+content="SMM-Boost">
+
+<meta property="og:description"
+content="Инструменты продвижения контента">
+
+<meta property="og:image"
+content="https://smm-boost.pro/preview.jpg">
+
+<meta property="og:url"
+content="https://smm-boost.pro">
+
+<meta name="twitter:card"
+content="summary_large_image">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Заказать услуги | SMM-Boost</title>
+
+<meta name="description" content="Выберите услугу SMM-Boost для TikTok, VK, Instagram или Telegram. Заказы доступны после входа и оплачиваются с баланса.">
+
+<meta
+name="keywords"
+content="продвижение соцсетей, smm boost, рост аудитории, продвижение контента, TikTok, YouTube, Telegram"
+>
+
+  <link rel="stylesheet" href="style.css?v=20260609-jap-all">
+<script src="metrika-goals.js"></script>
+</head>
+<body>
+<div class="bg-animation"><span></span><span></span><span></span><span></span></div>
+<nav class="navbar">
+
+  <div class="nav-logo">
+    SMM-Boost
+  </div>
+
+  <div class="nav-links main-nav-links">
+
+    <a href="services.html">
+      Услуги
+    </a>
+
+    <a href="orders.html">
+      Мои заказы
+    </a>
+
+    <a href="wallet.html">
+      Баланс
+    </a>
+
+    <button class="menu-toggle" type="button" aria-label="Открыть меню" aria-expanded="false"><span></span><span></span><span></span></button>
+
+  </div>
+
+  <div class="nav-menu" id="navMenu">
+    <a href="services.html"><span class="menu-emoji">🚀</span><span>Заказать услуги</span></a>
+    <a href="wallet.html"><span class="menu-emoji">💰</span><span>Баланс</span></a>
+    <a href="auth.html"><span class="menu-emoji">🎁</span><span>Зарегистрироваться</span></a>
+    <a href="daily.html"><span class="menu-emoji">🎁</span><span>Ежедневная раздача</span></a>
+    <a href="index.html#reviews"><span class="menu-emoji">⭐</span><span>Отзывы</span></a>
+    <a href="index.html#faq"><span class="menu-emoji">❔</span><span>FAQ</span></a>
+    <a href="contacts.html"><span class="menu-emoji">💬</span><span>Контакты</span></a>
+    <a href="privacy.html"><span class="menu-emoji">🛡</span><span>Политика</span></a>
+  </div>
+
+</nav>
+
+<main class="services-page-main quick-order-page">
+  <section class="quick-order-panel card">
+    <div class="quick-order-head">
+      <div>
+        <p class="quick-kicker">SMM-Boost</p>
+        <h1>Заказать услугу</h1>
+        <p>Все услуги JAP загружаются автоматически. Цена уже с наценкой +10%.</p>
+      </div>
+      <a class="quick-balance-link" href="wallet.html">💰 Баланс</a>
+    </div>
+
+    <form id="quickOrderForm" class="quick-order-form">
+      <label class="quick-field">
+        <span>Соцсеть</span>
+        <select id="quickSocial" required>
+          <option value="">Загрузка...</option>
+        </select>
+      </label>
+
+      <label class="quick-field">
+        <span>Категория</span>
+        <select id="quickCategory" required>
+          <option value="">Сначала выберите соцсеть</option>
+        </select>
+      </label>
+
+      <label class="quick-field quick-field-wide">
+        <span>Услуга</span>
+        <select id="quickService" required>
+          <option value="">Сначала выберите категорию</option>
+        </select>
+      </label>
+
+      <label class="quick-field quick-field-wide">
+        <span>Ссылка</span>
+        <input id="quickLink" type="url" placeholder="https://..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required>
+      </label>
+
+      <label class="quick-field">
+        <span>Количество</span>
+        <input id="quickQuantity" type="number" inputmode="numeric" min="1" step="1" placeholder="Сколько заказать" required>
+      </label>
+
+      <div class="quick-price-box">
+        <span>Цена услуги</span>
+        <strong id="quickPricePer1000">—</strong>
+        <small id="quickMinMax">Выберите услугу</small>
+      </div>
+
+      <div class="quick-total-box quick-field-wide">
+        <span>Цена заказа</span>
+        <strong id="quickOrderPrice">0.00₽</strong>
+      </div>
+
+      <button id="quickSubmitBtn" class="quick-submit-btn" type="submit">Отправить заказ</button>
+    </form>
+
+    <p id="quickServicesStatus" class="quick-status">Загрузка услуг JAP...</p>
+  </section>
+
+  <section class="quick-service-description card">
+    <h2>Описание выбранной услуги</h2>
+    <div id="quickDescription" class="quick-description-text">Выберите соцсеть, категорию и услугу, чтобы увидеть описание.</div>
+  </section>
+
+  <section class="quick-help-grid">
+    <div class="quick-help-card">🔐 Заказы доступны только после входа</div>
+    <div class="quick-help-card">💳 Оплата только с баланса</div>
+    <div class="quick-help-card">🎁 Бонусный баланс можно использовать сразу</div>
+  </section>
+</main>
+<div id="live-orders"></div>
+<script type="module" src="app.js?v=20260609-jap-all"></script>
+<script src="user-state.js?v=20260603-final-working"></script>
+</body>
+</html>
