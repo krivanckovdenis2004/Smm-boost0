@@ -1,14 +1,11 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
 import {
   getFirestore,
   collection,
-  addDoc,
   query,
   orderBy,
   limit,
-  onSnapshot,
-  serverTimestamp
+  onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -24,31 +21,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let currentService = "";
-let currentServiceId = "";
-let currentAmount = 0;
-let currentPrice = 0;
+let allServices = [];
+let currentService = null;
 
-function generateOrderId() {
-  const part = Math.random().toString(36).slice(2, 8).toUpperCase();
-  return `SB-${part}`;
-}
-
-function saveMyOrder(orderDocId) {
-  const myOrders = JSON.parse(localStorage.getItem("myOrders")) || [];
-  if (!myOrders.includes(orderDocId)) {
-    myOrders.unshift(orderDocId);
-    localStorage.setItem("myOrders", JSON.stringify(myOrders));
-  }
-}
-
+function qs(id) { return document.getElementById(id); }
 
 function getSbUser() {
-  try {
-    return JSON.parse(localStorage.getItem("sb_user") || "null");
-  } catch {
-    return null;
-  }
+  try { return JSON.parse(localStorage.getItem("sb_user") || "null"); }
+  catch { return null; }
 }
 
 function isSbLoggedIn(user) {
@@ -65,281 +45,259 @@ function requireSbUser() {
   return isSbLoggedIn(user) ? user : null;
 }
 
-function showAuthRequiredModal() {
-  const modal = document.getElementById("orderModal");
-  const authBox = document.getElementById("authRequiredBox");
-  const orderBox = document.getElementById("orderFormBox");
-  if (authBox) authBox.style.display = "block";
-  if (orderBox) orderBox.style.display = "none";
-  if (modal) modal.style.display = "flex";
-}
+function setupMenu() {
+  const btn = document.querySelector('.menu-toggle');
+  const menu = document.querySelector('.nav-menu');
+  if (!btn || !menu) return;
 
-function showOrderFormModal() {
-  const modal = document.getElementById("orderModal");
-  const authBox = document.getElementById("authRequiredBox");
-  const orderBox = document.getElementById("orderFormBox");
-  if (authBox) authBox.style.display = "none";
-  if (orderBox) orderBox.style.display = "block";
-  if (modal) modal.style.display = "flex";
-}
-
-function calculateCardPrice(card, amount) {
-  const price = Number(card.dataset.price || 0);
-  const mode = card.dataset.priceMode || "per1000";
-
-  if (mode === "per1") {
-    return amount * price;
-  }
-
-  if (mode === "per3") {
-    return (amount / 3) * price;
-  }
-
-  return (amount / 1000) * price;
-}
-
-function updateCardTotal(card) {
-  const input = card.querySelector(".service-amount");
-  const total = card.querySelector(".service-total");
-  const error = card.querySelector(".input-error");
-  const min = Number(card.dataset.min || 1);
-  const max = Number(card.dataset.max || 1000000);
-  const amount = Number(input.value || 0);
-  const price = calculateCardPrice(card, amount);
-
-  total.innerText = price.toFixed(2) + "₽";
-
-  const mode = card.dataset.priceMode || "per1000";
-  if (amount > 0 && (amount < min || amount > max || (mode === "per3" && amount % 3 !== 0))) {
-    error.style.display = "block";
-  } else {
-    error.style.display = "none";
-  }
-}
-
-function openOrderModal(card) {
-  const user = requireSbUser();
-  if (!user) {
-    showAuthRequiredModal();
-    return;
-  }
-
-  const input = card.querySelector(".service-amount");
-  const amount = Number(input.value || 0);
-  const min = Number(card.dataset.min || 1);
-  const max = Number(card.dataset.max || 1000000);
-
-  const mode = card.dataset.priceMode || "per1000";
-
-  if (amount < min) {
-    alert(`Минимальный заказ: ${min}`);
-    return;
-  }
-
-  if (amount > max) {
-    alert(`Максимальный заказ: ${max}`);
-    return;
-  }
-
-  if (mode === "per3" && amount % 3 !== 0) {
-    alert("Для этой услуги количество должно быть кратно 3");
-    return;
-  }
-
-  currentService = card.dataset.serviceName;
-  currentServiceId = card.dataset.serviceId;
-  currentAmount = amount;
-  currentPrice = calculateCardPrice(card, amount);
-
-  document.getElementById("serviceName").innerText = "Услуга: " + currentService;
-  document.getElementById("serviceAmount").innerText = "Количество: " + currentAmount;
-  document.getElementById("servicePrice").innerText = "Сумма: " + currentPrice.toFixed(2) + "₽";
-  showOrderFormModal();
-}
-
-function showPlatform(platform) {
-  document.querySelectorAll(".platform-btn").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.platform === platform);
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const opened = menu.classList.toggle('open');
+    btn.setAttribute('aria-expanded', opened ? 'true' : 'false');
   });
 
-  document.querySelectorAll(".service-card").forEach(card => {
-    card.classList.toggle("active-service", card.dataset.platform === platform);
+  document.addEventListener('click', (e) => {
+    if (!menu.contains(e.target) && !btn.contains(e.target)) {
+      menu.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  menu.querySelectorAll('a').forEach((link) => {
+    link.addEventListener('click', () => {
+      menu.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+    });
   });
 }
 
-document.querySelectorAll(".platform-btn").forEach(btn => {
-  btn.addEventListener("click", () => showPlatform(btn.dataset.platform));
-});
-
-document.querySelectorAll(".service-card").forEach(card => {
-  const input = card.querySelector(".service-amount");
-  const button = card.querySelector(".order-btn");
-
-  input.addEventListener("input", () => updateCardTotal(card));
-  button.addEventListener("click", () => openOrderModal(card));
-});
-
-showPlatform("Instagram");
-
-
+function saveMyOrder(orderDocId) {
+  const myOrders = JSON.parse(localStorage.getItem("myOrders") || "[]");
+  if (orderDocId && !myOrders.includes(orderDocId)) {
+    myOrders.unshift(orderDocId);
+    localStorage.setItem("myOrders", JSON.stringify(myOrders));
+  }
+}
 
 function normalizeSocialLink(raw) {
   let link = String(raw || '').trim();
   if (!link) return '';
   if (!/^https?:\/\//i.test(link)) {
-    if (/^(www\.|instagram\.com|tiktok\.com|vk\.com|vk\.ru|t\.me|telegram\.me|telegram\.dog|youtube\.com|youtu\.be)/i.test(link)) {
+    if (/^(www\.|instagram\.com|tiktok\.com|vk\.com|vk\.ru|t\.me|telegram\.me|telegram\.dog|youtube\.com|youtu\.be|facebook\.com|x\.com|twitter\.com|twitch\.tv|discord\.gg|open\.spotify\.com)/i.test(link)) {
       link = 'https://' + link.replace(/^\/\/+/, '');
     }
   }
   return link;
 }
 
-function linkMatchesSelectedService(link) {
-  const name = String(currentService || '').toLowerCase();
-  const id = String(currentServiceId || '');
-  const value = String(link || '').toLowerCase();
-  if (name.includes('telegram') || ['1165','8862','10298','8485','7411','8811'].includes(id)) return /(t\.me|telegram\.me|telegram\.dog)/i.test(value);
-  if (name.includes('vk') || name.includes('вк') || ['3752','1543','3757','7737','3761','4186'].includes(id)) return /(vk\.com|vk\.ru)/i.test(value);
-  if (name.includes('tiktok') || ['10238','10136','10019','8526','2260','10122','8101','10022','1978'].includes(id)) return /tiktok\.com/i.test(value);
-  if (name.includes('youtube') || /youtube|youtu/.test(name)) return /(youtube\.com|youtu\.be)/i.test(value);
-  return /instagram\.com/i.test(value);
+function rub(value) {
+  const n = Number(value || 0);
+  return n.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '₽';
 }
 
-async function createBalanceOrder() {
-  const user = requireSbUser();
-  if (!user) {
-    showAuthRequiredModal();
-    return;
+function unique(list) {
+  return [...new Set(list.filter(Boolean))];
+}
+
+function setOptions(select, values, placeholder) {
+  if (!select) return;
+  select.innerHTML = '';
+  const first = document.createElement('option');
+  first.value = '';
+  first.textContent = placeholder;
+  select.appendChild(first);
+  values.forEach((value) => {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = value;
+    select.appendChild(option);
+  });
+}
+
+function getSelectedService() {
+  const id = qs('quickService')?.value || '';
+  return allServices.find(s => String(s.id) === String(id)) || null;
+}
+
+function updateQuickSummary() {
+  const service = getSelectedService();
+  currentService = service;
+  const qty = Number(qs('quickQuantity')?.value || 0);
+  const price = service && qty > 0 ? (qty / 1000) * Number(service.price || 0) : 0;
+
+  if (qs('quickMinMax')) {
+    qs('quickMinMax').textContent = service
+      ? `Лимит: ${service.min} – ${service.max.toLocaleString('ru-RU')}`
+      : 'Выберите услугу';
   }
-
-  const linkInput = document.getElementById("instagramLink");
-  const link = normalizeSocialLink(linkInput?.value || '');
-  if (linkInput) linkInput.value = link;
-
-  if (!link || !/^https?:\/\//i.test(link)) {
-    alert("Введите полную ссылку на профиль, пост или видео");
-    return;
+  if (qs('quickPricePer1000')) {
+    qs('quickPricePer1000').textContent = service ? `${rub(service.price)} / 1000` : '—';
   }
-
-  if (!linkMatchesSelectedService(link)) {
-    alert("Ссылка не подходит для выбранной услуги. Выберите правильную платформу или вставьте нужную ссылку.");
-    return;
+  if (qs('quickOrderPrice')) qs('quickOrderPrice').textContent = rub(price);
+  if (qs('quickDescription')) {
+    qs('quickDescription').innerHTML = service ? `
+      <div>🆔 ID услуги: <b>${service.id}</b></div>
+      <div>🌐 Соцсеть: <b>${service.platform}</b></div>
+      <div>📌 Категория: <b>${service.category}</b></div>
+      <div>💸 Цена: <b>${rub(service.price)} / 1000</b></div>
+      <div>📦 Лимит заказа: <b>${service.min} – ${service.max.toLocaleString('ru-RU')}</b></div>
+      ${service.refill ? '<div>♻️ Есть отметка гарантии/refill</div>' : ''}
+    ` : 'Выберите соцсеть, категорию и услугу, чтобы увидеть описание.';
   }
+}
 
-  if (!currentServiceId) {
-    alert("Выберите услугу заново");
-    return;
-  }
+function refreshCategories() {
+  const social = qs('quickSocial')?.value || '';
+  const list = allServices.filter(s => !social || s.platform === social);
+  const categories = unique(list.map(s => s.category)).sort((a, b) => a.localeCompare(b, 'ru'));
+  setOptions(qs('quickCategory'), categories, 'Выберите категорию');
+  setOptions(qs('quickService'), [], 'Сначала выберите категорию');
+  updateQuickSummary();
+}
 
-  const button = document.getElementById("balancePayButton");
-  const originalText = button.innerText;
-  button.disabled = true;
-  button.innerText = "Создание заказа...";
+function refreshServices() {
+  const social = qs('quickSocial')?.value || '';
+  const category = qs('quickCategory')?.value || '';
+  const list = allServices
+    .filter(s => (!social || s.platform === social) && (!category || s.category === category))
+    .sort((a, b) => Number(a.price) - Number(b.price));
+
+  const select = qs('quickService');
+  if (!select) return;
+  select.innerHTML = '';
+  const first = document.createElement('option');
+  first.value = '';
+  first.textContent = list.length ? 'Выберите услугу' : 'Услуг не найдено';
+  select.appendChild(first);
+
+  list.forEach((service) => {
+    const option = document.createElement('option');
+    option.value = service.id;
+    option.textContent = `${service.id} — ${service.name} — ${rub(service.price)} / 1000`;
+    select.appendChild(option);
+  });
+  updateQuickSummary();
+}
+
+async function loadJapServices() {
+  const form = qs('quickOrderForm');
+  if (!form) return;
+
+  const status = qs('quickServicesStatus');
+  if (status) status.textContent = 'Загрузка услуг JAP...';
 
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    const response = await fetch('/api/service-catalog?ts=' + Date.now(), { cache: 'no-store' });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.ok || !Array.isArray(data.services)) {
+      throw new Error(data.error || 'Не удалось загрузить услуги');
+    }
+    allServices = data.services;
+    const platforms = unique(allServices.map(s => s.platform)).sort((a, b) => a.localeCompare(b, 'ru'));
+    setOptions(qs('quickSocial'), platforms, 'Выберите соцсеть');
+    if (status) status.textContent = `Загружено услуг: ${data.count}. Наценка: ${data.markupPercent || 10}%`;
+  } catch (e) {
+    if (status) status.textContent = 'Ошибка загрузки услуг: ' + e.message;
+  }
+}
 
-    const response = await fetch("/api/balance-order", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      signal: controller.signal,
+async function submitQuickOrder(event) {
+  event.preventDefault();
+
+  const user = requireSbUser();
+  if (!user) {
+    alert('Сначала зарегистрируйтесь или войдите в аккаунт');
+    window.location.href = 'auth.html';
+    return;
+  }
+
+  const service = getSelectedService();
+  if (!service) return alert('Выберите услугу');
+
+  const quantity = Math.floor(Number(qs('quickQuantity')?.value || 0));
+  if (!Number.isFinite(quantity) || quantity < service.min || quantity > service.max) {
+    return alert(`Количество должно быть от ${service.min} до ${service.max}`);
+  }
+
+  const linkInput = qs('quickLink');
+  const link = normalizeSocialLink(linkInput?.value || '');
+  if (linkInput) linkInput.value = link;
+  if (!/^https?:\/\//i.test(link)) return alert('Введите полную ссылку');
+
+  const btn = qs('quickSubmitBtn');
+  const original = btn?.textContent || 'Отправить';
+  if (btn) { btn.disabled = true; btn.textContent = 'Создание заказа...'; }
+
+  try {
+    const response = await fetch('/api/balance-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         userId: user.userId,
         login: user.username || user.displayName || user.email || '',
         sessionToken: user.sessionToken,
-        service: currentService,
-        serviceId: String(({ '8777':'10238', '10136':'10238', '8526':'10019', '2260':'10019', '10022':'10122', '8101':'10122', '1543':'3752' }[String(currentServiceId)] || currentServiceId)),
-        quantity: currentAmount,
+        service: service.name,
+        serviceId: String(service.id),
+        quantity,
         link
       })
     });
-
-    clearTimeout(timeoutId);
     const data = await response.json().catch(() => ({}));
-
     if (response.status === 401) {
       localStorage.removeItem('sb_user');
       window.SBUserState?.refresh?.();
-      showAuthRequiredModal();
-      throw new Error(data.error || "Сначала войдите в аккаунт");
+      throw new Error(data.error || 'Сначала войдите в аккаунт');
     }
-
-    if (!response.ok || !data.ok) {
-      throw new Error(data.error || ("Ошибка заказа с баланса. ID услуги: " + String(currentServiceId || "—")));
-    }
+    if (!response.ok || !data.ok) throw new Error(data.error || 'Ошибка создания заказа');
 
     saveMyOrder(data.orderDocId);
-    window.sbGoal?.('order_created', { order_id: data.publicOrderId || data.orderDocId, value: Number(currentPrice || 0) });
-    alert("Заказ создан и отправлен в работу");
-    window.location.href = "orders.html?order=" + encodeURIComponent(data.orderDocId);
-    return;
+    window.sbGoal?.('order_created', { order_id: data.publicOrderId || data.orderDocId, value: Number(qs('quickOrderPrice')?.textContent?.replace(/[^0-9.,]/g, '').replace(',', '.') || 0) });
+    alert('Заказ создан и отправлен в работу');
+    window.location.href = 'orders.html?order=' + encodeURIComponent(data.orderDocId || '');
   } catch (e) {
-    const message = e.name === 'AbortError' ? 'Сервер долго не отвечает. Попробуйте ещё раз через минуту.' : (e.message || 'Ошибка заказа');
-    alert(message);
+    alert(e.message || 'Ошибка заказа');
   } finally {
-    button.disabled = false;
-    button.innerText = originalText;
+    if (btn) { btn.disabled = false; btn.textContent = original; }
   }
 }
 
-// Прямая оплата услуги отключена. Заказы создаются только после входа и только с баланса.
-
-const balancePayButton = document.getElementById("balancePayButton");
-if (balancePayButton) {
-  balancePayButton.addEventListener("click", () => createBalanceOrder());
+function setupQuickOrder() {
+  const form = qs('quickOrderForm');
+  if (!form) return;
+  qs('quickSocial')?.addEventListener('change', refreshCategories);
+  qs('quickCategory')?.addEventListener('change', refreshServices);
+  qs('quickService')?.addEventListener('change', updateQuickSummary);
+  qs('quickQuantity')?.addEventListener('input', updateQuickSummary);
+  form.addEventListener('submit', submitQuickOrder);
+  loadJapServices();
 }
 
-const liveContainer = document.getElementById("live-orders");
+function setupLiveOrders() {
+  const liveContainer = qs('live-orders');
+  if (!liveContainer) return;
 
-if (liveContainer) {
-  const q = query(
-    collection(db, "orders"),
-    orderBy("createdAt", "desc"),
-    limit(1)
-  );
-
+  const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(1));
   let lastOrderId = null;
   let initialized = false;
 
   onSnapshot(q, (snapshot) => {
-    if (!initialized) {
-      initialized = true;
-      return;
-    }
-
+    if (!initialized) { initialized = true; return; }
     snapshot.forEach((docItem) => {
       if (docItem.id === lastOrderId) return;
-
       lastOrderId = docItem.id;
       const order = docItem.data();
-
-      if (order.status && order.status.includes("Ожидает оплаты")) {
-        return;
-      }
-
-      const div = document.createElement("div");
-      div.className = "live-order";
+      if (order.status && order.status.includes('Ожидает оплаты')) return;
+      const div = document.createElement('div');
+      div.className = 'live-order';
       div.innerHTML = `🔥 Новый заказ<br><br>${order.service} × ${order.amount}`;
-
       liveContainer.appendChild(div);
-
-      const allOrders = liveContainer.querySelectorAll(".live-order");
-      if (allOrders.length > 2) {
-        allOrders[0].remove();
-      }
-
-      setTimeout(() => {
-        div.remove();
-      }, 6000);
+      const all = liveContainer.querySelectorAll('.live-order');
+      if (all.length > 2) all[0].remove();
+      setTimeout(() => div.remove(), 6000);
     });
   });
 }
 
-const closeModalBtn = document.getElementById("closeModal");
-
-if (closeModalBtn) {
-  closeModalBtn.addEventListener("click", () => {
-    document.getElementById("orderModal").style.display = "none";
-  });
-}
+setupMenu();
+setupQuickOrder();
+setupLiveOrders();

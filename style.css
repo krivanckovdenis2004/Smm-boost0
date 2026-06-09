@@ -4764,3 +4764,181 @@ body.trust-ui,
   .nav-menu{top:calc(env(safe-area-inset-top, 0px) + 92px) !important;right:12px !important;width:258px !important;max-height:62vh !important;padding:10px !important;}
   .nav-menu a{min-height:40px !important;font-size:14px !important;padding:8px 10px !important;}
 }
+
+/* === JAP all-services quick order panel === */
+.quick-order-page{
+  width:min(980px, calc(100% - 28px));
+  margin:38px auto 90px;
+  padding:0;
+}
+.quick-order-panel{
+  padding:28px;
+  border-radius:26px;
+  background:rgba(18,18,28,.88);
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow:0 22px 80px rgba(0,0,0,.42);
+}
+.quick-order-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:22px;
+}
+.quick-kicker{
+  margin:0 0 8px;
+  color:#9b7cff;
+  font-size:14px;
+  font-weight:800;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+.quick-order-head h1{
+  margin:0 0 8px;
+  color:#fff;
+  font-size:clamp(32px, 6vw, 56px);
+  line-height:1.02;
+}
+.quick-order-head p{
+  margin:0;
+  max-width:620px;
+  color:rgba(255,255,255,.66);
+  font-size:18px;
+  line-height:1.45;
+}
+.quick-balance-link{
+  flex:0 0 auto;
+  padding:14px 18px;
+  border-radius:16px;
+  color:#fff;
+  text-decoration:none;
+  font-weight:800;
+  background:rgba(139,92,255,.18);
+  border:1px solid rgba(139,92,255,.32);
+}
+.quick-order-form{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+}
+.quick-field,
+.quick-price-box,
+.quick-total-box{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.quick-field-wide{
+  grid-column:1 / -1;
+}
+.quick-field span,
+.quick-price-box span,
+.quick-total-box span{
+  color:rgba(255,255,255,.62);
+  font-size:14px;
+  font-weight:700;
+}
+.quick-field select,
+.quick-field input{
+  width:100%;
+  min-height:58px;
+  padding:0 16px;
+  border-radius:14px;
+  outline:none;
+  color:#fff;
+  font-size:17px;
+  font-weight:650;
+  background:rgba(255,255,255,.055);
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.02);
+}
+.quick-field select:focus,
+.quick-field input:focus{
+  border-color:rgba(139,92,255,.85);
+  box-shadow:0 0 0 4px rgba(139,92,255,.18);
+}
+.quick-field option{background:#14121f;color:#fff;}
+.quick-price-box,
+.quick-total-box{
+  justify-content:center;
+  min-height:76px;
+  padding:14px 16px;
+  border-radius:16px;
+  background:rgba(255,255,255,.045);
+  border:1px solid rgba(255,255,255,.10);
+}
+.quick-price-box strong,
+.quick-total-box strong{
+  color:#77ffb7;
+  font-size:25px;
+  line-height:1;
+}
+.quick-price-box small{color:rgba(255,255,255,.50);font-size:13px;}
+.quick-total-box{
+  flex-direction:row;
+  align-items:center;
+  justify-content:space-between;
+  background:linear-gradient(135deg,rgba(31,211,127,.15),rgba(139,92,255,.18));
+}
+.quick-total-box strong{font-size:34px;}
+.quick-submit-btn{
+  grid-column:1 / -1;
+  min-height:62px;
+  border:0;
+  border-radius:16px;
+  color:#fff;
+  font-size:20px;
+  font-weight:900;
+  letter-spacing:.04em;
+  background:linear-gradient(135deg,#7c4dff,#5b35ff);
+  box-shadow:0 16px 36px rgba(124,77,255,.32);
+}
+.quick-submit-btn:disabled{opacity:.58;filter:grayscale(.25);}
+.quick-status{
+  margin:16px 0 0;
+  color:rgba(255,255,255,.55);
+  font-size:14px;
+}
+.quick-service-description{
+  margin-top:18px;
+  padding:22px;
+  border-radius:22px;
+  background:rgba(18,18,28,.72);
+  border:1px solid rgba(255,255,255,.09);
+}
+.quick-service-description h2{
+  margin:0 0 12px;
+  color:#fff;
+  font-size:24px;
+}
+.quick-description-text{
+  color:rgba(255,255,255,.68);
+  font-size:16px;
+  line-height:1.7;
+}
+.quick-help-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin-top:16px;
+}
+.quick-help-card{
+  padding:16px;
+  border-radius:18px;
+  color:#fff;
+  font-weight:800;
+  background:rgba(255,255,255,.055);
+  border:1px solid rgba(255,255,255,.09);
+}
+@media (max-width:720px){
+  .quick-order-page{width:calc(100% - 24px); margin-top:26px;}
+  .quick-order-panel{padding:20px;border-radius:22px;}
+  .quick-order-head{flex-direction:column;}
+  .quick-order-head h1{font-size:38px;}
+  .quick-order-head p{font-size:16px;}
+  .quick-order-form{grid-template-columns:1fr; gap:13px;}
+  .quick-field-wide{grid-column:auto;}
+  .quick-total-box{grid-column:auto;}
+  .quick-help-grid{grid-template-columns:1fr;}
+  .quick-total-box strong{font-size:28px;}
+}
