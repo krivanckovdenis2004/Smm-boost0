@@ -42,7 +42,7 @@ export default async function handler(req, res) {
     if (!userId || !sessionToken) return res.status(401).json({ error: 'Сначала войдите в аккаунт' });
     if (!JAP_API_KEY) return res.status(500).json({ error: 'JAP_API_KEY не настроен в Vercel' });
 
-    const validated = validateOrderPayload(req.body || {});
+    const validated = await validateOrderPayload(req.body || {});
     if (!validated.ok) return res.status(400).json({ error: validated.error });
 
     const { service, quantity, link, priceRub } = validated;

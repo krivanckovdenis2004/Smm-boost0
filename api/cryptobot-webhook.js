@@ -102,7 +102,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, topup: true });
     }
 
-    const validated = validateOrderPayload(orderData);
+    const validated = await validateOrderPayload(orderData);
     if (!validated.ok) {
       throw new Error(validated.error);
     }
