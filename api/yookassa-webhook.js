@@ -68,7 +68,13 @@ export default async function handler(req, res) {
     const verifiedPayment = await verifyYooKassaPayment(eventPayment.id);
     const orderData = verifiedPayment.metadata || eventPayment.metadata || {};
 
-    if (String(orderData.type || '') === 'balance_topup') {
+    
+    if (String(orderData.type || '') === 'vpn_order') {
+      await sendTelegram(`🛡 Новый заказ VPN\n\nTelegram: ${orderData.telegram || '-'}\nСумма: 129₽\nPayment ID: ${verifiedPayment.id}`);
+      return res.status(200).json({ success: true, vpn: true });
+    }
+
+if (String(orderData.type || '') === 'balance_topup') {
       const userId = String(orderData.userId || '');
       const login = String(orderData.login || orderData.email || '');
       const amountRub = Number(orderData.amountRub || verifiedPayment.amount?.value || 0);
