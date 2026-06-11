@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="UTF-8"><title>VPN</title></head>
+<body>
+<h1>VPN на 1 месяц — 129 ₽</h1>
+<p>Введите Telegram username для получения доступа.</p>
+<input id="tg" placeholder="@username">
+<button onclick="pay()">Оплатить 129 ₽</button>
+<script>
+async function pay(){
+ const telegram=document.getElementById('tg').value.trim();
+ if(!telegram){alert('Введите Telegram username');return;}
+ const r=await fetch('/api/create-vpn-order.js',{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({telegram})
+ });
+ const d=await r.json();
+ if(d.confirmation_url) location.href=d.confirmation_url;
+ else alert(d.error||'Ошибка');
+}
+</script></body></html>
