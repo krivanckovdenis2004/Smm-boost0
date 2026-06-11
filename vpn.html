@@ -1,10 +1,43 @@
 <!DOCTYPE html>
-<html lang="ru"><head><meta charset="UTF-8"><title>VPN</title></head>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NaChile72 VPN</title>
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#050805;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center}
+body:before{content:"";position:fixed;inset:0;background:radial-gradient(circle,#18ff6d33,transparent 60%)}
+.card{width:min(92%,420px);background:rgba(10,15,10,.85);border:1px solid #1cff75;box-shadow:0 0 30px #17ff6a55;border-radius:24px;padding:28px;position:relative}
+.logo{font-size:38px;font-weight:800;text-align:center}
+.logo span{color:#27ff78}
+.sub{text-align:center;color:#b8c7b8}
+.price{text-align:center;font-size:34px;font-weight:700;margin:18px 0;color:#27ff78}
+input{width:100%;padding:14px;border-radius:12px;border:1px solid #1cff75;background:#0b120d;color:#fff;box-sizing:border-box}
+button{width:100%;margin-top:12px;padding:14px;border:none;border-radius:12px;background:#19d861;color:#000;font-weight:700;font-size:16px}
+.features{margin:18px 0;line-height:1.8}
+.warn{background:#151915;border-left:4px solid #1cff75;padding:12px;border-radius:10px;font-size:14px;color:#d7dfd7}
+</style>
+</head>
 <body>
-<h1>VPN на 1 месяц — 129 ₽</h1>
-<p>Введите Telegram username для получения доступа.</p>
+<div class="card">
+<div class="logo">NaChile<span>72</span></div>
+<div class="sub">VPN доступ на 1 месяц</div>
+<div class="price">129 ₽</div>
+<div class="features">
+🚀 Высокая скорость<br>
+🛡 Защита соединения<br>
+🌍 Доступ к популярным сервисам<br>
+📱 Поддержка iPhone, Android, Windows и macOS
+</div>
 <input id="tg" placeholder="@username">
-<button onclick="pay()">Оплатить 129 ₽</button>
+<button onclick="pay()">Получить доступ</button>
+<div class="warn">
+<b>⚠ Правила использования</b><br><br>
+Подписка предназначена для личного использования.<br>
+Рекомендуется использовать не более 2 устройств на одну подписку.<br>
+При выявлении передачи доступа третьим лицам или использовании более 2 устройств доступ может быть ограничен или заблокирован без возврата средств.
+</div>
+</div>
 <script>
 async function pay(){
  const telegram=document.getElementById('tg').value.trim();
@@ -16,6 +49,7 @@ async function pay(){
  });
  const d=await r.json();
  if(d.confirmation_url) location.href=d.confirmation_url;
- else alert(d.error||'Ошибка');
+ else alert(d.error||'Ошибка оплаты');
 }
-</script></body></html>
+</script>
+</body></html>
