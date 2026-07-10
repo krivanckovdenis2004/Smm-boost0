@@ -1,121 +1,35 @@
-# CHANGES.md — Security Stage 1 + оптимизация Serverless Functions
-
-Дата: 2026-07-10
-Проект: SMM-Boost
+# CHANGES — Google Sign-In (Stage 2 auth)
 
 ## 1. Изменённые файлы
-
-| Файл | Что изменено |
-|---|---|
-| `admin.html` | Убран литеральный пароль из клиентского кода. Логин админа теперь через `POST /api/admin-login`; при успехе в `sessionStorage` кладётся короткоживущий токен. |
-| `api/balance-order.js` | Добавлена идемпотентность по `requestId` (коллекция `order_requests`). Проверка сессии `sessionToken`. Списание средств через `runTransaction` только **после** успешного ответа JAP. Валидация payload через `service-catalog.validateOrderPayload`. Таймаут запроса к JAP + AbortController. |
-| `api/check-status.js` | Требование `userId`+`sessionToken`, проверка владельца заказа перед возвратом статуса. |
-| `api/cryptobot-webhook.js` | Проверка HMAC-подписи (`crypto-pay-api-signature`). Идемпотентность по `invoice_id`. Транзакционное зачисление на баланс. |
-| `api/yookassa-webhook.js` | Проверка `event=payment.succeeded`, идемпотентность по `payment.id`. Транзакционное зачисление. |
-| `api/free-gift.js` | Транзакционное списание/начисление, защита от повторного получения. |
-| `app.js` | Замена прямых записей в Firestore на вызовы серверных API. Использование `sessionToken`. |
-| `package.json` | Актуализированы зависимости (`firebase`), убраны лишние. |
-| `vercel.json` | Security headers (CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy). Rewrite `/api/create-balance-yookassa` → `/api/create-balance-invoice?provider=yookassa`. |
-| `api/create-balance-invoice.js` | Объединён с бывшим `api/create-balance-yookassa.js`. Диспетчер `detectProvider()` по URL/`req.body.provider`. |
+- `auth.html` — добавлена кнопка «Войти или зарегистрироваться через Google» (единая кнопка над вкладками «Регистрация» / «Войти»), стили `.google-btn` / `.auth-divider` встроены в `<head>`, подключён модуль `google-auth.js`.
+- `firestore.rules` — коллекция `users/{uid}`: разрешён `create` и `update` только владельцу (`request.auth.uid == userId`) и только для полей профиля (`uid, displayName, email, photoURL, authType, createdAt` / для update — `displayName, email, photoURL, updatedAt`). Финансовые поля по-прежнему пишутся только сервером.
 
 ## 2. Новые файлы
+- `google-auth.js` — клиентский ES-модуль. Инициализирует Firebase Auth + Firestore, реализует `signInWithPopup` (с fallback на `signInWithRedirect` при блокировке popup), делает `getDoc → setDoc` (документ создаётся только при первом входе), сохраняет сессию в `localStorage['sb_user']` совместимо с существующим `user-state.js` (поля `userId`, `displayName`, `email`, `photoURL`, `sessionToken`), вызывает `window.SBUserState.refresh()` и `window.sbGoal('registration'|'login', ...)`.
 
-| Файл | Назначение |
-|---|---|
-| `api/admin-login.js` | Серверная проверка пароля админа. `ADMIN_PASSWORD` берётся из env. Timing-safe compare через `crypto.timingSafeEqual`. Rate-limit в памяти инстанса (8 попыток / 15 мин на IP). Выдаёт случайный токен-маркер сессии. |
-| `firestore.rules` | Полностью закрывает прямую запись с клиента во все коллекции (`users`, `orders`, `topups`). Чтение — только владельцу. **Требуется ручной деплой в Firebase.** |
-| `CHANGES.md` | Этот файл. |
-
-## 3. Файлы, которые нужно удалить из репозитория GitHub
-
-| Файл | Причина |
-|---|---|
-| `api/create-balance-yookassa.js` | Логика перенесена в `api/create-balance-invoice.js`. Совместимость сохранена через rewrite в `vercel.json` — фронтенд (`wallet.js`) продолжает вызывать `/api/create-balance-yookassa` без изменений. |
-
-Других файлов на удаление нет.
-
-## 4. Переименованные файлы
-
+## 3. Файлы к удалению из GitHub
 Нет.
 
-## 5. Объединение Serverless Functions
+## 4. Serverless-функции `/api`
+Осталось ровно **12** файлов — ни один не добавлен и не удалён:
+`admin-login.js, auth-social-register.js, balance-order.js, check-status.js, create-balance-invoice.js, create-vpn-order.js, cryptobot-webhook.js, free-gift.js, list-orders.js, service-catalog.js, social-bonus.js, yookassa-webhook.js`.
 
-Было 13 функций → превышение лимита Vercel Hobby (максимум 12).
+Вся авторизация Google выполняется клиентским Firebase SDK — без создания новой serverless-функции.
 
-**Объединено:**
-- `api/create-balance-yookassa.js` + `api/create-balance-invoice.js` → **`api/create-balance-invoice.js`**
-  - Один файл обслуживает обоих провайдеров.
-  - Провайдер определяется функцией `detectProvider(req)`:
-    - если `req.body.provider === 'yookassa'` → YooKassa;
-    - если URL содержит `yookassa` (через rewrite) → YooKassa;
-    - иначе → CryptoBot (по умолчанию).
-  - Rewrite в `vercel.json` перенаправляет старый путь `/api/create-balance-yookassa` на `/api/create-balance-invoice?provider=yookassa`, поэтому фронтенд не требует правок.
+## 5. Ручные действия
+1. **Firebase Console → Authentication → Sign-in method** — включить провайдер **Google** (если ещё не включён).
+2. **Firebase Console → Authentication → Settings → Authorized domains** — добавить продовый домен (`smm-boost.ru` / `*.vercel.app`) и `localhost` для локальной разработки.
+3. **Deploy правил Firestore:**
+   ```
+   firebase deploy --only firestore:rules --project smm-boost-905d5
+   ```
+   (или скопировать `firestore.rules` в Firebase Console → Firestore → Rules → Publish).
+4. Vercel: переменные окружения не меняются.
 
-**Итоговый список — 12 функций в `api/`:**
-1. `admin-login.js`
-2. `auth-social-register.js`
-3. `balance-order.js`
-4. `check-status.js`
-5. `create-balance-invoice.js` *(CryptoBot + YooKassa)*
-6. `create-vpn-order.js`
-7. `cryptobot-webhook.js`
-8. `free-gift.js`
-9. `list-orders.js`
-10. `service-catalog.js` *(и helper, и endpoint для фронта)*
-11. `social-bonus.js`
-12. `yookassa-webhook.js`
-
-## 6. Ручные действия после замены файлов
-
-### 6.1. Environment Variables в Vercel
-Убедиться, что в Project Settings → Environment Variables заданы (значения оставить прежние — не ротировать):
-- `ADMIN_PASSWORD` — пароль админ-панели (**обязательно, новое требование**).
-- `JAP_API_KEY`
-- `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`
-- `CRYPTOBOT_TOKEN`
-- `YOOKASSA_SHOP_ID`, `YOOKASSA_SECRET_KEY`
-
-Если `ADMIN_PASSWORD` не задан — `/api/admin-login` вернёт 500. Это единственная новая переменная окружения.
-
-### 6.2. Деплой Firestore Rules
-Правила из `firestore.rules` **не деплоятся автоматически**. Выполнить один раз:
-
-```bash
-npm i -g firebase-tools
-firebase login
-firebase deploy --only firestore:rules --project smm-boost-905d5
-```
-
-Либо скопировать содержимое `firestore.rules` в Firebase Console → Firestore Database → Rules → Publish.
-
-**Без этого шага защита Firestore не активна** (серверные API уже работают правильно, но клиент теоретически всё ещё может писать напрямую).
-
-### 6.3. Проверка Firebase Web API Key
-Ключ публичный (лежит в клиентском коде — это норма для Firebase), но в Google Cloud Console → APIs & Services → Credentials рекомендуется:
-- ограничить HTTP referrer доменом `smm-boost.pro` и `*.vercel.app`;
-- ограничить список API (Identity Toolkit, Firestore, Firebase Installations).
-
-## 7. Работоспособность после удаления перечисленных файлов
-
-Да, подтверждаю: после удаления `api/create-balance-yookassa.js` проект остаётся полностью работоспособным:
-
-- Фронтенд `wallet.js` вызывает `POST /api/create-balance-yookassa` → rewrite в `vercel.json` направляет запрос на `/api/create-balance-invoice?provider=yookassa` → диспетчер вызывает ветку YooKassa. Ответ идентичен старому.
-- Фронтенд `wallet.js` также вызывает `POST /api/create-balance-invoice` → диспетчер по умолчанию использует CryptoBot. Ответ идентичен старому.
-- Все остальные эндпоинты не тронуты.
-- Число функций строго 12 → соответствует лимиту Vercel Hobby → деплой пройдёт.
-
-## Итог по Security Stage 1
-
-Устранённые уязвимости:
-- Литеральный пароль админа в клиентском JS → серверная проверка.
-- Прямая запись клиента в Firestore (`orders`, `users`, `topups`) → закрыто правилами + серверные API.
-- Отсутствие проверки подписи вебхуков → HMAC для CryptoBot, валидация статуса для YooKassa.
-- Race conditions на балансе / повторные начисления бонусов / повторные заказы → `runTransaction` + идемпотентность по `requestId`/`invoice_id`/`payment.id`.
-- Списание средств до подтверждения JAP → списание только после успеха.
-- Отсутствие security headers → CSP, HSTS, X-Frame-Options и др. в `vercel.json`.
-- Отсутствие rate-limit на логин админа → 8 попыток / 15 мин на IP.
-
-Осталось на Stage 2 (не входит в этот архив):
-- JWT-сессия админа вместо sessionStorage-токена + серверные админ-эндпоинты для изменения балансов/статусов.
-- Аудит SEO, мобильной адаптации, производительности.
-- Ограничение Firebase Web API Key в Google Cloud Console (пункт 6.3).
+## 6. Что реализовано
+- Единая кнопка Google на странице `auth.html` работает и как вход, и как регистрация (Firebase сам различает первый и повторный вход).
+- После успешного входа проверяем `users/{uid}` через `getDoc`; если документа нет — создаём `setDoc` с `uid, displayName, email, photoURL, authType='google', createdAt: serverTimestamp()`. Повторный вход документ не перезаписывает.
+- Сессия сохраняется в `localStorage['sb_user']` в том же формате, что и логин по паролю, поэтому `user-state.js` без правок показывает имя/аватар в верхней навигации и меню.
+- `onAuthStateChanged` подхватывает уже авторизованного пользователя при возврате на сайт и синхронизирует локальное состояние.
+- Redirect-режим (`signInWithRedirect` + `getRedirectResult`) как fallback для окружений, где popup заблокирован.
+- Правила Firestore ограничивают запись только своим документом и только безопасными полями — балансы/бонусы под клиентом изменить нельзя.
