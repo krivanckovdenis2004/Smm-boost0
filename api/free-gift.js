@@ -1,5 +1,4 @@
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8539363038:AAGm30GEC8_k9YYlFfEFx5mI3iKeiMPAYSU';
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '8676446654';
+import { handleCors, sendTelegram, rateLimit } from './_lib/shared.js';
 
 const SERVICE_MAP = {
   followers: {
@@ -25,66 +24,40 @@ const SERVICE_MAP = {
   }
 };
 
-function clean(value) {
-  return String(value || '').replace(/[<>]/g, '').slice(0, 1000);
-}
+function clean(value) { return String(value || '').replace(/[<>]/g, '').slice(0, 1000); }
 
 function isValidLink(social, link) {
   const value = String(link || '');
   const rules = {
-    TikTok: /tiktok\.com|vm\.tiktok\.com/i,
-    Telegram: /t\.me|telegram\.me/i,
-    YouTube: /youtube\.com|youtu\.be/i,
-    VK: /vk\.com|vk\.ru/i,
-    Instagram: /instagram\.com/i
+    TikTok: /^https?:\/\/(www\.)?(tiktok\.com|vm\.tiktok\.com)/i,
+    Telegram: /^https?:\/\/(www\.)?(t\.me|telegram\.me)/i,
+    YouTube: /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)/i,
+    VK: /^https?:\/\/(www\.)?(vk\.com|vk\.ru)/i,
+    Instagram: /^https?:\/\/(www\.)?instagram\.com/i
   };
   return rules[social] ? rules[social].test(value) : /^https?:\/\//i.test(value);
 }
 
-async function sendTelegram(text) {
-  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
-  await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text })
-  });
-}
-
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (handleCors(req, res)) return;
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
+    const clientIp = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+    if (!rateLimit(`gift:${clientIp}`, 3)) return res.status(429).json({ error: 'Слишком много запросов. Подождите минуту.' });
+
     const { source, giftKey, giftTitle, giftId, quantity, deviceId, social, link, telegramUser } = req.body || {};
-
-    if (!giftKey || !giftId || !quantity || !social || !link || !telegramUser) {
-      return res.status(400).json({ error: 'Не хватает данных для подарка' });
-    }
-
-    if (!isValidLink(social, link)) {
-      return res.status(400).json({ error: 'Некорректная ссылка для выбранной соцсети' });
-    }
+    if (!giftKey || !giftId || !quantity || !social || !link || !telegramUser) return res.status(400).json({ error: 'Не хватает данных для подарка' });
+    if (!isValidLink(social, link)) return res.status(400).json({ error: 'Некорректная ссылка для выбранной соцсети' });
 
     const serviceConfig = SERVICE_MAP[giftKey]?.[social] || null;
-
-    // ВАЖНО: бесплатные подарки НЕ создают заказ в JAP автоматически.
-    // Это защита баланса: endpoint публичный, его могут дергать боты.
-    // Заявка приходит в Telegram, а JAP создается вручную после проверки подписки.
     const message = `🎁 Бесплатный подарок пользователю\n\nИсточник: ${clean(source)}\nID подарка: ${clean(giftId)}\nDevice ID: ${clean(deviceId)}\nПодарок: ${clean(giftTitle)}\nКоличество: ${clean(quantity)}\nСоцсеть: ${clean(social)}\nКонтакт: ${clean(telegramUser)}\nСсылка: ${clean(link)}\n\nРекомендуемая JAP услуга: ${serviceConfig ? `${serviceConfig.service} — ${serviceConfig.label}` : 'нет авто-позиции'}\nСтатус: 🛡 авто-заказ отключен ради защиты баланса. Проверь подписку и создай вручную.`;
 
     await sendTelegram(message);
-
-    return res.status(200).json({
-      success: true,
-      autoCreated: false,
-      japOrder: null,
-      protected: true,
-      message: 'Заявка отправлена администратору. После проверки подписки подарок будет выдан.'
-    });
+    return res.status(200).json({ success: true, autoCreated: false, japOrder: null, protected: true, message: 'Заявка отправлена администратору. После проверки подписки подарок будет выдан.' });
   } catch (e) {
     console.error(e);
     try { await sendTelegram(`❌ Ошибка бесплатного подарка:\n${e.message}`); } catch {}
-    return res.status(500).json({ error: e.message });
+    return res.status(500).json({ error: 'Server error' });
   }
 }
