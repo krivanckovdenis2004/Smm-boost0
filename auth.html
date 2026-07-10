@@ -105,7 +105,46 @@
   </section>
 </main>
 <script type="module" src="auth.js"></script>
-<script type="module" src="google-auth.js"></script>
+<script>
+// Привязка клика к Google-кнопке — обычный (не module) inline-скрипт,
+// чтобы обработчик работал даже если внешний Firebase SDK не загрузится.
+(function () {
+  function bind() {
+    document.querySelectorAll('[data-google-signin]').forEach(function (btn) {
+      if (btn.dataset.gsbBound === '1') return;
+      btn.dataset.gsbBound = '1';
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        var msg = document.getElementById('authMessage');
+        if (msg) { msg.textContent = 'Загружаем Google Sign-In...'; msg.className = 'auth-message ok'; }
+        function callSignIn() {
+          if (window.SBGoogleAuth && typeof window.SBGoogleAuth.signInWithGoogle === 'function') {
+            window.SBGoogleAuth.signInWithGoogle();
+            return true;
+          }
+          return false;
+        }
+        if (callSignIn()) return;
+        // SDK-обёртка ещё не загрузилась — ждём максимум ~6с.
+        var tries = 0;
+        var iv = setInterval(function () {
+          tries++;
+          if (callSignIn() || tries > 60) {
+            clearInterval(iv);
+            if (tries > 60 && msg) {
+              msg.textContent = 'Не удалось загрузить модуль Google-авторизации. Проверьте сеть/блокировщик и обновите страницу.';
+              msg.className = 'auth-message error';
+            }
+          }
+        }, 100);
+      });
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
+  else bind();
+})();
+</script>
+<script type="module" src="google-auth.js?v=20260710"></script>
 
 <script>
 (function(){
