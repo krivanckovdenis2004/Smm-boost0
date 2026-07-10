@@ -18,7 +18,7 @@ function getPlatformData(platform) {
   const value = String(platform || '').toLowerCase();
 
   if (value === 'telegram') {
-    return { key: 'telegramBonusClaimed', name: 'Telegram', amount: 2.5 };
+    return { key: 'telegramBonusClaimed', name: 'Telegram', amount: 15 };
   }
 
   if (value === 'vk') {
