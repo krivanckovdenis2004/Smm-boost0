@@ -1,20 +1,30 @@
 import crypto from 'crypto';
-import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
-const firebaseConfig = {
-  apiKey: 'AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8',
-  authDomain: 'smm-boost-905d5.firebaseapp.com',
-  projectId: 'smm-boost-905d5',
-  storageBucket: 'smm-boost-905d5.firebasestorage.app',
-  messagingSenderId: '554912523069',
-  appId: '1:554912523069:web:26d405b696b9d45e5edb54',
-  measurementId: 'G-E6SRLXZW5V'
-};
+// --- Firebase Admin init ---------------------------------------------------
+// Требуется env-переменная FIREBASE_SERVICE_ACCOUNT — JSON сервис-аккаунта
+// проекта smm-boost-905d5 (Firebase Console → Project settings →
+// Service accounts → Generate new private key). Записывается в Vercel как
+// секрет одной строкой JSON.
+function loadServiceAccount() {
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT env var is not configured');
+  try {
+    return JSON.parse(raw);
+  } catch {
+    // Иногда в переменные окружения JSON вставляют с \n внутри private_key —
+    // делаем толерантный парсинг.
+    return JSON.parse(raw.replace(/\\n/g, '\n'));
+  }
+}
 
-const firebaseApp = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-const db = getFirestore(firebaseApp);
+const adminApp = getApps().length
+  ? getApps()[0]
+  : initializeApp({ credential: cert(loadServiceAccount()) });
+const db = getFirestore(adminApp);
 
+// --- helpers ---------------------------------------------------------------
 function safeText(value = '', max = 80) {
   return String(value || '').trim().slice(0, max);
 }
@@ -60,6 +70,7 @@ function validateUsername(username) {
   return /^[a-zA-Z0-9_а-яА-ЯёЁ.-]{3,32}$/.test(username);
 }
 
+// --- handlers --------------------------------------------------------------
 async function registerPasswordUser(req, res) {
   const usernameRaw = safeText(req.body?.username, 32);
   const password = String(req.body?.password || '');
@@ -74,9 +85,9 @@ async function registerPasswordUser(req, res) {
   if (password !== passwordConfirm) return res.status(400).json({ error: 'Пароли не совпадают' });
 
   const userId = uidFromKey(`password:${usernameLower}`);
-  const userRef = doc(db, 'users', userId);
-  const userSnap = await getDoc(userRef);
-  if (userSnap.exists()) return res.status(409).json({ error: 'Такой логин уже зарегистрирован. Нажмите «Войти».' });
+  const userRef = db.collection('users').doc(userId);
+  const userSnap = await userRef.get();
+  if (userSnap.exists) return res.status(409).json({ error: 'Такой логин уже зарегистрирован. Нажмите «Войти».' });
 
   const { salt, hash } = hashPassword(password);
   const sessionToken = newToken();
@@ -93,11 +104,11 @@ async function registerPasswordUser(req, res) {
     passwordSalt: salt,
     passwordHash: hash,
     sessionToken,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-    lastLoginAt: serverTimestamp()
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+    lastLoginAt: FieldValue.serverTimestamp()
   };
-  await setDoc(userRef, user);
+  await userRef.set(user);
   return res.status(200).json({ ok: true, user: publicUser(user) });
 }
 
@@ -112,9 +123,9 @@ async function loginPasswordUser(req, res) {
   }
 
   const userId = uidFromKey(`password:${usernameLower}`);
-  const userRef = doc(db, 'users', userId);
-  const userSnap = await getDoc(userRef);
-  if (!userSnap.exists()) return res.status(404).json({ error: 'Пользователь не найден. Зарегистрируйтесь.' });
+  const userRef = db.collection('users').doc(userId);
+  const userSnap = await userRef.get();
+  if (!userSnap.exists) return res.status(404).json({ error: 'Пользователь не найден. Зарегистрируйтесь.' });
 
   const savedUser = { userId, ...userSnap.data() };
   if (!verifyPassword(password, savedUser.passwordSalt, savedUser.passwordHash)) {
@@ -122,7 +133,11 @@ async function loginPasswordUser(req, res) {
   }
 
   const sessionToken = newToken();
-  await updateDoc(userRef, { sessionToken, lastLoginAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  await userRef.update({
+    sessionToken,
+    lastLoginAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp()
+  });
   return res.status(200).json({ ok: true, user: publicUser({ ...savedUser, sessionToken }) });
 }
 
@@ -136,7 +151,7 @@ export default async function handler(req, res) {
 
     return res.status(400).json({ error: 'Неверное действие. Доступны register и login.' });
   } catch (e) {
-    console.error(e);
+    console.error('[auth-social-register]', e);
     return res.status(500).json({ error: e.message || 'Server error' });
   }
 }
