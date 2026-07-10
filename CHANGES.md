@@ -40,3 +40,39 @@
 - `onAuthStateChanged` подхватывает уже авторизованного пользователя при возврате на сайт и синхронизирует локальное состояние.
 - Redirect-режим (`signInWithRedirect` + `getRedirectResult`) как fallback для окружений, где popup заблокирован.
 - Правила Firestore ограничивают запись только своим документом и только безопасными полями — балансы/бонусы под клиентом изменить нельзя.
+
+---
+
+## Hotfix 3 (2026-07-10): распаковка auth/internal-error
+
+### Причина
+`auth/internal-error` — это **обёртка Firebase** над ответом identitytoolkit.googleapis.com. Сам код ничего не говорит; настоящая причина лежит в `error.customData._tokenResponse` / `serverResponse`. Прошлый обработчик выводил только `e.message`, поэтому пользователь видел голый код без объяснения.
+
+### Что изменено
+- **`google-auth.js`**:
+  - Добавлена `unwrapFirebaseError()` — извлекает `customData._tokenResponse.error.message` (реальный ответ identitytoolkit).
+  - Диагностический `console.info` при каждом входе: количество инициализированных Firebase apps (должно быть =1), `authDomain`, префикс `apiKey`, `currentUser`.
+  - Обработка новых кодов: `auth/operation-not-allowed` (Google-провайдер выключен), `auth/api-key-not-valid`, `auth/invalid-api-key`.
+  - На `auth/internal-error` теперь автоматически fallback на `signInWithRedirect` (popup-канал через iframe `firebaseapp.com` иногда режется блокировкой third-party cookies в Safari/Firefox — это одна из типичных причин internal-error).
+  - В UI выводятся 4 частые причины: ограничение API-ключа по HTTP-referrer, выключенный Google-провайдер, не включённый Identity Toolkit API, отсутствие redirect URI `https://smm-boost-905d5.firebaseapp.com/__/auth/handler` в OAuth 2.0 Client.
+
+### Проверенные пункты
+- `firebaseConfig` — apiKey/authDomain/projectId/appId соответствуют консоли Firebase проекта `smm-boost-905d5`.
+- `authDomain: 'smm-boost-905d5.firebaseapp.com'` — корректный (дефолтный Firebase-хостинг для OAuth handshake).
+- Инициализация одна: `appMod.getApps().length ? getApp() : initializeApp(config)`. Логируется количество apps в консоли.
+- Второй копии SDK нет: подключается только `google-auth.js`, никаких `<script src="firebase-*.js">` в HTML.
+- Импорты валидные: динамические `import(gstatic.com/firebasejs/10.12.2/firebase-{app,auth,firestore}.js)`.
+- `GoogleAuthProvider` создаётся один раз внутри `loadSDK()`, с `prompt: 'select_account'`.
+
+### API-функции
+В `/api` — по-прежнему 12 файлов. Новых серверных функций не добавлено.
+
+### Ручные действия (если internal-error повторится)
+1. **Google Cloud Console → APIs & Services → Credentials** — открыть API-ключ `AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8`. В **Application restrictions → HTTP referrers** добавить: `https://smm-boost.pro/*`, `https://*.vercel.app/*`, `https://smm-boost-905d5.firebaseapp.com/*`. Либо снять ограничения (None) для теста.
+2. **Firebase Console → Authentication → Sign-in method** — убедиться, что **Google** provider **Enabled**.
+3. **Firebase Console → Authentication → Settings → Authorized domains** — добавить `smm-boost.pro` и текущий Vercel-домен.
+4. **Google Cloud Console → APIs & Services → OAuth consent screen** — статус Published (или ваш email добавлен как test user).
+5. **Google Cloud Console → Credentials → OAuth 2.0 Client (Web client (auto created by Google Service))** — Authorized redirect URIs должен содержать `https://smm-boost-905d5.firebaseapp.com/__/auth/handler`.
+6. **Google Cloud Console → APIs & Services → Enabled APIs** — должен быть включён **Identity Toolkit API**.
+
+После правки перезагрузить страницу и открыть DevTools → Console: строка `[google-auth] signIn error ... customData=...` покажет точный ответ сервера.
