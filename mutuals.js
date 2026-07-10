@@ -39,23 +39,11 @@ const requirement = document.getElementById("mutualsRequirement");
 
 let mutuals = [];
 let myProfileDocId = localStorage.getItem("smmBoostMutualProfileDocId") || "";
-
-// Use authenticated sb_user session if available, fallback to local ID for anonymous users
-function getMutualsUserId() {
-  try {
-    const sbUser = JSON.parse(localStorage.getItem("sb_user") || "{}");
-    if (sbUser.userId) return sbUser.userId;
-  } catch {}
-
-  let existingId = localStorage.getItem("smmBoostMutualUserId");
-  if (existingId) return existingId;
-
-  let userId = "u_" + crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+let userId = localStorage.getItem("smmBoostMutualUserId");
+if (!userId) {
+  userId = "u_" + Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
   localStorage.setItem("smmBoostMutualUserId", userId);
-  return userId;
 }
-
-let userId = getMutualsUserId();
 
 function setupMenu(){
   const btn = document.querySelector(".menu-toggle");
@@ -218,7 +206,7 @@ async function addProfile(){
   }
 
   if(myProfileDocId || mutuals.some(x => x.userId === userId)){
-    alert("Вы уже добавили профиль. Он отображается сверху в блоке 'Ваш профиль'.");
+    alert("Вы уже добавили профиль. Он отображается сверху в блоке ‘Ваш профиль’.");
     return;
   }
 

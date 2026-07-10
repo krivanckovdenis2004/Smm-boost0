@@ -1,43 +1,51 @@
 rules_version = '2';
 
-// SMM-Boost Security Rules
-// All client-side Firestore access is DENIED.
-// All database operations go through Vercel serverless functions (api/*.js)
-// which use the Firebase Admin SDK with proper authentication checks.
+// ВНИМАНИЕ: эти правила нужно задеплоить в Firebase — они не применяются
+// автоматически. Установи Firebase CLI (`npm i -g firebase-tools`),
+// авторизуйся (`firebase login`) и запусти:
+//
+//   firebase deploy --only firestore:rules --project smm-boost-905d5
+//
+// Либо скопируй содержимое этого файла в Firebase Console →
+// Firestore Database → Rules и опубликуй.
+//
+// Текущая цель Этапа 1: полностью закрыть прямые записи с клиента.
+// Все записи в orders / users / topups должны идти только через
+// серверные API (Vercel Functions). Клиенту оставлено чтение только
+// своих собственных данных.
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users collection: no client access (server functions handle auth, balance, profile)
+    // ---- Пользователи ----
+    // Читать может только владелец. Запись — только сервер (admin SDK).
     match /users/{userId} {
-      allow read, write: if false;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
     }
 
-    // Orders collection: no client access (server functions handle creation, listing, status)
+    // ---- Заказы ----
+    // Клиент видит только свои заказы. Запись — только сервер.
     match /orders/{orderId} {
-      allow read, write: if false;
+      allow read: if request.auth != null
+                  && resource.data.userId == request.auth.uid;
+      allow write: if false;
     }
 
-    // Topups collection: no client access (server functions handle crediting)
+    // ---- Пополнения ----
     match /topups/{topupId} {
-      allow read, write: if false;
+      allow read: if request.auth != null
+                  && resource.data.userId == request.auth.uid;
+      allow write: if false;
     }
 
-    // Services collection: no client access (catalog served via API endpoint)
-    match /services/{serviceId} {
-      allow read, write: if false;
-    }
-
-    // Mutuals collection: temporarily allow read/create/update for the mutuals feature
-    // TODO: Move mutuals operations to serverless functions in a later stage
-    match /mutuals/{mutualId} {
+    // ---- Каталог услуг (публичный кэш, если используется) ----
+    match /catalog/{docId} {
       allow read: if true;
-      allow create: if true;
-      allow update: if true;
-      allow delete: if false;
+      allow write: if false;
     }
 
-    // Deny everything else
+    // ---- Всё остальное закрыто по умолчанию ----
     match /{document=**} {
       allow read, write: if false;
     }

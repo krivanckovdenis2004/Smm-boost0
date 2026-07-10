@@ -239,7 +239,8 @@ async function submitQuickOrder(event) {
         service: service.name,
         serviceId: String(service.id),
         quantity,
-        link
+        link,
+        requestId: (crypto?.randomUUID?.() || (Date.now() + '-' + Math.random().toString(36).slice(2)))
       })
     });
     const data = await response.json().catch(() => ({}));

@@ -17,15 +17,40 @@ content="width=device-width, initial-scale=1.0">
 
 <body>
 
-<div id="adminLogin" class="services">
-  <div class="card">
-    <h2>Вход в админ-панель</h2>
-    <p>Авторизуйтесь как администратор</p>
-    <div id="adminLoginMsg" class="auth-message" style="display:none;"></div>
-  </div>
-</div>
+<script>
+(async function adminGate() {
+  try {
+    const existing = sessionStorage.getItem('sb_admin_token');
+    if (existing) return;
 
-<div id="adminPanel" style="display:none;">
+    const password = prompt('Введите пароль администратора');
+    if (!password) {
+      document.body.innerHTML = '';
+      alert('Доступ запрещен');
+      return;
+    }
+
+    const res = await fetch('/api/admin-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok || !data.ok) {
+      document.body.innerHTML = '';
+      alert(data.error || 'Доступ запрещен');
+      return;
+    }
+
+    sessionStorage.setItem('sb_admin_token', data.token);
+  } catch (e) {
+    document.body.innerHTML = '';
+    alert('Ошибка авторизации: ' + (e?.message || 'неизвестно'));
+  }
+})();
+</script>
 
 <header>
 
@@ -73,8 +98,6 @@ content="width=device-width, initial-scale=1.0">
 
 <div id="ordersContainer"
 class="services">
-
-</div>
 
 </div>
 
