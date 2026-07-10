@@ -1,76 +1,84 @@
-# CHANGES — редизайн SMM-Boost (UI/UX, 2026)
+# CHANGES — Регистрация/вход через Firebase Admin SDK (без открытия /users)
 
-Полностью визуальная переработка сайта уровня современных SaaS-2026. Бизнес-логика, цены, калькулятор, платежи, промокоды, API, заказы и архитектура — **не тронуты**. В `/api` осталось **12 функций** (ни одной новой).
+## Что было не так
+
+Предыдущий фикс ослаблял `firestore.rules` до `allow read, write: if true`
+для коллекции `/users`. Это неприемлемо: любой клиент мог бы читать и
+переписывать чужие профили и балансы.
 
 ## Что сделано
 
-### 1. Дизайн-система (`style.css`)
-- Добавлен большой **дизайн-оверлей** в конец файла (не удаляет и не переопределяет каркасные правила — только полирует и модернизирует поверх существующих селекторов).
-- Введены CSS-токены: цвета, градиенты (`--sb-grad-primary`, `--sb-grad-cta`, `--sb-grad-gold`), тени, радиусы, easing.
-- Новый фон: многослойные radial-gradients (индиго → циан → фиолет), мягкое свечение орбов (blur 110px).
-- Стеклянные карточки (`backdrop-filter` blur+saturate) с внутренней подсветкой и мягкими тенями.
-- Единый премиум-стиль для всех кнопок (`.hero-button`, `.primary-wide-btn`, `.payment-method-btn`, `.wallet-link`, `.quick-submit-btn`, `.trust-card-button`) — градиент, glow, shine-эффект при наведении, `translateY` на hover, `active` state.
-- Отдельный вариант «Зарегистрироваться» — тёплый gold-градиент; CryptoBot — cyan-градиент.
-- Стеклянный navbar с blur, brand-текст навигации градиентом, круглая кнопка-плашка регистрации.
-- Гамбургер меню: анимация в крест при открытии, hover-подсветка.
-- Мобильное меню: премиум-стеклянная панель с glow и микро-hover на пунктах.
-- Формы: единые input'ы (тёмное стекло, focus-ring фиолетовым, плавные переходы), капсовые label'ы.
-- Табы регистрации/входа: сегментированный контрол с подсветкой активного.
-- Hero-заголовок: gradient-текст (white → фиолет → cyan), адаптивный `clamp()` размер.
-- Бейджи (`.badge`, `.badge-hot`, `.badge-new`, `.badge-gold`).
-- Skeleton-загрузка (`.skeleton` с shimmer).
-- Empty state (`.empty-state`).
-- Toast-уведомления (`.sb-toast` с `.show` / `.success` / `.error`).
-- Fade-in анимация появления секций.
-- Custom scrollbar в фирменной палитре.
-- `prefers-reduced-motion` — отключение анимаций для доступности.
-- `:focus-visible` — единый a11y-outline.
-- Полная мобильная адаптация (grid → 1fr, кнопки на всю ширину, отступы).
+Регистрация и вход по логину/паролю переведены на **Firebase Admin SDK**.
+Admin SDK работает по service-account и **обходит Firestore-правила** —
+поэтому серверный API может писать в `/users`, а правила при этом
+остаются строгими для клиента.
 
-### 2. Бонусная система «+15 ₽ за Telegram»
-- **`api/social-bonus.js`** — сумма бонуса за Telegram изменена `2.5 → 15` (одна константа, тот же endpoint, тот же контракт, VK и вся остальная логика начисления не тронуты).
-- **`wallet.html`** — на кнопке Telegram-бонуса отображается `+15 ₽`, текст блока обновлён (Telegram = +15 ₽, VK = +5 ₽). Начисление по-прежнему только после подтверждения подписки через существующий endpoint.
-- **`auth.html`** — welcome-бонус-блок переписан: три строки (`Регистрация +70 ₽`, `Telegram +15 ₽`, `VK +5 ₽`), добавлена акцентная плашка «💎 +15 ₽ после подписки на Telegram».
-- **`index.html`** — в hero добавлена мини-чип «✈ +15 ₽ за подписку в Telegram», hero-карточка бонусов обновлена (до 90 ₽, три строки: +70 / +15 / +5).
+### 1. `api/auth-social-register.js` — переписан
+- `firebase/app` + `firebase/firestore` → `firebase-admin/app` + `firebase-admin/firestore`.
+- Инициализация через `initializeApp({ credential: cert(serviceAccount) })`,
+  где `serviceAccount` берётся из env-переменной `FIREBASE_SERVICE_ACCOUNT`
+  (JSON сервис-аккаунта одной строкой).
+- Логика (валидация логина/пароля, PBKDF2-хэш, timing-safe сравнение,
+  бонус +5 ₽, сессионный токен) — без изменений.
+- Отдельный API-файл не добавлен, общее число функций в `/api` = **12**.
 
-### 3. UX/UI-мелочи по всему сайту (за счёт CSS-оверлея — без правок HTML)
-- Все существующие карточки услуг, wallet, auth, quick-order, trust-sections автоматически получают стеклянный вид, hover-подъём и glow-обводку.
-- Все инпуты по всему сайту (auth, wallet, quick-order, admin, track) — единый focus-ring и премиум-стекло.
-- Микро-анимации hover/active на всех кнопках и ссылках навигации.
-- Кастомный scrollbar в брендовой палитре на всех страницах.
+### 2. `firestore.rules` — возвращены строгие правила `/users`
+```
+match /users/{userId} {
+  allow read:  if request.auth != null && request.auth.uid == userId;
+  allow write: if false;   // клиент не пишет — только Admin SDK через API
+}
+```
+Клиенту `/users` полностью закрыт. Заказы, пополнения, каталог — как были.
+
+### 3. `package.json`
+Добавлена зависимость `"firebase-admin": "^12.3.0"`. `firebase` (клиентский
+SDK) оставлен — его использует фронтенд и остальные API.
 
 ## Изменённые файлы
-- `style.css` — добавлен современный дизайн-оверлей (~420 строк в конце файла).
-- `index.html` — обновлены hero-строки бонусов и добавлен Telegram-чип.
-- `auth.html` — обновлён welcome-бонус-блок + плашка Telegram +15 ₽.
-- `wallet.html` — обновлена метка Telegram-бонуса `+5₽ → +15₽` и текст блока.
-- `api/social-bonus.js` — сумма Telegram-бонуса `2.5 → 15` (одна строка).
-- `CHANGES.md` — этот файл.
+- `api/auth-social-register.js`
+- `firestore.rules`
+- `package.json`
+- `CHANGES.md`
 
 ## Новые файлы
-Нет.
+- нет
 
-## Удалённые файлы
-Нет.
+## Удалить
+- нет
 
-## `/api` — количество функций
-**12 функций** (без изменений):
-`admin-login`, `auth-social-register`, `balance-order`, `check-status`, `create-balance-invoice`, `create-vpn-order`, `cryptobot-webhook`, `free-gift`, `list-orders`, `service-catalog`, `social-bonus`, `yookassa-webhook`.
+## Ручные действия (обязательно, один раз)
 
-## Что НЕ менялось (по требованию)
-- Цены услуг.
-- Калькулятор.
-- Логика пополнения баланса и платежи (YooKassa, CryptoBot).
-- Логика заказов, промокоды.
-- API-контракты (изменена лишь одна числовая константа внутри `social-bonus`).
-- Архитектура проекта, файловая структура.
-- Авторизация по логину/паролю (`auth.js`) — не тронута.
+**1. Создать service-account в Firebase:**
+Firebase Console → ⚙ Project settings → вкладка **Service accounts** →
+кнопка **Generate new private key** → скачается JSON-файл.
 
-## Ручные действия
-Не требуются. Достаточно задеплоить. Кеш браузера может подтягивать старый `style.css?v=20260603-final-working` — при необходимости обновите query-параметр `?v=` в HTML-файлах, чтобы форсировать обновление у клиентов.
+**2. Добавить его в Vercel как переменную окружения:**
+Vercel → Project → Settings → **Environment Variables** → добавить:
+- Name: `FIREBASE_SERVICE_ACCOUNT`
+- Value: **всё содержимое** скачанного JSON-файла, одной строкой
+  (можно с переносами — код толерантен к `\n` внутри `private_key`).
+- Environments: Production, Preview, Development (все три).
+- Save → **Redeploy** проекта, чтобы переменная попала в функции.
 
-## Как проверить
-1. Открыть главную — новый фон, стеклянные секции, gradient-hero, чип Telegram-бонуса в hero.
-2. Открыть `auth.html` — трёхстрочный welcome-бонус, tabs, стеклянные инпуты, gold-кнопка «Зарегистрироваться».
-3. Открыть `wallet.html` — стеклянная карта баланса, gradient-цифры, кнопка Telegram-бонуса показывает `+15 ₽`.
-4. Услуги/quick-order/orders — единый стиль кнопок, hover-glow на карточках.
+**3. Опубликовать правила Firestore:**
+```
+firebase deploy --only firestore:rules --project smm-boost-905d5
+```
+или Firebase Console → Firestore Database → Rules → вставить содержимое
+`firestore.rules` → Publish.
+
+## Проверка после деплоя
+1. `auth.html` → «Регистрация» → новый логин + пароль → «Зарегистрироваться».
+   Ожидается успех и переход в `wallet.html`.
+2. Выйти (очистить `localStorage.sb_user`) → «Войти» с тем же логином/паролем
+   → успех.
+3. Firebase Console → Firestore → `users` → появился документ с полями
+   `passwordHash`, `passwordSalt`, `balance: 0`, `bonusBalance: 5`.
+4. Попытка прочитать чужой документ `/users/<чужойId>` из клиента должна
+   упереться в правила (`permission-denied`) — это норма.
+
+## Локальная проверка сборки
+`node --input-type=module -e "import('./api/auth-social-register.js')"` —
+модуль загружается без синтаксических ошибок; при отсутствии/невалидности
+`FIREBASE_SERVICE_ACCOUNT` API отдаёт понятную ошибку из handler'а.

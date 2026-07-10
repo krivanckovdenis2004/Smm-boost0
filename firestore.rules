@@ -18,24 +18,15 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ---- Пользователи ----
-    // Читать может только владелец. Запись — только сервер (admin SDK).
+    // Клиент НЕ пишет в /users. Регистрация, вход и любые изменения
+    // профиля/баланса идут через серверные API на Firebase Admin SDK
+    // (api/auth-social-register.js и др.) — Admin SDK обходит правила
+    // по service-account. Читать документ разрешено только его владельцу,
+    // но фактически весь клиент читает данные через /api, поэтому read
+    // тоже можно оставить закрытым без последствий для UX.
     match /users/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
-      // Разрешаем аутентифицированному пользователю (Google/Firebase Auth)
-      // создать/обновить только свой собственный документ с ограниченным
-      // набором полей профиля. Финансовые поля (balance, bonusBalance и т.п.)
-      // остаются под контролем сервера.
-      allow create: if request.auth != null
-                    && request.auth.uid == userId
-                    && request.resource.data.uid == userId
-                    && request.resource.data.keys().hasOnly(
-                         ['uid','displayName','email','photoURL','authType','createdAt']
-                       );
-      allow update: if request.auth != null
-                    && request.auth.uid == userId
-                    && request.resource.data.diff(resource.data).affectedKeys()
-                         .hasOnly(['displayName','email','photoURL','updatedAt']);
-      allow delete: if false;
+      allow write: if false;
     }
 
     // ---- Заказы ----
