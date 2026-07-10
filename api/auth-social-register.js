@@ -1,6 +1,19 @@
 import crypto from 'crypto';
-import { db, handleCors } from './_lib/shared.js';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { initializeApp, getApps } from 'firebase/app';
+import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+
+const firebaseConfig = {
+  apiKey: 'AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8',
+  authDomain: 'smm-boost-905d5.firebaseapp.com',
+  projectId: 'smm-boost-905d5',
+  storageBucket: 'smm-boost-905d5.firebasestorage.app',
+  messagingSenderId: '554912523069',
+  appId: '1:554912523069:web:26d405b696b9d45e5edb54',
+  measurementId: 'G-E6SRLXZW5V'
+};
+
+const firebaseApp = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
 
 function safeText(value = '', max = 80) {
   return String(value || '').trim().slice(0, max);
@@ -101,7 +114,7 @@ async function loginPasswordUser(req, res) {
   const userId = uidFromKey(`password:${usernameLower}`);
   const userRef = doc(db, 'users', userId);
   const userSnap = await getDoc(userRef);
-  if (!userSnap.exists()) return res.status(401).json({ error: 'Неверный логин или пароль' });
+  if (!userSnap.exists()) return res.status(404).json({ error: 'Пользователь не найден. Зарегистрируйтесь.' });
 
   const savedUser = { userId, ...userSnap.data() };
   if (!verifyPassword(password, savedUser.passwordSalt, savedUser.passwordHash)) {
@@ -114,8 +127,6 @@ async function loginPasswordUser(req, res) {
 }
 
 export default async function handler(req, res) {
-  if (handleCors(req, res)) return;
-
   try {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -126,6 +137,6 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Неверное действие. Доступны register и login.' });
   } catch (e) {
     console.error(e);
-    return res.status(500).json({ error: 'Server error' });
+    return res.status(500).json({ error: e.message || 'Server error' });
   }
 }
