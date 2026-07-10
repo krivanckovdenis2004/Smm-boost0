@@ -1,0 +1,45 @@
+rules_version = '2';
+
+// SMM-Boost Security Rules
+// All client-side Firestore access is DENIED.
+// All database operations go through Vercel serverless functions (api/*.js)
+// which use the Firebase Admin SDK with proper authentication checks.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users collection: no client access (server functions handle auth, balance, profile)
+    match /users/{userId} {
+      allow read, write: if false;
+    }
+
+    // Orders collection: no client access (server functions handle creation, listing, status)
+    match /orders/{orderId} {
+      allow read, write: if false;
+    }
+
+    // Topups collection: no client access (server functions handle crediting)
+    match /topups/{topupId} {
+      allow read, write: if false;
+    }
+
+    // Services collection: no client access (catalog served via API endpoint)
+    match /services/{serviceId} {
+      allow read, write: if false;
+    }
+
+    // Mutuals collection: temporarily allow read/create/update for the mutuals feature
+    // TODO: Move mutuals operations to serverless functions in a later stage
+    match /mutuals/{mutualId} {
+      allow read: if true;
+      allow create: if true;
+      allow update: if true;
+      allow delete: if false;
+    }
+
+    // Deny everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
