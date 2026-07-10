@@ -1,25 +1,10 @@
+import crypto from 'crypto';
+import { db, handleCors, verifySession, rateLimit } from './_lib/shared.js';
 
-import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
-
-const firebaseConfig = {
-  apiKey: 'AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8',
-  authDomain: 'smm-boost-905d5.firebaseapp.com',
-  projectId: 'smm-boost-905d5',
-  storageBucket: 'smm-boost-905d5.firebasestorage.app',
-  messagingSenderId: '554912523069',
-  appId: '1:554912523069:web:26d405b696b9d45e5edb54',
-  measurementId: 'G-E6SRLXZW5V'
-};
-
-const firebaseApp = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-const db = getFirestore(firebaseApp);
-
-function json(res, status, payload) {
-  return res.status(status).json(payload);
-}
+function json(res, status, payload) { return res.status(status).json(payload); }
 
 export default async function handler(req, res) {
+  if (handleCors(req, res)) return;
   if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed' });
 
   try {
@@ -30,48 +15,35 @@ export default async function handler(req, res) {
 
     if (!userId || !sessionToken) return json(res, 401, { error: 'Сначала войдите в аккаунт' });
     if (!Number.isFinite(amount) || amount < 100) return json(res, 400, { error: 'Минимальное пополнение 100₽' });
+    if (amount > 50000) return json(res, 400, { error: 'Максимальное пополнение 50000₽' });
+    if (!rateLimit(`topup:${userId}`, 5)) return json(res, 429, { error: 'Слишком много запросов. Подождите минуту.' });
 
-    const userRef = doc(db, 'users', userId);
-    const userSnap = await getDoc(userRef);
-    if (!userSnap.exists()) return json(res, 401, { error: 'Аккаунт не найден. Войдите заново.' });
-    const user = userSnap.data();
-    if (String(user.sessionToken || '') !== sessionToken) return json(res, 401, { error: 'Сессия устарела. Войдите заново.' });
+    const session = await verifySession(db, userId, sessionToken);
+    if (!session.ok) return json(res, session.status, { error: session.error });
+
+    const user = session.user;
     const userLogin = login || user.username || user.displayName || 'user';
 
-    if (!process.env.YOOKASSA_SHOP_ID || !process.env.YOOKASSA_SECRET_KEY) {
-      return json(res, 500, { error: 'YooKassa credentials are not configured' });
-    }
+    if (!process.env.YOOKASSA_SHOP_ID || !process.env.YOOKASSA_SECRET_KEY) return json(res, 500, { error: 'YooKassa credentials are not configured' });
 
     const auth = Buffer.from(process.env.YOOKASSA_SHOP_ID + ':' + process.env.YOOKASSA_SECRET_KEY).toString('base64');
-    const idempotenceKey = 'topup-' + userId + '-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+    const idempotenceKey = 'topup-' + userId + '-' + amount.toFixed(2) + '-' + crypto.randomUUID().slice(0, 8);
 
     const response = await fetch('https://api.yookassa.ru/v3/payments', {
       method: 'POST',
-      headers: {
-        Authorization: 'Basic ' + auth,
-        'Content-Type': 'application/json',
-        'Idempotence-Key': idempotenceKey
-      },
+      headers: { Authorization: 'Basic ' + auth, 'Content-Type': 'application/json', 'Idempotence-Key': idempotenceKey },
       body: JSON.stringify({
         amount: { value: amount.toFixed(2), currency: 'RUB' },
         capture: true,
-        confirmation: {
-          type: 'redirect',
-          return_url: 'https://smm-boost.pro/wallet.html?topup=1'
-        },
+        confirmation: { type: 'redirect', return_url: (process.env.SITE_URL || 'https://smm-boost.pro') + '/wallet.html?topup=1' },
         description: `Пополнение баланса SMM-BOOST — ${userLogin} — ${amount.toFixed(2)}₽`.slice(0, 128),
-        metadata: {
-          type: 'balance_topup',
-          userId,
-          login: userLogin,
-          amountRub: String(amount.toFixed(2))
-        }
+        metadata: { type: 'balance_topup', userId, login: userLogin, amountRub: String(amount.toFixed(2)) }
       })
     });
 
     const data = await response.json();
     return json(res, response.ok ? 200 : response.status, data);
   } catch (e) {
-    return json(res, 500, { error: e.message });
+    return json(res, 500, { error: 'Server error' });
   }
 }

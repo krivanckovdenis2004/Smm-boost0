@@ -17,20 +17,15 @@ content="width=device-width, initial-scale=1.0">
 
 <body>
 
-<script>
+<div id="adminLogin" class="services">
+  <div class="card">
+    <h2>Вход в админ-панель</h2>
+    <p>Авторизуйтесь как администратор</p>
+    <div id="adminLoginMsg" class="auth-message" style="display:none;"></div>
+  </div>
+</div>
 
-const password =
-prompt("Введите пароль");
-
-if (password !== "2898") {
-
-  document.body.innerHTML = "";
-
-  alert("Доступ запрещен");
-
-}
-
-</script>
+<div id="adminPanel" style="display:none;">
 
 <header>
 
@@ -78,6 +73,8 @@ if (password !== "2898") {
 
 <div id="ordersContainer"
 class="services">
+
+</div>
 
 </div>
 
