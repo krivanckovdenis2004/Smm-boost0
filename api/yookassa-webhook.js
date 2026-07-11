@@ -1,5 +1,5 @@
 import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, doc, updateDoc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, doc, updateDoc, setDoc, getDoc, serverTimestamp, runTransaction } from 'firebase/firestore';
 import { validateOrderPayload } from './service-catalog.js';
 
 const firebaseConfig = {
@@ -89,25 +89,37 @@ if (String(orderData.type || '') === 'balance_topup') {
       }
 
       const userRef = doc(db, 'users', userId);
-      const userSnap = await getDoc(userRef);
-      const oldBalance = userSnap.exists() ? Number(userSnap.data().balance || 0) : 0;
+      const topupRef = doc(db, 'topups', String(verifiedPayment.id));
 
-      await setDoc(userRef, {
-        userId,
-        login,
-        balance: Number((oldBalance + amountRub).toFixed(2)),
-        updatedAt: serverTimestamp()
-      }, { merge: true });
+      // Идемпотентность: один payment.id — одно начисление.
+      const alreadyProcessed = await runTransaction(db, async (tx) => {
+        const topupSnap = await tx.get(topupRef);
+        if (topupSnap.exists() && String(topupSnap.data().status || '') === 'paid') {
+          return true;
+        }
+        const userSnap = await tx.get(userRef);
+        const oldBalance = userSnap.exists() ? Number(userSnap.data().balance || 0) : 0;
+        tx.set(userRef, {
+          userId,
+          login,
+          balance: Number((oldBalance + amountRub).toFixed(2)),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+        tx.set(topupRef, {
+          userId,
+          login,
+          amount: amountRub,
+          paymentMethod: 'ЮKassa',
+          paymentId: String(verifiedPayment.id || ''),
+          status: 'paid',
+          createdAt: serverTimestamp()
+        }, { merge: true });
+        return false;
+      });
 
-      await setDoc(doc(db, 'topups', verifiedPayment.id), {
-        userId,
-        login,
-        amount: amountRub,
-        paymentMethod: 'ЮKassa',
-        paymentId: String(verifiedPayment.id || ''),
-        status: 'paid',
-        createdAt: serverTimestamp()
-      }, { merge: true });
+      if (alreadyProcessed) {
+        return res.status(200).json({ success: true, topup: true, duplicate: true });
+      }
 
       await sendTelegram(`💰 Пополнение баланса через ЮKassa\n\nЛогин: ${login}\nСумма: ${amountRub}₽\nPayment ID: ${verifiedPayment.id}`);
       return res.status(200).json({ success: true, topup: true });
