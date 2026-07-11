@@ -47,6 +47,7 @@ export default async function handler(req, res) {
     // Повторный вызов с тем же requestId вернёт уже созданный заказ.
     if (requestId) {
       const reqRef = doc(db, 'order_requests', `${userId}_${requestId}`);
+      console.log('[BALANCE-ORDER] STEP 1: getDoc(order_requests/' + userId + '_' + requestId + ')');
       const reqSnap = await getDoc(reqRef);
       if (reqSnap.exists()) {
         const cached = reqSnap.data();
@@ -57,6 +58,7 @@ export default async function handler(req, res) {
           return res.status(429).json({ error: 'Заказ уже обрабатывается, подождите пару секунд.' });
         }
       }
+      console.log('[BALANCE-ORDER] STEP 2: setDoc(order_requests) status=processing');
       await setDoc(reqRef, { userId, status: 'processing', createdAt: serverTimestamp() }, { merge: true });
     }
 
@@ -66,6 +68,7 @@ export default async function handler(req, res) {
     const { service, quantity, link, priceRub } = validated;
 
     const userRef = doc(db, 'users', userId);
+    console.log('[BALANCE-ORDER] STEP 3: getDoc(users/' + userId + ')');
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) return res.status(401).json({ error: 'Аккаунт не найден' });
 
@@ -110,6 +113,7 @@ export default async function handler(req, res) {
     const japErrorText = japData.error || japData.message || japData.description || '';
 
     if (!japOrderId) {
+      console.log('[BALANCE-ORDER] STEP 4a: addDoc(orders) JAP error');
       await addDoc(collection(db, 'orders'), {
         userId,
         userLogin: String(user.username || user.displayName || user.email || ''),
@@ -131,6 +135,7 @@ export default async function handler(req, res) {
     let spentBonus = 0;
     let spentBalance = 0;
 
+    console.log('[BALANCE-ORDER] STEP 5: runTransaction(users)');
     await runTransaction(db, async (transaction) => {
       const freshSnap = await transaction.get(userRef);
       if (!freshSnap.exists()) throw new Error('Аккаунт не найден');
@@ -153,6 +158,7 @@ export default async function handler(req, res) {
       }, { merge: true });
     });
 
+    console.log('[BALANCE-ORDER] STEP 6: addDoc(orders) success');
     const orderDoc = await addDoc(collection(db, 'orders'), {
       userId,
       userLogin: String(user.username || user.displayName || user.email || ''),
@@ -188,7 +194,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ ok: true, orderDocId: orderDoc.id, publicOrderId, japOrderId });
   } catch (e) {
-    console.error(e);
+    console.error('[BALANCE-ORDER] FAIL:', e && e.code, e && e.message, e && e.stack);
     try { await sendTelegram(`❌ Ошибка заказа с баланса:\n${e.message}`); } catch {}
     return res.status(500).json({ error: e.name === 'AbortError' ? 'JAP долго не отвечает. Попробуйте позже.' : e.message });
   }
