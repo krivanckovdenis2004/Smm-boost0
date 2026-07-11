@@ -93,7 +93,22 @@ if (String(orderData.type || '') === 'balance_topup') {
 
       console.log('[YK-WEBHOOK] STEP 0: start topup transaction', { userId, paymentId: verifiedPayment.id, amountRub });
 
+      // Быстрая идемпотентность до транзакции: если документ уже существует —
+      // платёж уже начислен, никаких изменений баланса и Telegram.
+      try {
+        const preSnap = await getDoc(topupRef);
+        if (preSnap.exists()) {
+          console.log('[YK-WEBHOOK] PRE-CHECK: topup already exists, skipping', verifiedPayment.id);
+          return res.status(200).json({ success: true, topup: true, duplicate: true });
+        }
+      } catch (preErr) {
+        console.warn('[YK-WEBHOOK] PRE-CHECK failed (continue to tx):', preErr && preErr.message);
+      }
+
       // Идемпотентность: один payment.id — одно начисление.
+      // Внутри транзакции проверяем ЛЮБОЕ существование topups/{paymentId},
+      // а не только status=='paid', и создаём документ атомарно (без merge),
+      // чтобы повторная доставка webhook гарантированно упала на конфликте.
       let currentStep = 'init';
       let alreadyProcessed = false;
       try {
@@ -101,8 +116,8 @@ if (String(orderData.type || '') === 'balance_topup') {
           currentStep = 'STEP 1: tx.get(topups/' + verifiedPayment.id + ')';
           console.log('[YK-WEBHOOK]', currentStep);
           const topupSnap = await tx.get(topupRef);
-          if (topupSnap.exists() && String(topupSnap.data().status || '') === 'paid') {
-            console.log('[YK-WEBHOOK] STEP 1a: topup already paid, skipping');
+          if (topupSnap.exists()) {
+            console.log('[YK-WEBHOOK] STEP 1a: topup already exists, skipping');
             return true;
           }
 
@@ -112,17 +127,10 @@ if (String(orderData.type || '') === 'balance_topup') {
           const oldBalance = userSnap.exists() ? Number(userSnap.data().balance || 0) : 0;
           console.log('[YK-WEBHOOK] STEP 2a: user exists=', userSnap.exists(), ' oldBalance=', oldBalance);
 
-          currentStep = 'STEP 3: tx.set(users/' + userId + ') balance update';
+          currentStep = 'STEP 3: tx.set(topups/' + verifiedPayment.id + ') create (atomic marker)';
           console.log('[YK-WEBHOOK]', currentStep);
-          tx.set(userRef, {
-            userId,
-            login,
-            balance: Number((oldBalance + amountRub).toFixed(2)),
-            updatedAt: serverTimestamp()
-          }, { merge: true });
-
-          currentStep = 'STEP 4: tx.set(topups/' + verifiedPayment.id + ') create';
-          console.log('[YK-WEBHOOK]', currentStep);
+          // Создаём маркер БЕЗ merge — при гонке второй transaction увидит
+          // существующий документ на retry и вернёт alreadyProcessed=true.
           tx.set(topupRef, {
             userId,
             login,
@@ -131,6 +139,15 @@ if (String(orderData.type || '') === 'balance_topup') {
             paymentId: String(verifiedPayment.id || ''),
             status: 'paid',
             createdAt: serverTimestamp()
+          });
+
+          currentStep = 'STEP 4: tx.set(users/' + userId + ') balance update';
+          console.log('[YK-WEBHOOK]', currentStep);
+          tx.set(userRef, {
+            userId,
+            login,
+            balance: Number((oldBalance + amountRub).toFixed(2)),
+            updatedAt: serverTimestamp()
           }, { merge: true });
 
           currentStep = 'STEP 5: transaction commit';
