@@ -13,15 +13,21 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isPasswordUserId(userId) {
+      return userId.matches('^[0-9a-f]{32}$');
+    }
+
     // ---- Пользователи ----
     match /users/{userId} {
-      // Клиент не читает /users напрямую (данные приходят через /api),
-      // но на случай будущего чтения — только владельцу.
-      allow read: if request.auth != null && request.auth.uid == userId;
+      // API регистрации/входа читает один документ по детерминированному id
+      // для проверки существования логина и пароля. Список /users закрыт.
+      allow get: if isPasswordUserId(userId);
+      allow list: if false;
 
       // Регистрация: документ должен содержать userId и хэш пароля,
       // userId в документе должен совпадать с id документа.
-      allow create: if request.resource.data.userId == userId
+      allow create: if isPasswordUserId(userId)
+                    && request.resource.data.userId == userId
                     && request.resource.data.keys().hasAll(
                          ['userId', 'passwordHash', 'passwordSalt', 'username']
                        );
