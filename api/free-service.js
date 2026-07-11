@@ -1,5 +1,5 @@
 import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, doc, runTransaction, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { getFirestore, doc, runTransaction, serverTimestamp, Timestamp, collection, addDoc } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8',
@@ -16,16 +16,18 @@ const db = getFirestore(firebaseApp);
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '';
+const JAP_API_KEY = process.env.JAP_API_KEY || '';
+const JAP_API_URL = 'https://justanotherpanel.com/api/v2';
 
 const COOLDOWN_MS = 30 * 60 * 1000; // 30 минут
 
 const FREE_SERVICES = {
-  likes:      { key: 'likes',      title: 'Лайки',       icon: '❤️', quantity: 50 },
-  followers:  { key: 'followers',  title: 'Подписчики',  icon: '👥', quantity: 20 },
-  views:      { key: 'views',      title: 'Просмотры',   icon: '👁',  quantity: 500 },
-  reactions:  { key: 'reactions',  title: 'Реакции',     icon: '🔥', quantity: 50 },
-  favorites:  { key: 'favorites',  title: 'Избранное',   icon: '⭐', quantity: 30 },
-  shares:     { key: 'shares',     title: 'Репосты',     icon: '🔁', quantity: 20 }
+  likes:      { key: 'likes',      title: 'Лайки',       icon: '❤️', quantity: 50,  category: 'likes' },
+  followers:  { key: 'followers',  title: 'Подписчики',  icon: '👥', quantity: 20,  category: 'followers' },
+  views:      { key: 'views',      title: 'Просмотры',   icon: '👁',  quantity: 500, category: 'views' },
+  reactions:  { key: 'reactions',  title: 'Реакции',     icon: '🔥', quantity: 50,  category: 'reactions' },
+  favorites:  { key: 'favorites',  title: 'Избранное',   icon: '⭐', quantity: 30,  category: 'saves' },
+  shares:     { key: 'shares',     title: 'Репосты',     icon: '🔁', quantity: 20,  category: 'shares' }
 };
 
 const SOCIAL_RULES = {
@@ -34,6 +36,23 @@ const SOCIAL_RULES = {
   YouTube: /youtube\.com|youtu\.be/i,
   VK: /vk\.com|vk\.ru/i,
   Instagram: /instagram\.com/i
+};
+
+const CATEGORY_PATTERNS = {
+  likes:     /\blike|лайк/i,
+  followers: /follow|subscrib|member|подписч|участник/i,
+  views:     /view|просмотр|impression|reach|охват/i,
+  reactions: /react|реакц/i,
+  saves:     /save|favou?rite|сохран|избран|bookmark/i,
+  shares:    /share|repost|forward|репост|пересыл/i
+};
+
+const PLATFORM_PATTERNS = {
+  TikTok:    /tiktok|тик\s?ток/i,
+  Telegram:  /telegram|телеграм/i,
+  YouTube:   /youtube|ютуб/i,
+  VK:        /\bvk\b|вконтакте|вк\s/i,
+  Instagram: /instagram|инстаграм/i
 };
 
 function clean(v) { return String(v || '').replace(/[<>]/g, '').slice(0, 500); }
@@ -47,6 +66,89 @@ async function sendTelegram(text) {
       body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text })
     });
   } catch {}
+}
+
+let cachedJapServices = null;
+let cachedJapAt = 0;
+const JAP_CACHE_TTL = 10 * 60 * 1000;
+
+async function fetchJapServices() {
+  if (cachedJapServices && Date.now() - cachedJapAt < JAP_CACHE_TTL) return cachedJapServices;
+  if (!JAP_API_KEY) return [];
+  try {
+    const r = await fetch(JAP_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ key: JAP_API_KEY, action: 'services' })
+    });
+    const data = await r.json();
+    if (Array.isArray(data)) {
+      cachedJapServices = data;
+      cachedJapAt = Date.now();
+      return data;
+    }
+  } catch (e) {
+    console.error('[free-service] fetchJapServices', e);
+  }
+  return cachedJapServices || [];
+}
+
+// Найти самую дешёвую услугу JAP под (соцсеть, категория, количество)
+async function findCheapestJapService(social, category, quantity) {
+  const services = await fetchJapServices();
+  const platformRe = PLATFORM_PATTERNS[social];
+  const categoryRe = CATEGORY_PATTERNS[category];
+  if (!platformRe || !categoryRe) return null;
+
+  const candidates = services.filter(s => {
+    const name = String(s.name || '');
+    const cat = String(s.category || '');
+    const text = `${cat} ${name}`;
+    if (!platformRe.test(text)) return false;
+    if (!categoryRe.test(text)) return false;
+    const min = Number(s.min || 0);
+    const max = Number(s.max || 0);
+    if (min > quantity) return false;
+    if (max && max < quantity) return false;
+    const rate = Number(s.rate || 0);
+    if (!(rate > 0)) return false;
+    const type = String(s.type || '').toLowerCase();
+    if (type && type !== 'default') return false;
+    // избегаем услуг с явно плохими метками
+    if (/drip|drip-feed|subscriptions|custom|refill/i.test(name) && !/likes|followers|views|reactions|shares/i.test(name)) {
+      // не отбрасываем полностью, но понизим приоритет — фильтр не жёсткий
+    }
+    return true;
+  });
+
+  if (!candidates.length) return null;
+  candidates.sort((a, b) => Number(a.rate) - Number(b.rate));
+  return candidates[0];
+}
+
+async function submitJapOrder(serviceId, link, quantity) {
+  if (!JAP_API_KEY) return { error: 'JAP_API_KEY not set' };
+  try {
+    const r = await fetch(JAP_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        key: JAP_API_KEY,
+        action: 'add',
+        service: String(serviceId),
+        link: String(link),
+        quantity: String(quantity)
+      })
+    });
+    const text = await r.text();
+    try { return JSON.parse(text); } catch { return { error: text }; }
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
+function generatePublicOrderId() {
+  return 'F' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 6).toUpperCase();
 }
 
 export default async function handler(req, res) {
@@ -162,15 +264,61 @@ export default async function handler(req, res) {
       };
     });
 
-    // Отправляем заявку админу в Telegram (аналог free-gift.js — безопасно, без авто-JAP)
-    const msg = `🎁 Бесплатная услуга (авторизованный пользователь)\n\nUserId: ${userId}\nКонтакт: ${clean(claimResult.telegramUser)}\nУслуга: ${claimResult.service.icon} ${claimResult.service.title} × ${claimResult.service.quantity}\nСоцсеть: ${clean(claimResult.social)}\nСсылка: ${clean(claimResult.link)}\nСтатус: заявка принята, обработать вручную.`;
+    // Автоматически отправляем заказ в JAP: подбираем самую дешёвую подходящую услугу
+    const svc = claimResult.service;
+    const jap = await findCheapestJapService(claimResult.social, svc.category, svc.quantity);
+
+    let japOrderId = '';
+    let japError = '';
+    let japServiceId = '';
+    let japRate = 0;
+
+    if (jap) {
+      japServiceId = String(jap.service);
+      japRate = Number(jap.rate || 0);
+      const resp = await submitJapOrder(jap.service, claimResult.link, svc.quantity);
+      japOrderId = resp.order || resp.id || resp.orderId || '';
+      japError = resp.error || resp.message || '';
+    } else {
+      japError = 'Подходящая услуга JAP не найдена';
+    }
+
+    // Создаём запись в orders, чтобы админ и пользователь видели статус
+    try {
+      const publicOrderId = generatePublicOrderId();
+      await addDoc(collection(db, 'orders'), {
+        userId,
+        userLogin: String(claimResult.telegramUser || ''),
+        publicOrderId,
+        service: `${svc.icon} ${svc.title} × ${svc.quantity} (бесплатно)`,
+        serviceId: japServiceId,
+        platform: claimResult.social,
+        link: clean(claimResult.link),
+        amount: svc.quantity,
+        quantity: svc.quantity,
+        price: 0,
+        isFree: true,
+        japOrderId: String(japOrderId || ''),
+        japError: String(japError || ''),
+        status: japOrderId ? '🟡 В обработке' : '🕓 Ожидает запуска',
+        progress: japOrderId ? 15 : 5,
+        createdAt: serverTimestamp()
+      });
+    } catch (e) {
+      console.error('[free-service] addDoc order', e);
+    }
+
+    const msg = `🎁 Бесплатная услуга\n\nUserId: ${userId}\nКонтакт: ${clean(claimResult.telegramUser)}\nУслуга: ${svc.icon} ${svc.title} × ${svc.quantity}\nСоцсеть: ${clean(claimResult.social)}\nСсылка: ${clean(claimResult.link)}\nJAP service: ${japServiceId || '—'}\nJAP order: ${japOrderId || '—'}\n${japError ? 'JAP error: ' + japError : ''}`;
     await sendTelegram(msg);
 
     return res.status(200).json({
       ok: true,
       service: claimResult.service,
       nextAvailableAt: claimResult.nextAvailableAt,
-      message: 'Заявка принята! Услуга будет выполнена в течение нескольких минут.'
+      japOrderId: japOrderId || null,
+      message: japOrderId
+        ? 'Заказ отправлен! Услуга появится в течение нескольких минут.'
+        : 'Заявка принята. Услуга будет выполнена вручную в ближайшее время.'
     });
   } catch (e) {
     if (e.code === 'COOLDOWN') {
