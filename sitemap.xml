@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://smm-boost.pro/</loc></url>
-  <url><loc>https://smm-boost.pro/tiktok.html</loc></url>
-  <url><loc>https://smm-boost.pro/youtube.html</loc></url>
-  <url><loc>https://smm-boost.pro/vk.html</loc></url>
-  <url><loc>https://smm-boost.pro/telegram.html</loc></url>
-  <url><loc>https://smm-boost.pro/giveaway.html</loc></url>
-  <url><loc>https://smm-boost.pro/daily.html</loc></url>
-  <url><loc>https://smm-boost.pro/mutuals.html</loc></url>
-
-<url>
-<loc>https://smm-boost.pro/services.html</loc>
-</url>
-
-
-<url><loc>https://smm-boost.pro/auth.html</loc></url>
-
-<url><loc>https://smm-boost.pro/wallet.html</loc></url>
+  <url><loc>https://smm-boost.pro/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
+  <url><loc>https://smm-boost.pro/services.html</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
+  <url><loc>https://smm-boost.pro/wallet.html</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://smm-boost.pro/orders.html</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://smm-boost.pro/auth.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://smm-boost.pro/daily.html</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://smm-boost.pro/giveaway.html</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://smm-boost.pro/contacts.html</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://smm-boost.pro/tiktok.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://smm-boost.pro/telegram.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://smm-boost.pro/youtube.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://smm-boost.pro/vpn.html</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://smm-boost.pro/offer.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://smm-boost.pro/privacy.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://smm-boost.pro/refund.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://smm-boost.pro/terms.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://smm-boost.pro/agreement.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
 </urlset>

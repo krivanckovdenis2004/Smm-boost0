@@ -175,7 +175,7 @@ async function claimSocialBonus(platform) {
   }
 
   const links = {
-    telegram: 'https://t.me/smmboost_pro',
+    telegram: 'https://t.me/smm_boost_vesty',
     vk: 'https://vk.ru/smmboost_pro'
   };
 
