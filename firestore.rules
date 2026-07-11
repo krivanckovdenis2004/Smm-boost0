@@ -54,8 +54,12 @@ service cloud.firestore {
     // поэтому create/update разрешены, но только для документа правильной
     // формы (обязательные поля userId/amount/status/paymentId).
     match /topups/{topupId} {
-      allow read: if request.auth != null
-                  && resource.data.userId == request.auth.uid;
+      // get одного документа по id разрешён всем: webhook ЮKassa/CryptoBot
+      // выполняет tx.get(topups/{paymentId}) клиентским SDK без Firebase Auth
+      // для проверки идемпотентности (повторный webhook). list остаётся закрыт,
+      // поэтому перечислить коллекцию нельзя.
+      allow get: if true;
+      allow list: if false;
       allow create: if request.resource.data.keys().hasAll(
                          ['userId', 'amount', 'status', 'paymentId']
                        );
