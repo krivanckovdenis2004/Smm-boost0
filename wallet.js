@@ -73,7 +73,16 @@ if (!isLoggedIn(user)) {
   });
 }
 
+// Глобальный (в рамках модуля) флаг: одно нажатие — один запрос на создание платежа.
+// Защищает от гонки: submit + click, двойной click, повторный вызов из другого места и т.п.
+let topupInFlight = false;
+
 async function createTopup(type) {
+  if (topupInFlight) {
+    console.warn('[TOPUP] ignored: already in flight');
+    return;
+  }
+
   const user = getUser();
   if (!isLoggedIn(user)) {
     alert('Сначала войдите в аккаунт');
@@ -87,10 +96,18 @@ async function createTopup(type) {
     return;
   }
 
-  const button = type === 'crypto' ? document.getElementById('topupCrypto') : document.getElementById('topupYookassa');
+  const yBtn = document.getElementById('topupYookassa');
+  const cBtn = document.getElementById('topupCrypto');
+  const button = type === 'crypto' ? cBtn : yBtn;
   const old = button.textContent;
-  button.disabled = true;
+
+  topupInFlight = true;
+  if (yBtn) yBtn.disabled = true;
+  if (cBtn) cBtn.disabled = true;
   button.textContent = 'Создание оплаты...';
+
+  const requestId = Math.random().toString(36).slice(2, 10);
+  console.log('[TOPUP] create start', { type, amount, requestId });
 
   try {
     const res = await fetch(type === 'crypto' ? '/api/create-balance-invoice' : '/api/create-balance-yookassa', {
@@ -108,6 +125,8 @@ async function createTopup(type) {
       throw new Error(data.error || data.description || 'Ошибка создания оплаты');
     }
 
+    console.log('[TOPUP] created', { type, requestId, paymentId: data.id || data.result?.invoice_id || null });
+
     if (type === 'crypto' && data.ok && data.result?.pay_url) {
       window.location.href = data.result.pay_url;
       return;
@@ -121,14 +140,29 @@ async function createTopup(type) {
     throw new Error(data.error || data.description || 'Не найдена ссылка оплаты');
   } catch (e) {
     alert(e.message || 'Ошибка создания оплаты');
+  } finally {
+    topupInFlight = false;
+    if (yBtn) yBtn.disabled = false;
+    if (cBtn) cBtn.disabled = false;
+    button.textContent = old;
   }
-
-  button.disabled = false;
-  button.textContent = old;
 }
 
-document.getElementById('topupYookassa')?.addEventListener('click', () => createTopup('yookassa'));
-document.getElementById('topupCrypto')?.addEventListener('click', () => createTopup('crypto'));
+// Навешиваем ровно один обработчик через { once: false } без дублей.
+// Если по какой-то причине скрипт исполнится повторно, повторное навешивание
+// на тот же элемент даст двойной вызов — защищаемся флагом на элементе.
+(function bindTopupHandlersOnce(){
+  const yBtn = document.getElementById('topupYookassa');
+  const cBtn = document.getElementById('topupCrypto');
+  if (yBtn && !yBtn.dataset.sbBound) {
+    yBtn.dataset.sbBound = '1';
+    yBtn.addEventListener('click', (e) => { e.preventDefault(); createTopup('yookassa'); });
+  }
+  if (cBtn && !cBtn.dataset.sbBound) {
+    cBtn.dataset.sbBound = '1';
+    cBtn.addEventListener('click', (e) => { e.preventDefault(); createTopup('crypto'); });
+  }
+})();
 
 
 async function claimSocialBonus(platform) {
