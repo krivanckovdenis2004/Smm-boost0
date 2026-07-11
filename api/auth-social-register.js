@@ -1,28 +1,30 @@
 import crypto from 'crypto';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { initializeApp, getApps } from 'firebase/app';
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  serverTimestamp
+} from 'firebase/firestore';
 
-// --- Firebase Admin init ---------------------------------------------------
-// Требуется env-переменная FIREBASE_SERVICE_ACCOUNT — JSON сервис-аккаунта
-// проекта smm-boost-905d5 (Firebase Console → Project settings →
-// Service accounts → Generate new private key). Записывается в Vercel как
-// секрет одной строкой JSON.
-function loadServiceAccount() {
-  const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
-  if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT env var is not configured');
-  try {
-    return JSON.parse(raw);
-  } catch {
-    // Иногда в переменные окружения JSON вставляют с \n внутри private_key —
-    // делаем толерантный парсинг.
-    return JSON.parse(raw.replace(/\\n/g, '\n'));
-  }
-}
+// --- Firebase (клиентский SDK, публичный конфиг) ---------------------------
+// Возврат к состоянию до Google Auth: без Admin SDK, без service-account.
+// Серверный API пишет в Firestore обычным клиентским SDK. Безопасность
+// коллекции /users обеспечена firestore.rules (валидация формы документа
+// и запрет чтения чужих профилей). Никаких новых секретов не требуется.
+const firebaseConfig = {
+  apiKey: 'AIzaSyDpXvA6zg3nUFcnW3P-3rE2fSXQx2Fk9GA',
+  authDomain: 'smm-boost-905d5.firebaseapp.com',
+  projectId: 'smm-boost-905d5',
+  storageBucket: 'smm-boost-905d5.appspot.com',
+  messagingSenderId: '733216489773',
+  appId: '1:733216489773:web:9ac9d9b6b8b9d1b0b9c9c9'
+};
 
-const adminApp = getApps().length
-  ? getApps()[0]
-  : initializeApp({ credential: cert(loadServiceAccount()) });
-const db = getFirestore(adminApp);
+const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 // --- helpers ---------------------------------------------------------------
 function safeText(value = '', max = 80) {
@@ -85,9 +87,9 @@ async function registerPasswordUser(req, res) {
   if (password !== passwordConfirm) return res.status(400).json({ error: 'Пароли не совпадают' });
 
   const userId = uidFromKey(`password:${usernameLower}`);
-  const userRef = db.collection('users').doc(userId);
-  const userSnap = await userRef.get();
-  if (userSnap.exists) return res.status(409).json({ error: 'Такой логин уже зарегистрирован. Нажмите «Войти».' });
+  const userRef = doc(db, 'users', userId);
+  const userSnap = await getDoc(userRef);
+  if (userSnap.exists()) return res.status(409).json({ error: 'Такой логин уже зарегистрирован. Нажмите «Войти».' });
 
   const { salt, hash } = hashPassword(password);
   const sessionToken = newToken();
@@ -104,11 +106,11 @@ async function registerPasswordUser(req, res) {
     passwordSalt: salt,
     passwordHash: hash,
     sessionToken,
-    createdAt: FieldValue.serverTimestamp(),
-    updatedAt: FieldValue.serverTimestamp(),
-    lastLoginAt: FieldValue.serverTimestamp()
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    lastLoginAt: serverTimestamp()
   };
-  await userRef.set(user);
+  await setDoc(userRef, user);
   return res.status(200).json({ ok: true, user: publicUser(user) });
 }
 
@@ -123,9 +125,9 @@ async function loginPasswordUser(req, res) {
   }
 
   const userId = uidFromKey(`password:${usernameLower}`);
-  const userRef = db.collection('users').doc(userId);
-  const userSnap = await userRef.get();
-  if (!userSnap.exists) return res.status(404).json({ error: 'Пользователь не найден. Зарегистрируйтесь.' });
+  const userRef = doc(db, 'users', userId);
+  const userSnap = await getDoc(userRef);
+  if (!userSnap.exists()) return res.status(404).json({ error: 'Пользователь не найден. Зарегистрируйтесь.' });
 
   const savedUser = { userId, ...userSnap.data() };
   if (!verifyPassword(password, savedUser.passwordSalt, savedUser.passwordHash)) {
@@ -133,10 +135,10 @@ async function loginPasswordUser(req, res) {
   }
 
   const sessionToken = newToken();
-  await userRef.update({
+  await updateDoc(userRef, {
     sessionToken,
-    lastLoginAt: FieldValue.serverTimestamp(),
-    updatedAt: FieldValue.serverTimestamp()
+    lastLoginAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
   });
   return res.status(200).json({ ok: true, user: publicUser({ ...savedUser, sessionToken }) });
 }
