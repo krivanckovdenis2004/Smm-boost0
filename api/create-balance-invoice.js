@@ -57,7 +57,8 @@ export default async function handler(req, res) {
         return json(res, 500, { error: 'YooKassa credentials are not configured' });
       }
       const auth = Buffer.from(process.env.YOOKASSA_SHOP_ID + ':' + process.env.YOOKASSA_SECRET_KEY).toString('base64');
-      const idempotenceKey = 'topup-' + userId + '-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+      const { randomUUID } = await import('crypto');
+      const idempotenceKey = randomUUID();
 
       const response = await fetch('https://api.yookassa.ru/v3/payments', {
         method: 'POST',

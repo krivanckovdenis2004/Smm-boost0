@@ -3,9 +3,10 @@ if(req.method!=='POST') return res.status(405).json({error:'Method not allowed'}
 const telegram=String(req.body?.telegram||'').trim();
 if(!telegram) return res.status(400).json({error:'Telegram required'});
 const auth=Buffer.from(process.env.YOOKASSA_SHOP_ID+':'+process.env.YOOKASSA_SECRET_KEY).toString('base64');
+const { randomUUID } = await import('crypto');
 const response=await fetch('https://api.yookassa.ru/v3/payments',{
 method:'POST',
-headers:{Authorization:'Basic '+auth,'Content-Type':'application/json','Idempotence-Key':'vpn-'+Date.now()},
+headers:{Authorization:'Basic '+auth,'Content-Type':'application/json','Idempotence-Key':randomUUID()},
 body:JSON.stringify({
 amount:{value:'129.00',currency:'RUB'},
 capture:true,
