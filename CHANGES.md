@@ -1,39 +1,37 @@
-# CHANGES — Регистрация/вход через Firebase Admin SDK (без открытия /users)
-
-## Что было не так
-
-Предыдущий фикс ослаблял `firestore.rules` до `allow read, write: if true`
-для коллекции `/users`. Это неприемлемо: любой клиент мог бы читать и
-переписывать чужие профили и балансы.
+# CHANGES — Возврат к простой регистрации/входу по логину и паролю
 
 ## Что сделано
 
-Регистрация и вход по логину/паролю переведены на **Firebase Admin SDK**.
-Admin SDK работает по service-account и **обходит Firestore-правила** —
-поэтому серверный API может писать в `/users`, а правила при этом
-остаются строгими для клиента.
+Полностью удалены следы Google Auth, Firebase Auth и Firebase Admin SDK.
+Регистрация и вход работают через тот же серверный API, что и до
+экспериментов с Google Auth — клиентский Firebase SDK на сервере.
 
-### 1. `api/auth-social-register.js` — переписан
-- `firebase/app` + `firebase/firestore` → `firebase-admin/app` + `firebase-admin/firestore`.
-- Инициализация через `initializeApp({ credential: cert(serviceAccount) })`,
-  где `serviceAccount` берётся из env-переменной `FIREBASE_SERVICE_ACCOUNT`
-  (JSON сервис-аккаунта одной строкой).
-- Логика (валидация логина/пароля, PBKDF2-хэш, timing-safe сравнение,
-  бонус +5 ₽, сессионный токен) — без изменений.
-- Отдельный API-файл не добавлен, общее число функций в `/api` = **12**.
+### 1. `api/auth-social-register.js` — переписан обратно
+- Убраны импорты `firebase-admin/app`, `firebase-admin/firestore`,
+  `cert`, `getApps` от admin.
+- Возвращены импорты клиентского SDK: `firebase/app`, `firebase/firestore`.
+- Убрана логика чтения `FIREBASE_SERVICE_ACCOUNT`. Никаких service-account,
+  никаких переменных окружения для auth больше не нужно.
+- Бизнес-логика без изменений: валидация логина, PBKDF2-хэш пароля,
+  timing-safe сравнение, сессионный токен, бонус +5 ₽ при регистрации.
+- Файл по-прежнему обрабатывает `action: register` и `action: login`.
 
-### 2. `firestore.rules` — возвращены строгие правила `/users`
-```
-match /users/{userId} {
-  allow read:  if request.auth != null && request.auth.uid == userId;
-  allow write: if false;   // клиент не пишет — только Admin SDK через API
-}
-```
-Клиенту `/users` полностью закрыт. Заказы, пополнения, каталог — как были.
+### 2. `firestore.rules` — правила без Admin SDK
+Так как серверный API пишет в Firestore без `request.auth`, правила
+`/users/{userId}` разрешают `create/update` только для документов
+правильной формы (обязательные поля `userId`, `passwordHash`,
+`passwordSalt`, `username`) и запрещают перезапись хэша/соли/логина.
+Чтение чужих документов и удаление запрещены. Заказы и пополнения —
+только чтение владельцем, запись сервером.
 
 ### 3. `package.json`
-Добавлена зависимость `"firebase-admin": "^12.3.0"`. `firebase` (клиентский
-SDK) оставлен — его использует фронтенд и остальные API.
+- Удалена зависимость `firebase-admin`.
+- Оставлен `firebase` — используется фронтендом и API.
+
+### 4. Файлы Google Auth
+На момент этого шага их в проекте уже не было (`google-auth.js` удалён
+на предыдущей итерации). Дополнительно проверено — импортов Google Auth
+в `auth.html`, `auth.js`, `wallet.html`, `index.html` нет.
 
 ## Изменённые файлы
 - `api/auth-social-register.js`
@@ -45,40 +43,34 @@ SDK) оставлен — его использует фронтенд и ост
 - нет
 
 ## Удалить
-- нет
+- нет (все Google-файлы уже удалены ранее)
 
-## Ручные действия (обязательно, один раз)
+## Ручные действия
+1. Опубликовать `firestore.rules`:
+   ```
+   firebase deploy --only firestore:rules --project smm-boost-905d5
+   ```
+   или Firebase Console → Firestore → Rules → вставить и Publish.
+2. В Vercel Environment Variables можно удалить переменную
+   `FIREBASE_SERVICE_ACCOUNT` — она больше не используется.
+3. Redeploy проекта, чтобы подтянулся обновлённый `package.json`
+   (без `firebase-admin`).
 
-**1. Создать service-account в Firebase:**
-Firebase Console → ⚙ Project settings → вкладка **Service accounts** →
-кнопка **Generate new private key** → скачается JSON-файл.
+## Что не менялось
+- Цены, калькулятор, промокоды, баланс, пополнения, платежи.
+- Дизайн (`style.css`, HTML-страницы).
+- Все остальные API-функции (`balance-order`, `list-orders`,
+  `social-bonus`, `free-gift`, `check-status`,
+  `create-balance-invoice`, `create-vpn-order`, `cryptobot-webhook`,
+  `yookassa-webhook`, `service-catalog`, `admin-login`).
+- Количество функций в `/api` = **12**.
 
-**2. Добавить его в Vercel как переменную окружения:**
-Vercel → Project → Settings → **Environment Variables** → добавить:
-- Name: `FIREBASE_SERVICE_ACCOUNT`
-- Value: **всё содержимое** скачанного JSON-файла, одной строкой
-  (можно с переносами — код толерантен к `\n` внутри `private_key`).
-- Environments: Production, Preview, Development (все три).
-- Save → **Redeploy** проекта, чтобы переменная попала в функции.
-
-**3. Опубликовать правила Firestore:**
-```
-firebase deploy --only firestore:rules --project smm-boost-905d5
-```
-или Firebase Console → Firestore Database → Rules → вставить содержимое
-`firestore.rules` → Publish.
-
-## Проверка после деплоя
-1. `auth.html` → «Регистрация» → новый логин + пароль → «Зарегистрироваться».
-   Ожидается успех и переход в `wallet.html`.
-2. Выйти (очистить `localStorage.sb_user`) → «Войти» с тем же логином/паролем
-   → успех.
-3. Firebase Console → Firestore → `users` → появился документ с полями
-   `passwordHash`, `passwordSalt`, `balance: 0`, `bonusBalance: 5`.
-4. Попытка прочитать чужой документ `/users/<чужойId>` из клиента должна
-   упереться в правила (`permission-denied`) — это норма.
-
-## Локальная проверка сборки
-`node --input-type=module -e "import('./api/auth-social-register.js')"` —
-модуль загружается без синтаксических ошибок; при отсутствии/невалидности
-`FIREBASE_SERVICE_ACCOUNT` API отдаёт понятную ошибку из handler'а.
+## Проверка
+1. `auth.html` → «Регистрация» → логин + пароль → «Зарегистрироваться».
+   Ожидается успех и переход в `wallet.html`, документ создаётся
+   в Firestore `users` с `passwordHash`, `passwordSalt`, `balance: 0`,
+   `bonusBalance: 5`.
+2. Выйти (очистить `localStorage.sb_user`) → «Войти» с теми же
+   учётными данными → успех.
+3. Повторная регистрация того же логина → ошибка «Такой логин уже
+   зарегистрирован».

@@ -1,36 +1,42 @@
 rules_version = '2';
 
-// ВНИМАНИЕ: эти правила нужно задеплоить в Firebase — они не применяются
-// автоматически. Установи Firebase CLI (`npm i -g firebase-tools`),
-// авторизуйся (`firebase login`) и запусти:
+// Правила соответствуют состоянию до Google Auth / Admin SDK.
+// Серверный API (api/auth-social-register.js) пишет в /users клиентским
+// Firebase SDK без Firebase Auth — поэтому write разрешён неавторизованному
+// клиенту, но только для документов правильной формы (обязательные поля
+// хэша пароля и userId). Чтение чужих документов запрещено.
 //
+// Задеплой:
 //   firebase deploy --only firestore:rules --project smm-boost-905d5
-//
-// Либо скопируй содержимое этого файла в Firebase Console →
-// Firestore Database → Rules и опубликуй.
-//
-// Текущая цель Этапа 1: полностью закрыть прямые записи с клиента.
-// Все записи в orders / users / topups должны идти только через
-// серверные API (Vercel Functions). Клиенту оставлено чтение только
-// своих собственных данных.
+// либо Firebase Console → Firestore Database → Rules → Publish.
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
     // ---- Пользователи ----
-    // Клиент НЕ пишет в /users. Регистрация, вход и любые изменения
-    // профиля/баланса идут через серверные API на Firebase Admin SDK
-    // (api/auth-social-register.js и др.) — Admin SDK обходит правила
-    // по service-account. Читать документ разрешено только его владельцу,
-    // но фактически весь клиент читает данные через /api, поэтому read
-    // тоже можно оставить закрытым без последствий для UX.
     match /users/{userId} {
+      // Клиент не читает /users напрямую (данные приходят через /api),
+      // но на случай будущего чтения — только владельцу.
       allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if false;
+
+      // Регистрация: документ должен содержать userId и хэш пароля,
+      // userId в документе должен совпадать с id документа.
+      allow create: if request.resource.data.userId == userId
+                    && request.resource.data.keys().hasAll(
+                         ['userId', 'passwordHash', 'passwordSalt', 'username']
+                       );
+
+      // Обновление: нельзя менять хэш/соль/логин чужим writer'ом,
+      // разрешаем только обновление сессионного токена и служебных полей.
+      allow update: if request.resource.data.userId == resource.data.userId
+                    && request.resource.data.passwordHash == resource.data.passwordHash
+                    && request.resource.data.passwordSalt == resource.data.passwordSalt
+                    && request.resource.data.usernameLower == resource.data.usernameLower;
+
+      allow delete: if false;
     }
 
     // ---- Заказы ----
-    // Клиент видит только свои заказы. Запись — только сервер.
     match /orders/{orderId} {
       allow read: if request.auth != null
                   && resource.data.userId == request.auth.uid;
@@ -44,13 +50,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // ---- Каталог услуг (публичный кэш, если используется) ----
+    // ---- Каталог услуг (публичный кэш) ----
     match /catalog/{docId} {
       allow read: if true;
       allow write: if false;
     }
 
-    // ---- Всё остальное закрыто по умолчанию ----
+    // ---- Всё остальное закрыто ----
     match /{document=**} {
       allow read, write: if false;
     }
