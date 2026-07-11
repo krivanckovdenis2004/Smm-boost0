@@ -98,6 +98,19 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ---- Бесплатные услуги (free.html) ----
+    // Один документ на пользователя. API /api/free-service делает
+    // транзакцию на 30-минутный кулдаун и пишет историю. Ключ документа = userId.
+    match /free_claims/{userId} {
+      allow get: if isPasswordUserId(userId);
+      allow list: if false;
+      allow create: if isPasswordUserId(userId)
+                    && request.resource.data.userId == userId;
+      allow update: if isPasswordUserId(userId)
+                    && request.resource.data.userId == resource.data.userId;
+      allow delete: if false;
+    }
+
     // ---- Всё остальное закрыто ----
     match /{document=**} {
       allow read, write: if false;
