@@ -1,32 +1,20 @@
 import crypto from 'crypto';
 import { initializeApp, getApps } from 'firebase/app';
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  serverTimestamp
-} from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
-// --- Firebase (клиентский SDK, публичный конфиг) ---------------------------
-// Возврат к состоянию до Google Auth: без Admin SDK, без service-account.
-// Серверный API пишет в Firestore обычным клиентским SDK. Безопасность
-// коллекции /users обеспечена firestore.rules (валидация формы документа
-// и запрет чтения чужих профилей). Никаких новых секретов не требуется.
 const firebaseConfig = {
-  apiKey: 'AIzaSyDpXvA6zg3nUFcnW3P-3rE2fSXQx2Fk9GA',
+  apiKey: 'AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8',
   authDomain: 'smm-boost-905d5.firebaseapp.com',
   projectId: 'smm-boost-905d5',
-  storageBucket: 'smm-boost-905d5.appspot.com',
-  messagingSenderId: '733216489773',
-  appId: '1:733216489773:web:9ac9d9b6b8b9d1b0b9c9c9'
+  storageBucket: 'smm-boost-905d5.firebasestorage.app',
+  messagingSenderId: '554912523069',
+  appId: '1:554912523069:web:26d405b696b9d45e5edb54',
+  measurementId: 'G-E6SRLXZW5V'
 };
 
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const firebaseApp = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
 
-// --- helpers ---------------------------------------------------------------
 function safeText(value = '', max = 80) {
   return String(value || '').trim().slice(0, max);
 }
@@ -72,7 +60,6 @@ function validateUsername(username) {
   return /^[a-zA-Z0-9_а-яА-ЯёЁ.-]{3,32}$/.test(username);
 }
 
-// --- handlers --------------------------------------------------------------
 async function registerPasswordUser(req, res) {
   const usernameRaw = safeText(req.body?.username, 32);
   const password = String(req.body?.password || '');
@@ -135,11 +122,7 @@ async function loginPasswordUser(req, res) {
   }
 
   const sessionToken = newToken();
-  await updateDoc(userRef, {
-    sessionToken,
-    lastLoginAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  });
+  await updateDoc(userRef, { sessionToken, lastLoginAt: serverTimestamp(), updatedAt: serverTimestamp() });
   return res.status(200).json({ ok: true, user: publicUser({ ...savedUser, sessionToken }) });
 }
 
@@ -153,7 +136,7 @@ export default async function handler(req, res) {
 
     return res.status(400).json({ error: 'Неверное действие. Доступны register и login.' });
   } catch (e) {
-    console.error('[auth-social-register]', e);
+    console.error(e);
     return res.status(500).json({ error: e.message || 'Server error' });
   }
 }
