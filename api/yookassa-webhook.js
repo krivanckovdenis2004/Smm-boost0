@@ -91,31 +91,57 @@ if (String(orderData.type || '') === 'balance_topup') {
       const userRef = doc(db, 'users', userId);
       const topupRef = doc(db, 'topups', String(verifiedPayment.id));
 
+      console.log('[YK-WEBHOOK] STEP 0: start topup transaction', { userId, paymentId: verifiedPayment.id, amountRub });
+
       // Идемпотентность: один payment.id — одно начисление.
-      const alreadyProcessed = await runTransaction(db, async (tx) => {
-        const topupSnap = await tx.get(topupRef);
-        if (topupSnap.exists() && String(topupSnap.data().status || '') === 'paid') {
-          return true;
-        }
-        const userSnap = await tx.get(userRef);
-        const oldBalance = userSnap.exists() ? Number(userSnap.data().balance || 0) : 0;
-        tx.set(userRef, {
-          userId,
-          login,
-          balance: Number((oldBalance + amountRub).toFixed(2)),
-          updatedAt: serverTimestamp()
-        }, { merge: true });
-        tx.set(topupRef, {
-          userId,
-          login,
-          amount: amountRub,
-          paymentMethod: 'ЮKassa',
-          paymentId: String(verifiedPayment.id || ''),
-          status: 'paid',
-          createdAt: serverTimestamp()
-        }, { merge: true });
-        return false;
-      });
+      let currentStep = 'init';
+      let alreadyProcessed = false;
+      try {
+        alreadyProcessed = await runTransaction(db, async (tx) => {
+          currentStep = 'STEP 1: tx.get(topups/' + verifiedPayment.id + ')';
+          console.log('[YK-WEBHOOK]', currentStep);
+          const topupSnap = await tx.get(topupRef);
+          if (topupSnap.exists() && String(topupSnap.data().status || '') === 'paid') {
+            console.log('[YK-WEBHOOK] STEP 1a: topup already paid, skipping');
+            return true;
+          }
+
+          currentStep = 'STEP 2: tx.get(users/' + userId + ')';
+          console.log('[YK-WEBHOOK]', currentStep);
+          const userSnap = await tx.get(userRef);
+          const oldBalance = userSnap.exists() ? Number(userSnap.data().balance || 0) : 0;
+          console.log('[YK-WEBHOOK] STEP 2a: user exists=', userSnap.exists(), ' oldBalance=', oldBalance);
+
+          currentStep = 'STEP 3: tx.set(users/' + userId + ') balance update';
+          console.log('[YK-WEBHOOK]', currentStep);
+          tx.set(userRef, {
+            userId,
+            login,
+            balance: Number((oldBalance + amountRub).toFixed(2)),
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+
+          currentStep = 'STEP 4: tx.set(topups/' + verifiedPayment.id + ') create';
+          console.log('[YK-WEBHOOK]', currentStep);
+          tx.set(topupRef, {
+            userId,
+            login,
+            amount: amountRub,
+            paymentMethod: 'ЮKassa',
+            paymentId: String(verifiedPayment.id || ''),
+            status: 'paid',
+            createdAt: serverTimestamp()
+          }, { merge: true });
+
+          currentStep = 'STEP 5: transaction commit';
+          console.log('[YK-WEBHOOK]', currentStep);
+          return false;
+        });
+        console.log('[YK-WEBHOOK] STEP 6: transaction OK, alreadyProcessed=', alreadyProcessed);
+      } catch (txErr) {
+        console.error('[YK-WEBHOOK] FAIL at', currentStep, '->', txErr && txErr.code, txErr && txErr.message);
+        throw new Error('Firestore failed at ' + currentStep + ': ' + (txErr && txErr.message ? txErr.message : String(txErr)));
+      }
 
       if (alreadyProcessed) {
         return res.status(200).json({ success: true, topup: true, duplicate: true });
