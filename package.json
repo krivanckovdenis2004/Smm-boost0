@@ -4,7 +4,6 @@
   "type": "module",
   "scripts": {
     "dev": "node -e \"const p=Number((process.argv.find(a=>a.startsWith('--port='))||'--port=8080').split('=')[1])||8080;require('http').createServer((q,r)=>{r.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});r.end('<h1>SMM-Boost</h1><p>Статический проект.</p>');}).listen(p,()=>console.log('stub on '+p));\" --",
-    "build": "echo 'static site — no build step'",
     "build:dev": "echo 'static site — no build step'"
   },
   "dependencies": {
