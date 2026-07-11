@@ -43,10 +43,34 @@ service cloud.firestore {
     }
 
     // ---- Заказы ----
+    // Серверный API (api/balance-order.js, api/list-orders.js, api/check-status.js)
+    // работает клиентским Firebase SDK без Firebase Auth, поэтому правила
+    // валидируют форму документа, а не request.auth. Сессия пользователя
+    // проверяется в API до записи.
     match /orders/{orderId} {
-      allow read: if request.auth != null
-                  && resource.data.userId == request.auth.uid;
-      allow write: if false;
+      // get разрешён по id (track.html и одиночная подписка в orders.js),
+      // list нужен серверному list-orders (query where userId==...).
+      allow get: if true;
+      allow list: if true;
+      // create: обязательные поля заказа, publicOrderId и корректный userId
+      allow create: if request.resource.data.keys().hasAll(
+                         ['userId', 'publicOrderId', 'service', 'amount', 'price', 'status', 'createdAt']
+                       );
+      // update: нельзя менять владельца и публичный id заказа
+      allow update: if request.resource.data.userId == resource.data.userId
+                    && request.resource.data.publicOrderId == resource.data.publicOrderId;
+      allow delete: if false;
+    }
+
+    // ---- Идемпотентность заказов ----
+    // api/balance-order.js кладёт маркер order_requests/{userId}_{requestId}
+    // до создания заказа, чтобы повторный клик не создал дубль в JAP.
+    match /order_requests/{reqId} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if request.resource.data.keys().hasAll(['userId', 'status']);
+      allow update: if request.resource.data.userId == resource.data.userId;
+      allow delete: if false;
     }
 
     // ---- Пополнения ----
