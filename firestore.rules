@@ -50,10 +50,18 @@ service cloud.firestore {
     }
 
     // ---- Пополнения ----
+    // Webhook ЮKassa/CryptoBot пишет сюда клиентским SDK без Firebase Auth,
+    // поэтому create/update разрешены, но только для документа правильной
+    // формы (обязательные поля userId/amount/status/paymentId).
     match /topups/{topupId} {
       allow read: if request.auth != null
                   && resource.data.userId == request.auth.uid;
-      allow write: if false;
+      allow create: if request.resource.data.keys().hasAll(
+                         ['userId', 'amount', 'status', 'paymentId']
+                       );
+      allow update: if request.resource.data.userId == resource.data.userId
+                    && request.resource.data.paymentId == resource.data.paymentId;
+      allow delete: if false;
     }
 
     // ---- Каталог услуг (публичный кэш) ----
