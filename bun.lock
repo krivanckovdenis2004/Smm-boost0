@@ -1,0 +1,183 @@
+{
+  "lockfileVersion": 1,
+  "configVersion": 0,
+  "workspaces": {
+    "": {
+      "name": "smm-boost",
+      "dependencies": {
+        "firebase": "^10.12.2",
+      },
+    },
+  },
+  "packages": {
+    "@firebase/analytics": ["@firebase/analytics@0.10.8", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/analytics/-/analytics-0.10.8.tgz", { "dependencies": { "@firebase/component": "0.6.9", "@firebase/installations": "0.6.9", "@firebase/logger": "0.4.2", "@firebase/util": "1.10.0", "tslib": "^2.1.0" }, "peerDependencies": { "@firebase/app": "0.x" } }, ""],
+
+    "@firebase/analytics-compat": ["@firebase/analytics-compat@0.2.14", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/analytics-compat/-/analytics-compat-0.2.14.tgz", { "dependencies": { "@firebase/analytics": "0.10.8", "@firebase/analytics-types": "0.8.2", "@firebase/component": "0.6.9", "@firebase/util": "1.10.0", "tslib": "^2.1.0" }, "peerDependencies": { "@firebase/app-compat": "0.x" } }, ""],
+
+    "@firebase/analytics-types": ["@firebase/analytics-types@0.8.2", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/analytics-types/-/analytics-types-0.8.2.tgz", {}, ""],
+
+    "@firebase/app": ["@firebase/app@0.10.13", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/app/-/app-0.10.13.tgz", { "dependencies": { "@firebase/component": "0.6.9", "@firebase/logger": "0.4.2", "@firebase/util": "1.10.0", "idb": "7.1.1", "tslib": "^2.1.0" } }, ""],
+
+    "@firebase/app-check": ["@firebase/app-check@0.8.8", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/app-check/-/app-check-0.8.8.tgz", { "dependencies": { "@firebase/component": "0.6.9", "@firebase/logger": "0.4.2", "@firebase/util": "1.10.0", "tslib": "^2.1.0" }, "peerDependencies": { "@firebase/app": "0.x" } }, ""],
+
+    "@firebase/app-check-compat": ["@firebase/app-check-compat@0.3.15", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/app-check-compat/-/app-check-compat-0.3.15.tgz", { "dependencies": { "@firebase/app-check": "0.8.8", "@firebase/app-check-types": "0.5.2", "@firebase/component": "0.6.9", "@firebase/logger": "0.4.2", "@firebase/util": "1.10.0", "tslib": "^2.1.0" }, "peerDependencies": { "@firebase/app-compat": "0.x" } }, ""],
+
+    "@firebase/app-check-interop-types": ["@firebase/app-check-interop-types@0.3.2", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/app-check-interop-types/-/app-check-interop-types-0.3.2.tgz", {}, ""],
+
+    "@firebase/app-check-types": ["@firebase/app-check-types@0.5.2", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/app-check-types/-/app-check-types-0.5.2.tgz", {}, ""],
+
+    "@firebase/app-compat": ["@firebase/app-compat@0.2.43", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/app-compat/-/app-compat-0.2.43.tgz", { "dependencies": { "@firebase/app": "0.10.13", "@firebase/component": "0.6.9", "@firebase/logger": "0.4.2", "@firebase/util": "1.10.0", "tslib": "^2.1.0" } }, ""],
+
+    "@firebase/app-types": ["@firebase/app-types@0.9.2", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/app-types/-/app-types-0.9.2.tgz", {}, ""],
+
+    "@firebase/auth": ["@firebase/auth@1.7.9", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/auth/-/auth-1.7.9.tgz", { "dependencies": { "@firebase/component": "0.6.9", "@firebase/logger": "0.4.2", "@firebase/util": "1.10.0", "tslib": "^2.1.0", "undici": "6.19.7" }, "peerDependencies": { "@firebase/app": "0.x", "@react-native-async-storage/async-storage": "^1.18.1" }, "optionalPeers": ["@react-native-async-storage/async-storage"] }, ""],
+
+    "@firebase/auth-compat": ["@firebase/auth-compat@0.5.14", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/auth-compat/-/auth-compat-0.5.14.tgz", { "dependencies": { "@firebase/auth": "1.7.9", "@firebase/auth-types": "0.12.2", "@firebase/component": "0.6.9", "@firebase/util": "1.10.0", "tslib": "^2.1.0", "undici": "6.19.7" }, "peerDependencies": { "@firebase/app-compat": "0.x" } }, ""],
+
+    "@firebase/auth-interop-types": ["@firebase/auth-interop-types@0.2.3", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/auth-interop-types/-/auth-interop-types-0.2.3.tgz", {}, ""],
+
+    "@firebase/auth-types": ["@firebase/auth-types@0.12.2", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/auth-types/-/auth-types-0.12.2.tgz", { "peerDependencies": { "@firebase/app-types": "0.x", "@firebase/util": "1.x" } }, ""],
+
+    "@firebase/component": ["@firebase/component@0.6.9", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/component/-/component-0.6.9.tgz", { "dependencies": { "@firebase/util": "1.10.0", "tslib": "^2.1.0" } }, ""],
+
+    "@firebase/data-connect": ["@firebase/data-connect@0.1.0", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/data-connect/-/data-connect-0.1.0.tgz", { "dependencies": { "@firebase/auth-interop-types": "0.2.3", "@firebase/component": "0.6.9", "@firebase/logger": "0.4.2", "@firebase/util": "1.10.0", "tslib": "^2.1.0" }, "peerDependencies": { "@firebase/app": "0.x" } }, ""],
+
+    "@firebase/database": ["@firebase/database@1.0.8", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/database/-/database-1.0.8.tgz", { "dependencies": { "@firebase/app-check-interop-types": "0.3.2", "@firebase/auth-interop-types": "0.2.3", "@firebase/component": "0.6.9", "@firebase/logger": "0.4.2", "@firebase/util": "1.10.0", "faye-websocket": "0.11.4", "tslib": "^2.1.0" } }, ""],
+
+    "@firebase/database-compat": ["@firebase/database-compat@1.0.8", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/database-compat/-/database-compat-1.0.8.tgz", { "dependencies": { "@firebase/component": "0.6.9", "@firebase/database": "1.0.8", "@firebase/database-types": "1.0.5", "@firebase/logger": "0.4.2", "@firebase/util": "1.10.0", "tslib": "^2.1.0" } }, ""],
+
+    "@firebase/database-types": ["@firebase/database-types@1.0.5", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/database-types/-/database-types-1.0.5.tgz", { "dependencies": { "@firebase/app-types": "0.9.2", "@firebase/util": "1.10.0" } }, ""],
+
+    "@firebase/firestore": ["@firebase/firestore@4.7.3", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/firestore/-/firestore-4.7.3.tgz", { "dependencies": { "@firebase/component": "0.6.9", "@firebase/logger": "0.4.2", "@firebase/util": "1.10.0", "@firebase/webchannel-wrapper": "1.0.1", "@grpc/grpc-js": "~1.9.0", "@grpc/proto-loader": "^0.7.8", "tslib": "^2.1.0", "undici": "6.19.7" }, "peerDependencies": { "@firebase/app": "0.x" } }, ""],
+
+    "@firebase/firestore-compat": ["@firebase/firestore-compat@0.3.38", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/firestore-compat/-/firestore-compat-0.3.38.tgz", { "dependencies": { "@firebase/component": "0.6.9", "@firebase/firestore": "4.7.3", "@firebase/firestore-types": "3.0.2", "@firebase/util": "1.10.0", "tslib": "^2.1.0" }, "peerDependencies": { "@firebase/app-compat": "0.x" } }, ""],
+
+    "@firebase/firestore-types": ["@firebase/firestore-types@3.0.2", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/firestore-types/-/firestore-types-3.0.2.tgz", { "peerDependencies": { "@firebase/app-types": "0.x", "@firebase/util": "1.x" } }, ""],
+
+    "@firebase/functions": ["@firebase/functions@0.11.8", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/functions/-/functions-0.11.8.tgz", { "dependencies": { "@firebase/app-check-interop-types": "0.3.2", "@firebase/auth-interop-types": "0.2.3", "@firebase/component": "0.6.9", "@firebase/messaging-interop-types": "0.2.2", "@firebase/util": "1.10.0", "tslib": "^2.1.0", "undici": "6.19.7" }, "peerDependencies": { "@firebase/app": "0.x" } }, ""],
+
+    "@firebase/functions-compat": ["@firebase/functions-compat@0.3.14", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/functions-compat/-/functions-compat-0.3.14.tgz", { "dependencies": { "@firebase/component": "0.6.9", "@firebase/functions": "0.11.8", "@firebase/functions-types": "0.6.2", "@firebase/util": "1.10.0", "tslib": "^2.1.0" }, "peerDependencies": { "@firebase/app-compat": "0.x" } }, ""],
+
+    "@firebase/functions-types": ["@firebase/functions-types@0.6.2", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/functions-types/-/functions-types-0.6.2.tgz", {}, ""],
+
+    "@firebase/installations": ["@firebase/installations@0.6.9", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/installations/-/installations-0.6.9.tgz", { "dependencies": { "@firebase/component": "0.6.9", "@firebase/util": "1.10.0", "idb": "7.1.1", "tslib": "^2.1.0" }, "peerDependencies": { "@firebase/app": "0.x" } }, ""],
+
+    "@firebase/installations-compat": ["@firebase/installations-compat@0.2.9", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/installations-compat/-/installations-compat-0.2.9.tgz", { "dependencies": { "@firebase/component": "0.6.9", "@firebase/installations": "0.6.9", "@firebase/installations-types": "0.5.2", "@firebase/util": "1.10.0", "tslib": "^2.1.0" }, "peerDependencies": { "@firebase/app-compat": "0.x" } }, ""],
+
+    "@firebase/installations-types": ["@firebase/installations-types@0.5.2", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/installations-types/-/installations-types-0.5.2.tgz", { "peerDependencies": { "@firebase/app-types": "0.x" } }, ""],
+
+    "@firebase/logger": ["@firebase/logger@0.4.2", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/logger/-/logger-0.4.2.tgz", { "dependencies": { "tslib": "^2.1.0" } }, ""],
+
+    "@firebase/messaging": ["@firebase/messaging@0.12.12", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/messaging/-/messaging-0.12.12.tgz", { "dependencies": { "@firebase/component": "0.6.9", "@firebase/installations": "0.6.9", "@firebase/messaging-interop-types": "0.2.2", "@firebase/util": "1.10.0", "idb": "7.1.1", "tslib": "^2.1.0" }, "peerDependencies": { "@firebase/app": "0.x" } }, ""],
+
+    "@firebase/messaging-compat": ["@firebase/messaging-compat@0.2.12", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/messaging-compat/-/messaging-compat-0.2.12.tgz", { "dependencies": { "@firebase/component": "0.6.9", "@firebase/messaging": "0.12.12", "@firebase/util": "1.10.0", "tslib": "^2.1.0" }, "peerDependencies": { "@firebase/app-compat": "0.x" } }, ""],
+
+    "@firebase/messaging-interop-types": ["@firebase/messaging-interop-types@0.2.2", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/messaging-interop-types/-/messaging-interop-types-0.2.2.tgz", {}, ""],
+
+    "@firebase/performance": ["@firebase/performance@0.6.9", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/performance/-/performance-0.6.9.tgz", { "dependencies": { "@firebase/component": "0.6.9", "@firebase/installations": "0.6.9", "@firebase/logger": "0.4.2", "@firebase/util": "1.10.0", "tslib": "^2.1.0" }, "peerDependencies": { "@firebase/app": "0.x" } }, ""],
+
+    "@firebase/performance-compat": ["@firebase/performance-compat@0.2.9", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/performance-compat/-/performance-compat-0.2.9.tgz", { "dependencies": { "@firebase/component": "0.6.9", "@firebase/logger": "0.4.2", "@firebase/performance": "0.6.9", "@firebase/performance-types": "0.2.2", "@firebase/util": "1.10.0", "tslib": "^2.1.0" }, "peerDependencies": { "@firebase/app-compat": "0.x" } }, ""],
+
+    "@firebase/performance-types": ["@firebase/performance-types@0.2.2", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/performance-types/-/performance-types-0.2.2.tgz", {}, ""],
+
+    "@firebase/remote-config": ["@firebase/remote-config@0.4.9", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/remote-config/-/remote-config-0.4.9.tgz", { "dependencies": { "@firebase/component": "0.6.9", "@firebase/installations": "0.6.9", "@firebase/logger": "0.4.2", "@firebase/util": "1.10.0", "tslib": "^2.1.0" }, "peerDependencies": { "@firebase/app": "0.x" } }, ""],
+
+    "@firebase/remote-config-compat": ["@firebase/remote-config-compat@0.2.9", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/remote-config-compat/-/remote-config-compat-0.2.9.tgz", { "dependencies": { "@firebase/component": "0.6.9", "@firebase/logger": "0.4.2", "@firebase/remote-config": "0.4.9", "@firebase/remote-config-types": "0.3.2", "@firebase/util": "1.10.0", "tslib": "^2.1.0" }, "peerDependencies": { "@firebase/app-compat": "0.x" } }, ""],
+
+    "@firebase/remote-config-types": ["@firebase/remote-config-types@0.3.2", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/remote-config-types/-/remote-config-types-0.3.2.tgz", {}, ""],
+
+    "@firebase/storage": ["@firebase/storage@0.13.2", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/storage/-/storage-0.13.2.tgz", { "dependencies": { "@firebase/component": "0.6.9", "@firebase/util": "1.10.0", "tslib": "^2.1.0", "undici": "6.19.7" }, "peerDependencies": { "@firebase/app": "0.x" } }, ""],
+
+    "@firebase/storage-compat": ["@firebase/storage-compat@0.3.12", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/storage-compat/-/storage-compat-0.3.12.tgz", { "dependencies": { "@firebase/component": "0.6.9", "@firebase/storage": "0.13.2", "@firebase/storage-types": "0.8.2", "@firebase/util": "1.10.0", "tslib": "^2.1.0" }, "peerDependencies": { "@firebase/app-compat": "0.x" } }, ""],
+
+    "@firebase/storage-types": ["@firebase/storage-types@0.8.2", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/storage-types/-/storage-types-0.8.2.tgz", { "peerDependencies": { "@firebase/app-types": "0.x", "@firebase/util": "1.x" } }, ""],
+
+    "@firebase/util": ["@firebase/util@1.10.0", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/util/-/util-1.10.0.tgz", { "dependencies": { "tslib": "^2.1.0" } }, ""],
+
+    "@firebase/vertexai-preview": ["@firebase/vertexai-preview@0.0.4", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/vertexai-preview/-/vertexai-preview-0.0.4.tgz", { "dependencies": { "@firebase/app-check-interop-types": "0.3.2", "@firebase/component": "0.6.9", "@firebase/logger": "0.4.2", "@firebase/util": "1.10.0", "tslib": "^2.1.0" }, "peerDependencies": { "@firebase/app": "0.x", "@firebase/app-types": "0.x" } }, ""],
+
+    "@firebase/webchannel-wrapper": ["@firebase/webchannel-wrapper@1.0.1", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@firebase/webchannel-wrapper/-/webchannel-wrapper-1.0.1.tgz", {}, ""],
+
+    "@grpc/grpc-js": ["@grpc/grpc-js@1.9.16", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@grpc/grpc-js/-/grpc-js-1.9.16.tgz", { "dependencies": { "@grpc/proto-loader": "^0.7.8", "@types/node": ">=12.12.47" } }, ""],
+
+    "@grpc/proto-loader": ["@grpc/proto-loader@0.7.15", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@grpc/proto-loader/-/proto-loader-0.7.15.tgz", { "dependencies": { "lodash.camelcase": "^4.3.0", "long": "^5.0.0", "protobufjs": "^7.2.5", "yargs": "^17.7.2" }, "bin": { "proto-loader-gen-types": "build/bin/proto-loader-gen-types.js" } }, ""],
+
+    "@protobufjs/aspromise": ["@protobufjs/aspromise@1.1.2", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@protobufjs/aspromise/-/aspromise-1.1.2.tgz", {}, ""],
+
+    "@protobufjs/base64": ["@protobufjs/base64@1.1.2", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@protobufjs/base64/-/base64-1.1.2.tgz", {}, ""],
+
+    "@protobufjs/codegen": ["@protobufjs/codegen@2.0.5", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@protobufjs/codegen/-/codegen-2.0.5.tgz", {}, ""],
+
+    "@protobufjs/eventemitter": ["@protobufjs/eventemitter@1.1.1", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@protobufjs/eventemitter/-/eventemitter-1.1.1.tgz", {}, ""],
+
+    "@protobufjs/fetch": ["@protobufjs/fetch@1.1.1", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@protobufjs/fetch/-/fetch-1.1.1.tgz", { "dependencies": { "@protobufjs/aspromise": "^1.1.1" } }, ""],
+
+    "@protobufjs/float": ["@protobufjs/float@1.0.2", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@protobufjs/float/-/float-1.0.2.tgz", {}, ""],
+
+    "@protobufjs/path": ["@protobufjs/path@1.1.2", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@protobufjs/path/-/path-1.1.2.tgz", {}, ""],
+
+    "@protobufjs/pool": ["@protobufjs/pool@1.1.0", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@protobufjs/pool/-/pool-1.1.0.tgz", {}, ""],
+
+    "@protobufjs/utf8": ["@protobufjs/utf8@1.1.2", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@protobufjs/utf8/-/utf8-1.1.2.tgz", {}, ""],
+
+    "@types/node": ["@types/node@26.1.1", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@types/node/-/node-26.1.1.tgz", { "dependencies": { "undici-types": "~8.3.0" } }, ""],
+
+    "ansi-regex": ["ansi-regex@5.0.1", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/ansi-regex/-/ansi-regex-5.0.1.tgz", {}, ""],
+
+    "ansi-styles": ["ansi-styles@4.3.0", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/ansi-styles/-/ansi-styles-4.3.0.tgz", { "dependencies": { "color-convert": "^2.0.1" } }, ""],
+
+    "cliui": ["cliui@8.0.1", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/cliui/-/cliui-8.0.1.tgz", { "dependencies": { "string-width": "^4.2.0", "strip-ansi": "^6.0.1", "wrap-ansi": "^7.0.0" } }, ""],
+
+    "color-convert": ["color-convert@2.0.1", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/color-convert/-/color-convert-2.0.1.tgz", { "dependencies": { "color-name": "~1.1.4" } }, ""],
+
+    "color-name": ["color-name@1.1.4", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/color-name/-/color-name-1.1.4.tgz", {}, ""],
+
+    "emoji-regex": ["emoji-regex@8.0.0", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/emoji-regex/-/emoji-regex-8.0.0.tgz", {}, ""],
+
+    "escalade": ["escalade@3.2.0", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/escalade/-/escalade-3.2.0.tgz", {}, ""],
+
+    "faye-websocket": ["faye-websocket@0.11.4", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/faye-websocket/-/faye-websocket-0.11.4.tgz", { "dependencies": { "websocket-driver": ">=0.5.1" } }, ""],
+
+    "firebase": ["firebase@10.14.1", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/firebase/-/firebase-10.14.1.tgz", { "dependencies": { "@firebase/analytics": "0.10.8", "@firebase/analytics-compat": "0.2.14", "@firebase/app": "0.10.13", "@firebase/app-check": "0.8.8", "@firebase/app-check-compat": "0.3.15", "@firebase/app-compat": "0.2.43", "@firebase/app-types": "0.9.2", "@firebase/auth": "1.7.9", "@firebase/auth-compat": "0.5.14", "@firebase/data-connect": "0.1.0", "@firebase/database": "1.0.8", "@firebase/database-compat": "1.0.8", "@firebase/firestore": "4.7.3", "@firebase/firestore-compat": "0.3.38", "@firebase/functions": "0.11.8", "@firebase/functions-compat": "0.3.14", "@firebase/installations": "0.6.9", "@firebase/installations-compat": "0.2.9", "@firebase/messaging": "0.12.12", "@firebase/messaging-compat": "0.2.12", "@firebase/performance": "0.6.9", "@firebase/performance-compat": "0.2.9", "@firebase/remote-config": "0.4.9", "@firebase/remote-config-compat": "0.2.9", "@firebase/storage": "0.13.2", "@firebase/storage-compat": "0.3.12", "@firebase/util": "1.10.0", "@firebase/vertexai-preview": "0.0.4" } }, ""],
+
+    "get-caller-file": ["get-caller-file@2.0.5", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/get-caller-file/-/get-caller-file-2.0.5.tgz", {}, ""],
+
+    "http-parser-js": ["http-parser-js@0.5.10", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/http-parser-js/-/http-parser-js-0.5.10.tgz", {}, ""],
+
+    "idb": ["idb@7.1.1", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/idb/-/idb-7.1.1.tgz", {}, ""],
+
+    "is-fullwidth-code-point": ["is-fullwidth-code-point@3.0.0", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/is-fullwidth-code-point/-/is-fullwidth-code-point-3.0.0.tgz", {}, ""],
+
+    "lodash.camelcase": ["lodash.camelcase@4.3.0", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/lodash.camelcase/-/lodash.camelcase-4.3.0.tgz", {}, ""],
+
+    "long": ["long@5.3.2", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/long/-/long-5.3.2.tgz", {}, ""],
+
+    "protobufjs": ["protobufjs@7.6.5", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/protobufjs/-/protobufjs-7.6.5.tgz", { "dependencies": { "@protobufjs/aspromise": "^1.1.2", "@protobufjs/base64": "^1.1.2", "@protobufjs/codegen": "^2.0.5", "@protobufjs/eventemitter": "^1.1.1", "@protobufjs/fetch": "^1.1.1", "@protobufjs/float": "^1.0.2", "@protobufjs/path": "^1.1.2", "@protobufjs/pool": "^1.1.0", "@protobufjs/utf8": "^1.1.1", "@types/node": ">=13.7.0", "long": "^5.3.2" } }, ""],
+
+    "require-directory": ["require-directory@2.1.1", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/require-directory/-/require-directory-2.1.1.tgz", {}, ""],
+
+    "safe-buffer": ["safe-buffer@5.2.1", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/safe-buffer/-/safe-buffer-5.2.1.tgz", {}, ""],
+
+    "string-width": ["string-width@4.2.3", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/string-width/-/string-width-4.2.3.tgz", { "dependencies": { "emoji-regex": "^8.0.0", "is-fullwidth-code-point": "^3.0.0", "strip-ansi": "^6.0.1" } }, ""],
+
+    "strip-ansi": ["strip-ansi@6.0.1", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/strip-ansi/-/strip-ansi-6.0.1.tgz", { "dependencies": { "ansi-regex": "^5.0.1" } }, ""],
+
+    "tslib": ["tslib@2.8.1", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/tslib/-/tslib-2.8.1.tgz", {}, ""],
+
+    "undici": ["undici@6.19.7", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/undici/-/undici-6.19.7.tgz", {}, ""],
+
+    "undici-types": ["undici-types@8.3.0", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/undici-types/-/undici-types-8.3.0.tgz", {}, ""],
+
+    "websocket-driver": ["websocket-driver@0.7.5", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/websocket-driver/-/websocket-driver-0.7.5.tgz", { "dependencies": { "http-parser-js": ">=0.5.1", "safe-buffer": ">=5.1.0", "websocket-extensions": ">=0.1.1" } }, ""],
+
+    "websocket-extensions": ["websocket-extensions@0.1.4", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/websocket-extensions/-/websocket-extensions-0.1.4.tgz", {}, ""],
+
+    "wrap-ansi": ["wrap-ansi@7.0.0", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/wrap-ansi/-/wrap-ansi-7.0.0.tgz", { "dependencies": { "ansi-styles": "^4.0.0", "string-width": "^4.1.0", "strip-ansi": "^6.0.0" } }, ""],
+
+    "y18n": ["y18n@5.0.8", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/y18n/-/y18n-5.0.8.tgz", {}, ""],
+
+    "yargs": ["yargs@17.7.3", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/yargs/-/yargs-17.7.3.tgz", { "dependencies": { "cliui": "^8.0.1", "escalade": "^3.1.1", "get-caller-file": "^2.0.5", "require-directory": "^2.1.1", "string-width": "^4.2.3", "y18n": "^5.0.5", "yargs-parser": "^21.1.1" } }, ""],
+
+    "yargs-parser": ["yargs-parser@21.1.1", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/yargs-parser/-/yargs-parser-21.1.1.tgz", {}, ""],
+  }
+}
