@@ -60,6 +60,29 @@ function validateUsername(username) {
   return /^[a-zA-Z0-9_а-яА-ЯёЁ.-]{3,32}$/.test(username);
 }
 
+function tagAuthError(error, step) {
+  if (error && typeof error === 'object' && !error.authStep) error.authStep = step;
+  return error;
+}
+
+function logAuthError(error) {
+  console.error('[auth-social-register]', {
+    step: error?.authStep || 'handler',
+    code: error?.code,
+    name: error?.name,
+    message: error?.message,
+    stack: error?.stack
+  });
+}
+
+async function readUserDoc(userRef, step) {
+  try {
+    return await getDoc(userRef);
+  } catch (error) {
+    throw tagAuthError(error, step);
+  }
+}
+
 async function registerPasswordUser(req, res) {
   const usernameRaw = safeText(req.body?.username, 32);
   const password = String(req.body?.password || '');
@@ -75,7 +98,7 @@ async function registerPasswordUser(req, res) {
 
   const userId = uidFromKey(`password:${usernameLower}`);
   const userRef = doc(db, 'users', userId);
-  const userSnap = await getDoc(userRef);
+  const userSnap = await readUserDoc(userRef, 'register:getDoc users/{userId}');
   if (userSnap.exists()) return res.status(409).json({ error: 'Такой логин уже зарегистрирован. Нажмите «Войти».' });
 
   const { salt, hash } = hashPassword(password);
@@ -113,7 +136,7 @@ async function loginPasswordUser(req, res) {
 
   const userId = uidFromKey(`password:${usernameLower}`);
   const userRef = doc(db, 'users', userId);
-  const userSnap = await getDoc(userRef);
+  const userSnap = await readUserDoc(userRef, 'login:getDoc users/{userId}');
   if (!userSnap.exists()) return res.status(404).json({ error: 'Пользователь не найден. Зарегистрируйтесь.' });
 
   const savedUser = { userId, ...userSnap.data() };
@@ -131,12 +154,12 @@ export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
     const action = safeText(req.body?.action || req.body?.platform, 40).toLowerCase();
-    if (action === 'password' || action === 'register') return registerPasswordUser(req, res);
-    if (action === 'login') return loginPasswordUser(req, res);
+    if (action === 'password' || action === 'register') return await registerPasswordUser(req, res);
+    if (action === 'login') return await loginPasswordUser(req, res);
 
     return res.status(400).json({ error: 'Неверное действие. Доступны register и login.' });
   } catch (e) {
-    console.error(e);
+    logAuthError(e);
     return res.status(500).json({ error: e.message || 'Server error' });
   }
 }
