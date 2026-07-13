@@ -77,7 +77,16 @@ export default async function handler(req, res) {
         throw new Error('Invalid balance topup payload');
       }
 
+      const paymentId = String(verifiedInvoice.invoice_id || eventInvoice.invoice_id || '');
       const userRef = doc(db, 'users', userId);
+      const topupRef = doc(db, 'topups', paymentId);
+
+      // Идемпотентность: один invoice_id — одно начисление.
+      const preSnap = await getDoc(topupRef);
+      if (preSnap.exists()) {
+        return res.status(200).json({ success: true, topup: true, duplicate: true });
+      }
+
       const userSnap = await getDoc(userRef);
       const oldBalance = userSnap.exists() ? Number(userSnap.data().balance || 0) : 0;
 
@@ -88,17 +97,20 @@ export default async function handler(req, res) {
         updatedAt: serverTimestamp()
       }, { merge: true });
 
-      await setDoc(doc(db, 'topups', String(verifiedInvoice.invoice_id || eventInvoice.invoice_id)), {
+      // Поля документа должны совпадать с firestore.rules для /topups:
+      // hasAll(['userId','amount','status','paymentId'])
+      await setDoc(topupRef, {
         userId,
         login,
         amount: amountRub,
         paymentMethod: 'CryptoBot',
-        invoiceId: String(verifiedInvoice.invoice_id || eventInvoice.invoice_id || ''),
+        paymentId,
+        invoiceId: paymentId,
         status: 'paid',
         createdAt: serverTimestamp()
-      }, { merge: true });
+      });
 
-      await sendTelegram(`💰 Пополнение баланса через CryptoBot\n\nЛогин: ${login}\nСумма: ${amountRub}₽\nInvoice ID: ${verifiedInvoice.invoice_id || eventInvoice.invoice_id}`);
+      await sendTelegram(`💰 Пополнение баланса через CryptoBot\n\nЛогин: ${login}\nСумма: ${amountRub}₽\nInvoice ID: ${paymentId}`);
       return res.status(200).json({ success: true, topup: true });
     }
 
