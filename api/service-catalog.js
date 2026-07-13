@@ -128,7 +128,8 @@ function normalizeService(item) {
     max: Math.max(1, Math.floor(Number(item.max || item.maximum || 1000000))),
     type: cleanText(item.type || ''),
     refill: Boolean(item.refill) || /refill/i.test(rawName),
-    dripfeed: Boolean(item.dripfeed)
+    dripfeed: Boolean(item.dripfeed),
+    averageTime: cleanText(item.average_time || item.averageTime || item.avg_time || '')
   };
 }
 
