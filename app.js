@@ -99,6 +99,27 @@ function unique(list) {
   return [...new Set(list.filter(Boolean))];
 }
 
+function formatAverageTime(value) {
+  if (value === null || value === undefined) return 'уточняется';
+  const raw = String(value).trim();
+  if (!raw) return 'уточняется';
+  // Явные текстовые ответы JAP
+  if (/not enough data|no data|n\/?a/i.test(raw)) return 'уточняется';
+  // Пытаемся достать число минут
+  const num = Number(String(raw).replace(',', '.').match(/-?\d+(\.\d+)?/)?.[0]);
+  if (!Number.isFinite(num) || num <= 0) return raw; // отдадим как есть
+  const mins = Math.round(num);
+  if (mins < 60) return `~${mins} мин`;
+  const hours = mins / 60;
+  if (hours < 24) {
+    const h = Math.round(hours * 10) / 10;
+    return `~${h} ч`;
+  }
+  const days = Math.round((hours / 24) * 10) / 10;
+  return `~${days} дн`;
+}
+
+
 function setOptions(select, values, placeholder) {
   if (!select) return;
   select.innerHTML = '';
@@ -141,6 +162,7 @@ function updateQuickSummary() {
       <div>📌 Категория: <b>${service.category}</b></div>
       <div>💸 Цена: <b>${rub(service.price)} / 1000</b></div>
       <div>📦 Лимит заказа: <b>${service.min} – ${service.max.toLocaleString('ru-RU')}</b></div>
+      <div>⏱ Примерное время выполнения: <b>${formatAverageTime(service.averageTime)}</b></div>
       ${service.refill ? '<div>♻️ Есть отметка гарантии/refill</div>' : ''}
     ` : 'Выберите соцсеть, категорию и услугу, чтобы увидеть описание.';
   }
