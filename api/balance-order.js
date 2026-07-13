@@ -86,7 +86,7 @@ export default async function handler(req, res) {
 
     // Сначала создаем заказ в JAP. Деньги списываем только после успешного ответа JAP.
     const japController = new AbortController();
-    const japTimeout = setTimeout(() => japController.abort(), 25000);
+    const japTimeout = setTimeout(() => japController.abort(), 8000);
     let japData = {};
 
     try {
@@ -196,6 +196,6 @@ export default async function handler(req, res) {
   } catch (e) {
     console.error('[BALANCE-ORDER] FAIL:', e && e.code, e && e.message, e && e.stack);
     try { await sendTelegram(`❌ Ошибка заказа с баланса:\n${e.message}`); } catch {}
-    return res.status(500).json({ error: e.name === 'AbortError' ? 'JAP долго не отвечает. Попробуйте позже.' : e.message });
+    return res.status(500).json({ error: (e.name === 'AbortError' || /aborted/i.test(e.message || '')) ? 'Сервис долго не отвечает. Попробуйте ещё раз.' : e.message });
   }
 }
