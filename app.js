@@ -99,15 +99,28 @@ function unique(list) {
   return [...new Set(list.filter(Boolean))];
 }
 
-function formatAverageTime(value) {
-  if (value === null || value === undefined) return 'уточняется';
+function estimateByCategory(service) {
+  const cat = String(service?.category || '').toLowerCase();
+  const name = String(service?.originalName || service?.name || '').toLowerCase();
+  if (/instant|мгновен/.test(name)) return '~10–30 мин';
+  if (/просмотр|view/.test(cat)) return '~1–6 ч';
+  if (/лайк|like|реакц/.test(cat)) return '~1–3 ч';
+  if (/коммент|comment/.test(cat)) return '~6–24 ч';
+  if (/подписчик|друз|участник|follower|member|friend/.test(cat)) return '~12–48 ч';
+  if (/репост|share|сохран|save/.test(cat)) return '~2–8 ч';
+  if (/сторис|story/.test(cat)) return '~1–4 ч';
+  if (/эфир|live|stream/.test(cat)) return '~5–30 мин';
+  return '~6–24 ч';
+}
+
+function formatAverageTime(value, service) {
+  const fallback = estimateByCategory(service);
+  if (value === null || value === undefined) return fallback;
   const raw = String(value).trim();
-  if (!raw) return 'уточняется';
-  // Явные текстовые ответы JAP
-  if (/not enough data|no data|n\/?a/i.test(raw)) return 'уточняется';
-  // Пытаемся достать число минут
+  if (!raw) return fallback;
+  if (/not enough data|no data|n\/?a/i.test(raw)) return fallback;
   const num = Number(String(raw).replace(',', '.').match(/-?\d+(\.\d+)?/)?.[0]);
-  if (!Number.isFinite(num) || num <= 0) return raw; // отдадим как есть
+  if (!Number.isFinite(num) || num <= 0) return fallback;
   const mins = Math.round(num);
   if (mins < 60) return `~${mins} мин`;
   const hours = mins / 60;
@@ -162,7 +175,7 @@ function updateQuickSummary() {
       <div>📌 Категория: <b>${service.category}</b></div>
       <div>💸 Цена: <b>${rub(service.price)} / 1000</b></div>
       <div>📦 Лимит заказа: <b>${service.min} – ${service.max.toLocaleString('ru-RU')}</b></div>
-      <div>⏱ Примерное время выполнения: <b>${formatAverageTime(service.averageTime)}</b></div>
+      <div>⏱ Примерное время выполнения: <b>${formatAverageTime(service.averageTime, service)}</b></div>
       ${service.refill ? '<div>♻️ Есть отметка гарантии/refill</div>' : ''}
     ` : 'Выберите соцсеть, категорию и услугу, чтобы увидеть описание.';
   }
@@ -217,7 +230,7 @@ async function loadJapServices() {
     allServices = data.services;
     const platforms = unique(allServices.map(s => s.platform)).sort((a, b) => a.localeCompare(b, 'ru'));
     setOptions(qs('quickSocial'), platforms, 'Выберите соцсеть');
-    if (status) status.textContent = `Загружено услуг: ${data.count}. Наценка: ${data.markupPercent || 10}%`;
+    if (status) status.textContent = `Загружено услуг: ${data.count}`;
   } catch (e) {
     if (status) status.textContent = 'Ошибка загрузки услуг: ' + e.message;
   }
