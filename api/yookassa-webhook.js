@@ -164,6 +164,29 @@ if (String(orderData.type || '') === 'balance_topup') {
         return res.status(200).json({ success: true, topup: true, duplicate: true });
       }
 
+      // Реферальный бонус: 10% пополнения зачисляем пригласившему.
+      try {
+        const userSnap2 = await getDoc(userRef);
+        const referredBy = userSnap2.exists() ? String(userSnap2.data().referredBy || '') : '';
+        if (/^[0-9a-f]{32}$/.test(referredBy)) {
+          const refRef = doc(db, 'users', referredBy);
+          const refSnap = await getDoc(refRef);
+          if (refSnap.exists()) {
+            const commission = Number((amountRub * 0.1).toFixed(2));
+            const prevBonus = Number(refSnap.data().bonusBalance || 0);
+            const prevEarned = Number(refSnap.data().referralEarned || 0);
+            await setDoc(refRef, {
+              bonusBalance: Number((prevBonus + commission).toFixed(2)),
+              referralEarned: Number((prevEarned + commission).toFixed(2)),
+              updatedAt: serverTimestamp()
+            }, { merge: true });
+            await sendTelegram(`🎉 Реферальный бонус ${commission}₽ начислен пользователю ${refSnap.data().username || referredBy} за пополнение ${login}`);
+          }
+        }
+      } catch (refErr) {
+        console.warn('[YK-WEBHOOK] referral bonus failed', refErr?.message);
+      }
+
       await sendTelegram(`💰 Пополнение баланса через ЮKassa\n\nЛогин: ${login}\nСумма: ${amountRub}₽\nPayment ID: ${verifiedPayment.id}`);
       return res.status(200).json({ success: true, topup: true });
     }

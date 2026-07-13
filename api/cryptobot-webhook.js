@@ -110,6 +110,28 @@ export default async function handler(req, res) {
         createdAt: serverTimestamp()
       });
 
+      // Реферальный бонус: 10% пополнения — пригласившему.
+      try {
+        const referredBy = String(userSnap.exists() ? (userSnap.data().referredBy || '') : '');
+        if (/^[0-9a-f]{32}$/.test(referredBy)) {
+          const refRef = doc(db, 'users', referredBy);
+          const refSnap = await getDoc(refRef);
+          if (refSnap.exists()) {
+            const commission = Number((amountRub * 0.1).toFixed(2));
+            const prevBonus = Number(refSnap.data().bonusBalance || 0);
+            const prevEarned = Number(refSnap.data().referralEarned || 0);
+            await setDoc(refRef, {
+              bonusBalance: Number((prevBonus + commission).toFixed(2)),
+              referralEarned: Number((prevEarned + commission).toFixed(2)),
+              updatedAt: serverTimestamp()
+            }, { merge: true });
+            await sendTelegram(`🎉 Реферальный бонус ${commission}₽ начислен ${refSnap.data().username || referredBy} за пополнение ${login}`);
+          }
+        }
+      } catch (refErr) {
+        console.warn('[CB-WEBHOOK] referral bonus failed', refErr?.message);
+      }
+
       await sendTelegram(`💰 Пополнение баланса через CryptoBot\n\nЛогин: ${login}\nСумма: ${amountRub}₽\nInvoice ID: ${paymentId}`);
       return res.status(200).json({ success: true, topup: true });
     }

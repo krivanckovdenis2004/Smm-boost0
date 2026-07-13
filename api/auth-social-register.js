@@ -52,6 +52,10 @@ function publicUser(user) {
     balance: Number(user.balance || 0),
     bonusBalance: Number(user.bonusBalance || 0),
     registrationBonus: Number(user.registrationBonus || 0),
+    referralCode: user.referralCode || user.userId,
+    referredBy: user.referredBy || '',
+    referralsCount: Number(user.referralsCount || 0),
+    referralEarned: Number(user.referralEarned || 0),
     sessionToken: user.sessionToken
   };
 }
@@ -101,6 +105,18 @@ async function registerPasswordUser(req, res) {
   const userSnap = await readUserDoc(userRef, 'register:getDoc users/{userId}');
   if (userSnap.exists()) return res.status(409).json({ error: 'Такой логин уже зарегистрирован. Нажмите «Войти».' });
 
+  // Обработка реферальной ссылки: ref = userId пригласившего.
+  const refRaw = safeText(req.body?.ref, 64).toLowerCase();
+  let referredBy = '';
+  if (/^[0-9a-f]{32}$/.test(refRaw) && refRaw !== userId) {
+    try {
+      const refSnap = await getDoc(doc(db, 'users', refRaw));
+      if (refSnap.exists()) referredBy = refRaw;
+    } catch (e) {
+      console.warn('[auth] referrer lookup failed', e?.message);
+    }
+  }
+
   const { salt, hash } = hashPassword(password);
   const sessionToken = newToken();
   const user = {
@@ -113,6 +129,10 @@ async function registerPasswordUser(req, res) {
     balance: 0,
     bonusBalance: 0,
     registrationBonus: 0,
+    referralCode: userId,
+    referredBy,
+    referralsCount: 0,
+    referralEarned: 0,
     passwordSalt: salt,
     passwordHash: hash,
     sessionToken,
@@ -121,6 +141,21 @@ async function registerPasswordUser(req, res) {
     lastLoginAt: serverTimestamp()
   };
   await setDoc(userRef, user);
+
+  // Увеличиваем счётчик рефералов у пригласившего.
+  if (referredBy) {
+    try {
+      const refRef = doc(db, 'users', referredBy);
+      const refSnap = await getDoc(refRef);
+      if (refSnap.exists()) {
+        const prev = Number(refSnap.data().referralsCount || 0);
+        await setDoc(refRef, { referralsCount: prev + 1, updatedAt: serverTimestamp() }, { merge: true });
+      }
+    } catch (e) {
+      console.warn('[auth] increment referralsCount failed', e?.message);
+    }
+  }
+
   return res.status(200).json({ ok: true, user: publicUser(user) });
 }
 
