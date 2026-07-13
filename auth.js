@@ -1,3 +1,19 @@
+// Захватываем реферальный код из ?ref=... и сохраняем в sessionStorage,
+// чтобы он не терялся между вкладками tabs / перезагрузками.
+(function captureRef(){
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const ref = (params.get('ref') || '').trim().toLowerCase();
+    if (/^[0-9a-f]{32}$/.test(ref)) {
+      sessionStorage.setItem('sb_ref', ref);
+    }
+  } catch (e) {}
+})();
+
+function getStoredRef() {
+  try { return sessionStorage.getItem('sb_ref') || ''; } catch { return ''; }
+}
+
 function setMessage(text, ok = false) {
   const el = document.getElementById('authMessage');
   if (!el) return;
@@ -68,7 +84,8 @@ async function registerWithLoginPassword(event) {
 
   const restore = toggleBusy(form, true, 'Регистрируем...');
   try {
-    await submitAuth({ action: 'register', username, password, passwordConfirm });
+    await submitAuth({ action: 'register', username, password, passwordConfirm, ref: getStoredRef() });
+    try { sessionStorage.removeItem('sb_ref'); } catch(e){}
     window.sbGoal?.('registration', { login: username });
     setMessage('Вы успешно зарегистрированы. Начислен приветственный бонус 70₽.', true);
     setTimeout(() => { window.location.href = 'wallet.html'; }, 900);

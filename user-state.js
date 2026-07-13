@@ -68,6 +68,16 @@
       else menu.insertBefore(orders, menu.firstChild);
     }
 
+    // Пункт «Реферальная программа» — добавляем на всех страницах.
+    if (!Array.from(menu.querySelectorAll('a')).some((a) => a.getAttribute('href') === 'referral.html')) {
+      const orders = menu.querySelector('a[href="orders.html"]');
+      const ref = document.createElement('a');
+      ref.href = 'referral.html';
+      ref.innerHTML = '<span class="menu-emoji">🤝</span><span>Реферальная программа</span>';
+      if (orders && orders.nextSibling) menu.insertBefore(ref, orders.nextSibling);
+      else menu.appendChild(ref);
+    }
+
     let authLink = menu.querySelector('.sb-menu-auth-link');
     if (!authLink) {
       authLink = document.createElement('a');

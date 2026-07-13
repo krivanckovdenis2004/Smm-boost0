@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Реферальная программа | SMM-Boost</title>
+<meta name="description" content="Приглашайте друзей в SMM-Boost и получайте 10% с каждого их пополнения на бонусный баланс.">
+<meta name="robots" content="noindex, follow">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="stylesheet" href="style.css?v=20260711-premium">
+<script src="metrika-goals.js"></script>
+</head>
+<body>
+<div class="bg-animation"><span></span><span></span><span></span><span></span></div>
+
+<nav class="navbar">
+  <a class="nav-logo" href="index.html">SMM-Boost</a>
+  <div class="nav-links main-nav-links">
+    <a href="auth.html">Зарегистрироваться</a>
+    <button class="menu-toggle" type="button" aria-label="Открыть меню" aria-expanded="false"><span></span><span></span><span></span></button>
+  </div>
+  <div class="nav-menu" id="navMenu">
+    <a href="services.html"><span class="menu-emoji">🚀</span><span>Заказать услуги</span></a>
+    <a href="wallet.html"><span class="menu-emoji">💰</span><span>Баланс</span></a>
+    <a href="orders.html"><span class="menu-emoji">📦</span><span>Мои заказы</span></a>
+    <a href="referral.html"><span class="menu-emoji">🤝</span><span>Реферальная программа</span></a>
+    <a href="free.html"><span class="menu-emoji">🎁</span><span>Бесплатная накрутка</span></a>
+    <a href="contacts.html"><span class="menu-emoji">💬</span><span>Поддержка</span></a>
+  </div>
+</nav>
+
+<main class="auth-page">
+  <section class="auth-card" style="max-width:640px;">
+    <div class="auth-badge">🤝 Реферальная программа</div>
+    <h1>Приглашайте друзей — получайте 10%</h1>
+    <p>Делитесь своей персональной ссылкой. За каждое пополнение баланса приглашённого друга вам автоматически начисляется <b>10%</b> на бонусный баланс. Бонусы можно тратить на любые услуги.</p>
+
+    <div id="refNotLogged" class="auth-message error hidden">
+      Чтобы получить свою реферальную ссылку, <a href="auth.html">войдите или зарегистрируйтесь</a>.
+    </div>
+
+    <div id="refCabinet" class="hidden">
+      <div class="stats" style="margin:24px 0;gap:12px;">
+        <div class="stat-card"><h2 id="refCount">0</h2><p>Приглашено друзей</p></div>
+        <div class="stat-card"><h2 id="refEarned">0₽</h2><p>Заработано с рефералов</p></div>
+        <div class="stat-card"><h2>10%</h2><p>С каждого пополнения</p></div>
+      </div>
+
+      <label for="refLinkInput" style="display:block;margin-top:8px;font-weight:600;">Ваша реферальная ссылка</label>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+        <input id="refLinkInput" type="text" readonly style="flex:1;min-width:220px;padding:12px;border-radius:10px;border:1px solid #333;background:#161022;color:#fff;">
+        <button id="refCopyBtn" type="button" class="primary-wide-btn" style="flex:0 0 auto;width:auto;padding:12px 20px;">Копировать</button>
+      </div>
+      <div id="refCopyMsg" class="auth-message ok hidden" style="margin-top:12px;">Ссылка скопирована!</div>
+
+      <div class="auth-note" style="margin-top:20px;">
+        <b>Как это работает:</b><br>
+        1. Друг переходит по вашей ссылке и регистрируется.<br>
+        2. Когда он пополняет баланс — вам автоматически приходит 10% на бонусный баланс.<br>
+        3. Бонусы доступны сразу и списываются вместе с основным балансом при заказе услуг.
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="referral.js?v=20260713-referral"></script>
+<script src="user-state.js?v=20260603-final-working"></script>
+</body>
+</html>
