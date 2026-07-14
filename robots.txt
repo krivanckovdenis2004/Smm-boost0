@@ -1,4 +1,27 @@
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /admin.html
+Disallow: /admin.js
+Disallow: /success.html
+Disallow: /track.html?
+Disallow: /*?utm_
+Disallow: /*?fbclid
+Disallow: /*?yclid
+Disallow: /*?gclid
 
+User-agent: Yandex
+Allow: /
+Clean-param: utm_source&utm_medium&utm_campaign&utm_term&utm_content&yclid&gclid&fbclid /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+Host: smm-boost.pro
 Sitemap: https://smm-boost.pro/sitemap.xml

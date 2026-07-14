@@ -1,0 +1,25 @@
+{
+  "name": "SMM-Boost — накрутка соцсетей",
+  "short_name": "SMM-Boost",
+  "description": "Премиум-сервис накрутки подписчиков, лайков и просмотров для TikTok, Instagram, Telegram, YouTube, VK.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0b0716",
+  "theme_color": "#0b0716",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -3,18 +3,77 @@
   <url><loc>https://smm-boost.pro/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
   <url><loc>https://smm-boost.pro/services.html</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
   <url><loc>https://smm-boost.pro/wallet.html</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://smm-boost.pro/orders.html</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://smm-boost.pro/auth.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://smm-boost.pro/free.html</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://smm-boost.pro/orders.html</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://smm-boost.pro/auth.html</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://smm-boost.pro/free.html</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://smm-boost.pro/giveaway.html</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
   <url><loc>https://smm-boost.pro/contacts.html</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
-  <url><loc>https://smm-boost.pro/tiktok.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://smm-boost.pro/telegram.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://smm-boost.pro/youtube.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://smm-boost.pro/vpn.html</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://smm-boost.pro/referral.html</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://smm-boost.pro/mutuals.html</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://smm-boost.pro/track.html</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://smm-boost.pro/daily.html</loc><changefreq>weekly</changefreq><priority>0.4</priority></url>
   <url><loc>https://smm-boost.pro/offer.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
   <url><loc>https://smm-boost.pro/privacy.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
   <url><loc>https://smm-boost.pro/refund.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
   <url><loc>https://smm-boost.pro/terms.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
   <url><loc>https://smm-boost.pro/agreement.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://smm-boost.pro/instagram/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/instagram/followers/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/instagram/likes/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/instagram/views/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/instagram/comments/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/instagram/reels-views/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/instagram/story-views/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/instagram/saves/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/instagram/reach/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/tiktok/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/tiktok/followers/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/tiktok/likes/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/tiktok/views/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/tiktok/comments/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/tiktok/shares/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/tiktok/live-views/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/tiktok/saves/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/youtube/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/youtube/subscribers/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/youtube/views/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/youtube/likes/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/youtube/comments/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/youtube/watch-time/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/youtube/shorts-views/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/telegram/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/telegram/members/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/telegram/post-views/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/telegram/reactions/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/telegram/comments/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/telegram/premium/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/telegram/boosts/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/vk/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/vk/friends/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/vk/group-subscribers/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/vk/likes/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/vk/views/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/vk/reposts/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/vk/comments/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/facebook/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/facebook/followers/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/facebook/likes/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/facebook/views/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/twitter/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/twitter/followers/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/twitter/likes/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/twitter/views/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/twitter/retweets/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/twitch/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/twitch/followers/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/twitch/views/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/spotify/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/spotify/plays/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/spotify/followers/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/spotify/monthly-listeners/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/discord/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/discord/members/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/threads/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/threads/followers/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://smm-boost.pro/threads/likes/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
 </urlset>

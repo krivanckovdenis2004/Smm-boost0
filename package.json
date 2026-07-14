@@ -1,10 +1,11 @@
 {
   "name": "smm-boost",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
+    "seo:build": "node build-seo.mjs .",
     "dev": "node -e \"const p=Number((process.argv.find(a=>a.startsWith('--port='))||'--port=8080').split('=')[1])||8080;require('http').createServer((q,r)=>{r.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});r.end('<h1>SMM-Boost</h1><p>Статический проект.</p>');}).listen(p,()=>console.log('stub on '+p));\" --",
-    "build:dev": "node -e \"const fs=require('fs'),path=require('path');const out='dist';fs.rmSync(out,{recursive:true,force:true});fs.mkdirSync(out,{recursive:true});for(const e of fs.readdirSync('.')){if(['node_modules','dist','.git','.lovable','api','.vercel'].includes(e))continue;const s=fs.statSync(e);if(s.isDirectory()){fs.cpSync(e,path.join(out,e),{recursive:true});}else{fs.copyFileSync(e,path.join(out,e));}}console.log('copied static site to '+out);\""
+    "build:dev": "node build-seo.mjs . && node -e \"const fs=require('fs'),path=require('path');const out='dist';fs.rmSync(out,{recursive:true,force:true});fs.mkdirSync(out,{recursive:true});for(const e of fs.readdirSync('.')){if(['node_modules','dist','.git','.lovable','api','.vercel','build-seo.mjs','fixup.mjs'].includes(e))continue;const s=fs.statSync(e);if(s.isDirectory()){fs.cpSync(e,path.join(out,e),{recursive:true});}else{fs.copyFileSync(e,path.join(out,e));}}console.log('copied static site to '+out);\""
   },
   "dependencies": {
     "firebase": "^10.12.2"
