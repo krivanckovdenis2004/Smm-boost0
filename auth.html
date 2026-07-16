@@ -1,296 +1,155 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5" />
-<meta name="theme-color" content="#0b0f1a" />
-<meta name="robots" content="noindex, nofollow" />
-<title>Вход · SMM-Boost</title>
-<link rel="icon" href="/favicon.ico" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<style>
-  :root{
-    --bg-1:#0b0f1a; --bg-2:#111a2e;
-    --accent:#7c5cff; --accent-2:#22d3ee;
-    --danger:#ff5d73; --success:#22c55e;
-    --card:rgba(255,255,255,.06); --card-br:rgba(255,255,255,.12);
-    --text:#eef2ff; --muted:#9aa3b2;
-    --input:rgba(255,255,255,.05); --input-br:rgba(255,255,255,.14);
-    --r-lg:20px; --r-md:12px;
-  }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{overflow-x:hidden;margin:0}
-  body{
-    min-height:100dvh; color:var(--text);
-    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-    background:
-      radial-gradient(1200px 600px at 10% -10%, rgba(124,92,255,.35), transparent 60%),
-      radial-gradient(900px 500px at 110% 10%, rgba(34,211,238,.25), transparent 60%),
-      radial-gradient(700px 500px at 50% 120%, rgba(124,92,255,.25), transparent 60%),
-      linear-gradient(180deg,var(--bg-1),var(--bg-2));
-    display:flex;flex-direction:column;
-    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  }
-  a{color:inherit}
-  .topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 20px}
-  .brand{display:inline-flex;align-items:center;gap:10px;font-weight:800;font-size:18px;text-decoration:none;color:#fff}
-  .brand-mark{width:32px;height:32px;border-radius:10px;
-    background:conic-gradient(from 200deg,var(--accent),var(--accent-2),var(--accent));
-    box-shadow:0 8px 24px rgba(124,92,255,.45)}
-  .back{color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;
-    padding:8px 12px;border-radius:10px;transition:.2s;display:inline-flex;gap:6px;align-items:center}
-  .back:hover{color:#fff;background:rgba(255,255,255,.06)}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Вход и регистрация — SMM-Boost</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="icon" href="/favicon.ico" />
+  <style>
+    .auth-page { min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; background: radial-gradient(120% 80% at 50% 0%, #eef2ff 0%, #f8fafc 60%, #ffffff 100%); }
+    .auth-card { width: 100%; max-width: 440px; background: rgba(255,255,255,0.75); backdrop-filter: saturate(1.4) blur(18px); -webkit-backdrop-filter: saturate(1.4) blur(18px); border: 1px solid rgba(15,23,42,0.06); border-radius: 20px; box-shadow: 0 20px 60px rgba(15,23,42,0.10); padding: 28px 24px; }
+    .auth-tabs { display: flex; gap: 4px; padding: 4px; background: rgba(15,23,42,0.05); border-radius: 12px; margin-bottom: 20px; }
+    .auth-tab { flex: 1; border: 0; background: transparent; padding: 10px; border-radius: 8px; font-weight: 600; color: #475569; cursor: pointer; transition: .2s; font-size: 14px; }
+    .auth-tab.is-active { background: #fff; color: #0f172a; box-shadow: 0 1px 2px rgba(15,23,42,.08); }
+    .auth-panel { display: block; }
+    .auth-panel[hidden] { display: none !important; }
+    .auth-field { display: block; margin-bottom: 12px; }
+    .auth-field label { display:block; font-size:12px; color:#475569; margin-bottom:6px; font-weight:500; }
+    .auth-field input { width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 15px; background: #fff; transition: border-color .15s, box-shadow .15s; }
+    .auth-field input:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.15); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 16px; border-radius: 10px; border: 0; font-weight: 600; font-size: 15px; cursor: pointer; transition: .15s; }
+    .btn-primary { background: #4f46e5; color: #fff; width: 100%; }
+    .btn-primary:hover { background: #4338ca; }
+    .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+    .btn-google { width:100%; background: #fff; color: #0f172a; border: 1px solid #e2e8f0; margin-top: 8px; }
+    .btn-google:hover { background:#f8fafc; }
+    .btn-ghost { background: transparent; color: #4f46e5; }
+    .auth-divider { text-align: center; color: #94a3b8; font-size: 12px; margin: 16px 0 8px; position: relative; }
+    .auth-divider::before, .auth-divider::after { content:""; position:absolute; top: 50%; width: 40%; height: 1px; background:#e2e8f0; }
+    .auth-divider::before { left: 0; } .auth-divider::after { right: 0; }
+    .auth-link { color:#4f46e5; text-decoration: none; font-size: 13px; }
+    .auth-link:hover { text-decoration: underline; }
+    .auth-error { background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; padding:10px 12px; border-radius:10px; font-size:13px; margin-bottom:12px; }
+    .auth-error[hidden] { display: none; }
+    .auth-meta { display:flex; justify-content: space-between; align-items:center; margin-top: 4px; }
 
-  .shell{flex:1;display:flex;align-items:center;justify-content:center;padding:12px 16px 32px}
-  .card{
-    width:100%;max-width:440px;background:var(--card);
-    border:1px solid var(--card-br);
-    backdrop-filter:blur(24px) saturate(140%);
-    border-radius:var(--r-lg);
-    box-shadow:0 30px 80px -20px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.03);
-    padding:24px; animation:in .5s cubic-bezier(.2,.8,.2,1) both;
-  }
-  @keyframes in{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
-  .head{margin-bottom:18px}
-  .title{margin:0 0 6px;font-size:22px;font-weight:700;letter-spacing:-.02em}
-  .sub{margin:0;color:var(--muted);font-size:14px;line-height:1.5}
+    /* Skeleton */
+    .auth-skeleton { padding: 8px 0; }
+    .sk-row { height: 44px; background: linear-gradient(90deg, #eef2f7 25%, #f6f8fb 37%, #eef2f7 63%); background-size: 400% 100%; animation: sk 1.4s ease infinite; border-radius: 10px; margin-bottom: 12px; }
+    .sk-row.sm { height: 20px; width: 60%; margin: 0 auto 16px; }
+    @keyframes sk { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
 
-  .tabs{display:grid;grid-template-columns:1fr 1fr 1fr;background:rgba(255,255,255,.04);
-    border:1px solid var(--card-br);border-radius:14px;padding:4px;gap:4px;margin-bottom:18px}
-  .tab{appearance:none;border:0;background:transparent;color:var(--muted);
-    font:600 13px/1 'Inter',sans-serif;padding:11px 6px;border-radius:10px;cursor:pointer;transition:.2s}
-  .tab[aria-selected="true"]{background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.05));
-    color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+    /* Toast */
+    .toast-root { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { pointer-events: auto; background: #0f172a; color: #fff; padding: 10px 14px; border-radius: 10px; font-size: 14px; box-shadow: 0 10px 30px rgba(15,23,42,.25); opacity: 0; transform: translateY(-6px); transition: .25s; max-width: 340px; }
+    .toast-in { opacity: 1; transform: translateY(0); }
+    .toast-success { background: #059669; }
+    .toast-error { background: #dc2626; }
 
-  .field{margin-bottom:14px}
-  .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:500}
-  .input-wrap{position:relative;display:flex;align-items:center;
-    background:var(--input);border:1px solid var(--input-br);border-radius:var(--r-md);transition:.2s}
-  .input-wrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 4px rgba(124,92,255,.18)}
-  .input-wrap.error{border-color:var(--danger);box-shadow:0 0 0 4px rgba(255,93,115,.15)}
-  .input-wrap input{
-    flex:1;background:transparent;border:0;outline:0;color:#fff;
-    padding:14px 14px;font:500 15px/1.2 'Inter',sans-serif;min-width:0;
-  }
-  .input-wrap input::placeholder{color:#6b7280}
-  .toggle-pass{background:transparent;border:0;color:var(--muted);cursor:pointer;padding:0 12px;font-size:13px;font-weight:600}
-  .toggle-pass:hover{color:#fff}
-  .hint{margin-top:6px;font-size:12px;color:var(--danger);min-height:1em}
+    /* Verify panel */
+    .verify-illo { font-size: 40px; text-align: center; margin-bottom: 8px; }
+    .verify-title { text-align:center; font-size: 18px; font-weight: 700; color:#0f172a; margin: 0 0 6px; }
+    .verify-desc { text-align:center; font-size: 14px; color:#475569; margin: 0 0 16px; }
 
-  .btn{
-    display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;
-    border:0;border-radius:var(--r-md);padding:14px 16px;
-    font:700 15px/1 'Inter',sans-serif;cursor:pointer;transition:.2s;
-    min-height:50px;
-  }
-  .btn-primary{color:#fff;background:linear-gradient(135deg,var(--accent),#5b3fe0);
-    box-shadow:0 10px 30px -10px rgba(124,92,255,.7)}
-  .btn-primary:hover{transform:translateY(-1px);filter:brightness(1.08)}
-  .btn-primary:active{transform:translateY(0)}
-  .btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none}
-  .btn-ghost{background:rgba(255,255,255,.05);color:#fff;border:1px solid var(--card-br)}
-  .btn-ghost:hover{background:rgba(255,255,255,.09)}
-  .btn-google{background:#fff;color:#111}
-  .btn-google:hover{background:#f4f4f7}
-  .btn-row{display:grid;gap:10px;margin-top:8px}
-
-  .divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--muted);font-size:12px}
-  .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--card-br)}
-
-  .foot{margin-top:16px;font-size:13px;color:var(--muted);text-align:center;line-height:1.5}
-  .foot a,.link{color:#fff;text-decoration:none;font-weight:600;cursor:pointer;background:none;border:0;padding:0;font-size:inherit}
-  .link:hover{text-decoration:underline}
-
-  .state{text-align:center;padding:8px 4px 4px}
-  .state .ico{width:64px;height:64px;margin:8px auto 14px;border-radius:50%;
-    display:grid;place-items:center;font-size:28px;
-    background:radial-gradient(circle,rgba(124,92,255,.35),rgba(124,92,255,.05) 70%);
-    border:1px solid var(--card-br)}
-  .state .ico.ok{background:radial-gradient(circle,rgba(34,197,94,.35),rgba(34,197,94,.05) 70%)}
-  .state h2{margin:0 0 8px;font-size:20px;letter-spacing:-.01em}
-  .state p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.55}
-
-  .spinner{width:18px;height:18px;border-radius:50%;
-    border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:spin .8s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-
-  .hidden{display:none !important}
-
-  /* Toast */
-  .toasts{position:fixed;top:calc(env(safe-area-inset-top) + 12px);left:0;right:0;
-    display:flex;flex-direction:column;align-items:center;gap:8px;z-index:9999;pointer-events:none;padding:0 12px}
-  .toast{pointer-events:auto;background:rgba(20,25,40,.92);color:#fff;border:1px solid var(--card-br);
-    backdrop-filter:blur(14px);padding:12px 16px;border-radius:12px;font-size:14px;
-    box-shadow:0 12px 32px rgba(0,0,0,.35);max-width:420px;width:100%;
-    animation:toastIn .3s ease-out both}
-  .toast.error{border-color:rgba(255,93,115,.5)}
-  .toast.success{border-color:rgba(34,197,94,.5)}
-  @keyframes toastIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
-
-  /* Skeleton */
-  .skeleton{
-    height:340px;border-radius:var(--r-lg);
-    background:linear-gradient(90deg,rgba(255,255,255,.05),rgba(255,255,255,.12),rgba(255,255,255,.05));
-    background-size:200% 100%;animation:sk 1.4s linear infinite;
-    border:1px solid var(--card-br);
-  }
-  @keyframes sk{from{background-position:200% 0}to{background-position:-200% 0}}
-
-  @media (max-width:380px){
-    .card{padding:20px;border-radius:16px}
-    .title{font-size:20px}
-    .btn{padding:13px 14px;font-size:14px}
-    .tab{font-size:12px;padding:10px 4px}
-    .input-wrap input{padding:12px 12px;font-size:14px}
-  }
-</style>
+    @media (max-width: 480px) {
+      .auth-card { padding: 22px 18px; border-radius: 18px; }
+    }
+  </style>
 </head>
-<body>
-  <div class="topbar">
-    <a href="/" class="brand"><span class="brand-mark"></span> SMM-Boost</a>
-    <a href="/" class="back">← На главную</a>
+<body class="auth-page">
+  <div class="auth-card-wrap">
+    <!-- Skeleton: показывается ДО того, как определится состояние Firebase.
+         Это устраняет мерцание регистрации, если пользователь уже вошёл. -->
+    <div class="auth-card auth-skeleton" data-auth-skeleton aria-hidden="true">
+      <div class="sk-row sm"></div>
+      <div class="sk-row"></div>
+      <div class="sk-row"></div>
+      <div class="sk-row"></div>
+    </div>
+
+    <div class="auth-card" data-auth-card hidden>
+      <div class="auth-tabs" role="tablist">
+        <button class="auth-tab is-active" data-tab="signin" role="tab" aria-selected="true">Войти</button>
+        <button class="auth-tab" data-tab="signup" role="tab" aria-selected="false">Регистрация</button>
+        <button class="auth-tab" data-tab="reset" role="tab" aria-selected="false">Забыли?</button>
+      </div>
+
+      <div class="auth-error" data-auth-error hidden></div>
+
+      <!-- Signin -->
+      <section class="auth-panel" data-panel="signin">
+        <form id="form-signin" novalidate>
+          <div class="auth-field">
+            <label>Email</label>
+            <input type="email" name="email" required autocomplete="email" />
+          </div>
+          <div class="auth-field">
+            <label>Пароль</label>
+            <input type="password" name="password" required minlength="6" autocomplete="current-password" />
+          </div>
+          <button class="btn btn-primary" type="submit">Войти</button>
+        </form>
+        <div class="auth-divider">или</div>
+        <button class="btn btn-google" type="button" data-google>
+          <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.9 32.5 29.4 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.1l6.6 4.8C14.7 15.1 19 12 24 12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.1z"/><path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.2C29.3 35.2 26.8 36 24 36c-5.4 0-9.9-3.5-11.5-8.3l-6.6 5.1C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.5l6.3 5.2C41.9 35 44 30 44 24c0-1.3-.1-2.3-.4-3.5z"/></svg>
+          Продолжить с Google
+        </button>
+      </section>
+
+      <!-- Signup -->
+      <section class="auth-panel" data-panel="signup" hidden>
+        <form id="form-signup" novalidate>
+          <div class="auth-field">
+            <label>Email</label>
+            <input type="email" name="email" required autocomplete="email" />
+          </div>
+          <div class="auth-field">
+            <label>Пароль (минимум 6 символов)</label>
+            <input type="password" name="password" required minlength="6" autocomplete="new-password" />
+          </div>
+          <button class="btn btn-primary" type="submit">Создать аккаунт</button>
+        </form>
+        <div class="auth-divider">или</div>
+        <button class="btn btn-google" type="button" data-google>Продолжить с Google</button>
+      </section>
+
+      <!-- Reset -->
+      <section class="auth-panel" data-panel="reset" hidden>
+        <form id="form-reset" novalidate>
+          <div class="auth-field">
+            <label>Email для восстановления</label>
+            <input type="email" name="email" required autocomplete="email" />
+          </div>
+          <button class="btn btn-primary" type="submit">Отправить письмо</button>
+        </form>
+      </section>
+
+      <!-- Verify state -->
+      <section class="auth-panel" data-panel="verify" hidden>
+        <div class="verify-illo">📩</div>
+        <h2 class="verify-title">Подтвердите Email</h2>
+        <p class="verify-desc">Мы отправили письмо на <strong data-verify-email></strong>. Откройте его и подтвердите адрес.</p>
+        <button class="btn btn-primary" type="button" data-resend>
+          Отправить снова<span data-resend-timer></span>
+        </button>
+        <div class="auth-meta" style="margin-top:12px;">
+          <button class="btn btn-ghost" type="button" onclick="location.reload()">Я подтвердил</button>
+        </div>
+      </section>
+
+      <!-- Reset sent -->
+      <section class="auth-panel" data-panel="reset-sent" hidden>
+        <div class="verify-illo">✉️</div>
+        <h2 class="verify-title">Письмо отправлено</h2>
+        <p class="verify-desc">Ссылка для сброса пароля отправлена на <strong data-reset-sent-email></strong>.</p>
+        <button class="btn btn-primary" type="button" data-tab="signin" onclick="document.querySelector('[data-tab=signin]').click()">Вернуться ко входу</button>
+      </section>
+    </div>
   </div>
 
-  <main class="shell">
-    <section class="card" id="authCard" aria-live="polite">
-
-      <div id="skeleton" class="skeleton"></div>
-
-      <!-- ВХОД -->
-      <div id="view-tabs" class="hidden">
-        <div class="head">
-          <h1 class="title" id="tabTitle">С возвращением</h1>
-          <p class="sub" id="tabSub">Войдите в аккаунт, чтобы продолжить.</p>
-        </div>
-
-        <div class="tabs" role="tablist">
-          <button class="tab" role="tab" data-tab="login" aria-selected="true">Вход</button>
-          <button class="tab" role="tab" data-tab="signup" aria-selected="false">Регистрация</button>
-          <button class="tab" role="tab" data-tab="reset" aria-selected="false">Пароль</button>
-        </div>
-
-        <!-- LOGIN -->
-        <form id="form-login" class="pane" novalidate>
-          <div class="field">
-            <label for="loginEmail">Email</label>
-            <div class="input-wrap"><input id="loginEmail" type="email" autocomplete="email" placeholder="you@example.com" required></div>
-            <div class="hint" data-hint="loginEmail"></div>
-          </div>
-          <div class="field">
-            <label for="loginPass">Пароль</label>
-            <div class="input-wrap">
-              <input id="loginPass" type="password" autocomplete="current-password" placeholder="••••••••" required>
-              <button type="button" class="toggle-pass" data-toggle="loginPass">Показать</button>
-            </div>
-            <div class="hint" data-hint="loginPass"></div>
-          </div>
-          <div class="btn-row">
-            <button type="submit" class="btn btn-primary" id="loginSubmit"><span>Продолжить</span></button>
-            <button type="button" class="btn btn-google" data-google>
-              <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 18.9 13 24 13c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 34.9 26.7 36 24 36c-5.2 0-9.6-3.1-11.3-7.5l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.5l6.2 5.2C41.1 35.8 44 30.4 44 24c0-1.2-.1-2.3-.4-3.5z"/></svg>
-              Продолжить через Google
-            </button>
-          </div>
-          <p class="foot">Нет аккаунта? <button type="button" class="link" data-goto="signup">Создать</button></p>
-        </form>
-
-        <!-- SIGNUP -->
-        <form id="form-signup" class="pane hidden" novalidate>
-          <div class="field">
-            <label for="suEmail">Email</label>
-            <div class="input-wrap"><input id="suEmail" type="email" autocomplete="email" placeholder="you@example.com" required></div>
-            <div class="hint" data-hint="suEmail"></div>
-          </div>
-          <div class="field">
-            <label for="suPass">Пароль</label>
-            <div class="input-wrap">
-              <input id="suPass" type="password" autocomplete="new-password" placeholder="Минимум 8 символов" required>
-              <button type="button" class="toggle-pass" data-toggle="suPass">Показать</button>
-            </div>
-            <div class="hint" data-hint="suPass"></div>
-          </div>
-          <div class="field">
-            <label for="suPass2">Повторите пароль</label>
-            <div class="input-wrap">
-              <input id="suPass2" type="password" autocomplete="new-password" placeholder="Повторите пароль" required>
-              <button type="button" class="toggle-pass" data-toggle="suPass2">Показать</button>
-            </div>
-            <div class="hint" data-hint="suPass2"></div>
-          </div>
-          <div class="btn-row">
-            <button type="submit" class="btn btn-primary" id="signupSubmit"><span>Продолжить</span></button>
-            <button type="button" class="btn btn-google" data-google>
-              <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 18.9 13 24 13c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 34.9 26.7 36 24 36c-5.2 0-9.6-3.1-11.3-7.5l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.5l6.2 5.2C41.1 35.8 44 30.4 44 24c0-1.2-.1-2.3-.4-3.5z"/></svg>
-              Продолжить через Google
-            </button>
-          </div>
-          <p class="foot">Регистрируясь, вы принимаете <a href="/terms.html">условия</a> и <a href="/privacy.html">политику</a>.</p>
-        </form>
-
-        <!-- RESET -->
-        <form id="form-reset" class="pane hidden" novalidate>
-          <div class="field">
-            <label for="rsEmail">Email от аккаунта</label>
-            <div class="input-wrap"><input id="rsEmail" type="email" autocomplete="email" placeholder="you@example.com" required></div>
-            <div class="hint" data-hint="rsEmail"></div>
-          </div>
-          <div class="btn-row">
-            <button type="submit" class="btn btn-primary" id="resetSubmit"><span>Отправить ссылку</span></button>
-            <button type="button" class="btn btn-ghost" data-goto="login">Вернуться ко входу</button>
-          </div>
-        </form>
-      </div>
-
-      <!-- ✓ Подтвердите Email -->
-      <div id="view-verify" class="state hidden">
-        <div class="ico">📩</div>
-        <h2>Подтвердите Email</h2>
-        <p>Мы отправили ссылку на <b id="verifyEmail">—</b>. Откройте письмо и подтвердите адрес, чтобы завершить регистрацию.</p>
-        <div class="btn-row">
-          <a class="btn btn-primary" id="openMail" target="_blank" rel="noopener">Открыть почту</a>
-          <button class="btn btn-ghost" id="resendMail">Отправить ещё раз</button>
-          <button class="btn btn-ghost" id="changeEmail">Изменить Email</button>
-          <button class="btn btn-ghost" data-goto="login" data-close-verify>Вернуться ко входу</button>
-        </div>
-      </div>
-
-      <!-- ✓ Email подтверждён -->
-      <div id="view-verified" class="state hidden">
-        <div class="ico ok">✓</div>
-        <h2>Email успешно подтверждён</h2>
-        <p>Ваш аккаунт активирован. Сейчас перенаправим в личный кабинет…</p>
-        <div class="btn-row">
-          <a href="/dashboard.html" class="btn btn-primary">Перейти в кабинет</a>
-        </div>
-      </div>
-
-      <!-- ✓ Ссылка отправлена -->
-      <div id="view-reset-sent" class="state hidden">
-        <div class="ico">📨</div>
-        <h2>Проверьте почту</h2>
-        <p>Мы отправили ссылку для смены пароля на <b id="resetEmailShown">—</b>.</p>
-        <div class="btn-row">
-          <button class="btn btn-primary" data-goto="login">Вернуться ко входу</button>
-          <button class="btn btn-ghost" id="resetResend">Отправить ещё раз</button>
-        </div>
-      </div>
-
-      <!-- ✓ Пароль изменён (показывается при возврате из письма) -->
-      <div id="view-reset-done" class="state hidden">
-        <div class="ico ok">✓</div>
-        <h2>Пароль успешно изменён</h2>
-        <p>Теперь можно войти с новым паролем.</p>
-        <div class="btn-row">
-          <button class="btn btn-primary" data-goto="login">Войти</button>
-        </div>
-      </div>
-
-    </section>
-  </main>
-
-  <div class="toasts" id="toasts" aria-live="polite" aria-atomic="true"></div>
+  <div class="toast-root" data-toast-root></div>
 
   <script type="module" src="/auth.js"></script>
 </body>
