@@ -1,286 +1,274 @@
-// auth.js — оркестратор новых экранов авторизации.
-// Основной путь — Firebase (email + Google). Легаси-логин работает как раньше через /api/auth-social-register.
-
+// auth.js — UI controller. Бизнес-логика в firebase-auth.js не меняется.
 import {
-  loadFirebase,
-  registerWithEmail,
-  loginWithEmail,
-  resendVerification,
-  sendResetEmail,
-  signOutAll,
-  signInWithGoogle,
-  checkGoogleRedirectResult,
-  applyVerification,
-  humanError,
-  persistSession
-} from './firebase-auth.js';
+  fbSignUp, fbSignIn, fbGoogle, fbSendReset, fbResendVerification,
+  fbSignOut, fbOnAuth, fbCurrentUser
+} from '/firebase-auth.js';
 
-// ---------- helpers ----------
-const $ = (sel) => document.querySelector(sel);
-const cards = { main: $('#mainCard'), verify: $('#verifyCard'), forgot: $('#forgotCard') };
-const toastEl = $('#authToast');
-let toastTimer = null;
+/* ===== helpers ===== */
+const $  = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+const qs = new URLSearchParams(location.search);
 
-function showCard(name){
-  Object.entries(cards).forEach(([k, el]) => el?.classList.toggle('hidden', k !== name));
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+const toastBox = $('#toasts');
+function toast(msg, type='info', ttl=3800){
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  toastBox.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(-8px)'; t.style.transition='.25s'; setTimeout(()=>t.remove(),260); }, ttl);
 }
-function toast(text, isErr){
-  if(!toastEl) return;
-  toastEl.textContent = text;
-  toastEl.classList.toggle('err', !!isErr);
-  toastEl.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=>toastEl.classList.remove('show'), 3200);
-}
-function setBusy(btn, busy, label){
+
+function setBusy(btn, busy){
   if(!btn) return;
+  btn.disabled = !!busy;
+  const label = btn.dataset._label || btn.innerHTML;
   if(busy){
-    btn.dataset.orig = btn.dataset.orig || btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span>' + (label || 'Пожалуйста, подождите…');
-  } else {
-    btn.disabled = false;
-    if(btn.dataset.orig){ btn.innerHTML = btn.dataset.orig; delete btn.dataset.orig; }
+    btn.dataset._label = label;
+    btn.innerHTML = '<span class="spinner"></span>';
+  } else if(btn.dataset._label){
+    btn.innerHTML = btn.dataset._label;
+    delete btn.dataset._label;
   }
 }
-function inlineMsg(text, type){
-  const box = $('#authMessage');
-  if(!box) return;
-  box.textContent = text || '';
-  box.className = 'auth-message ' + (type || '');
+
+function fieldError(id, msg){
+  const input = $('#'+id);
+  const wrap  = input?.closest('.input-wrap');
+  const hint  = $(`.hint[data-hint="${id}"]`);
+  if(wrap) wrap.classList.toggle('error', !!msg);
+  if(hint) hint.textContent = msg || '';
 }
-function goApp(){
-  const to = new URLSearchParams(location.search).get('next') || 'services.html';
-  location.href = to;
-}
+function clearErrors(form){ $$('.hint',form).forEach(h=>h.textContent=''); $$('.input-wrap.error',form).forEach(w=>w.classList.remove('error')); }
 
-// ---------- URL flow: verifyEmail / resetPassword ----------
-async function handleActionCode(){
-  const params = new URLSearchParams(location.search);
-  const mode = params.get('mode');
-  const oobCode = params.get('oobCode');
-  if(!mode || !oobCode) return false;
+const isEmail = v => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test((v||'').trim());
 
-  if(mode === 'verifyEmail'){
-    try{
-      const { autoSignedIn } = await applyVerification(oobCode);
-      history.replaceState({}, '', 'auth.html?verified=1');
-      if(autoSignedIn){
-        toast('Email подтверждён. Вы вошли в аккаунт.');
-        setTimeout(goApp, 700);
-      } else {
-        toast('Email подтверждён. Войдите в аккаунт.');
-        inlineMsg('Email успешно подтверждён. Войдите с вашим email и паролем.', 'ok');
-        activateTab('login');
-      }
-    } catch(e){
-      toast(humanError(e), true);
-    }
-    return true;
-  }
-
-  if(mode === 'resetPassword'){
-    // Ссылка на отдельную страницу для смены пароля.
-    location.replace('reset-password.html' + location.search);
-    return true;
-  }
-  return false;
+/* ===== views ===== */
+const views = {
+  tabs:      $('#view-tabs'),
+  verify:    $('#view-verify'),
+  verified:  $('#view-verified'),
+  resetSent: $('#view-reset-sent'),
+  resetDone: $('#view-reset-done'),
+};
+function show(name){
+  $('#skeleton').classList.add('hidden');
+  Object.values(views).forEach(v=>v.classList.add('hidden'));
+  views[name]?.classList.remove('hidden');
 }
 
-// ---------- Tabs ----------
-function activateTab(name){
-  document.querySelectorAll('.auth-tab').forEach(b => b.classList.toggle('active', b.dataset.authTab === name));
-  document.querySelectorAll('[data-auth-panel]').forEach(p => p.classList.toggle('hidden', p.dataset.authPanel !== name));
-  inlineMsg('');
+const panes = { login: $('#form-login'), signup: $('#form-signup'), reset: $('#form-reset') };
+const titles = {
+  login:  ['С возвращением','Войдите в аккаунт, чтобы продолжить.'],
+  signup: ['Создайте аккаунт','Займёт меньше минуты. Бонус за регистрацию.'],
+  reset:  ['Восстановление','Пришлём ссылку для сброса пароля на почту.'],
+};
+function selectTab(name){
+  $$('.tab').forEach(b=>b.setAttribute('aria-selected', b.dataset.tab===name ? 'true' : 'false'));
+  Object.entries(panes).forEach(([k,el])=>el.classList.toggle('hidden', k!==name));
+  const [t,s] = titles[name]; $('#tabTitle').textContent = t; $('#tabSub').textContent = s;
+  show('tabs');
 }
-document.querySelectorAll('.auth-tab').forEach(btn => {
-  btn.addEventListener('click', () => activateTab(btn.dataset.authTab));
+
+/* ===== password toggle ===== */
+document.addEventListener('click', e=>{
+  const btn = e.target.closest('[data-toggle]');
+  if(!btn) return;
+  const inp = document.getElementById(btn.dataset.toggle);
+  if(!inp) return;
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.textContent = show ? 'Скрыть' : 'Показать';
 });
 
-// ---------- Verify screen state ----------
-let pendingEmail = '';
-function showVerifyScreen(email){
-  pendingEmail = email || '';
-  $('#verifyEmailText').textContent = pendingEmail || 'вашу почту';
-  showCard('verify');
+/* ===== tab switching / navigation ===== */
+document.addEventListener('click', e=>{
+  const tab = e.target.closest('.tab'); if(tab) return selectTab(tab.dataset.tab);
+  const go  = e.target.closest('[data-goto]'); if(go) return selectTab(go.dataset.goto);
+});
+
+/* ===== live validation ===== */
+function bindLive(id, validator){
+  const inp = $('#'+id); if(!inp) return;
+  inp.addEventListener('blur', ()=>{
+    if(!inp.value) return fieldError(id,'');
+    const err = validator(inp.value.trim()); fieldError(id, err||'');
+  });
+  inp.addEventListener('input', ()=>{ if($(`.hint[data-hint="${id}"]`)?.textContent) fieldError(id,''); });
+}
+bindLive('loginEmail', v=> isEmail(v) ? '' : 'Введите корректный email');
+bindLive('suEmail',    v=> isEmail(v) ? '' : 'Введите корректный email');
+bindLive('rsEmail',    v=> isEmail(v) ? '' : 'Введите корректный email');
+bindLive('suPass',     v=> v.length>=8 ? '' : 'Минимум 8 символов');
+bindLive('suPass2',    v=> v === $('#suPass').value ? '' : 'Пароли не совпадают');
+
+/* ===== resend throttle ===== */
+function throttle(btn, sec=60){
+  let left = sec;
+  const base = btn.dataset._base || btn.textContent;
+  btn.dataset._base = base;
+  btn.disabled = true;
+  const tick = ()=>{
+    btn.textContent = `Отправить ещё раз (${left}с)`;
+    if(left<=0){ btn.textContent = base; btn.disabled = false; clearInterval(iv); return; }
+    left--;
+  };
+  tick(); const iv = setInterval(tick,1000);
 }
 
-$('#resendBtn')?.addEventListener('click', async (ev) => {
-  const btn = ev.currentTarget;
-  setBusy(btn, true, 'Отправляем…');
-  try{
-    await resendVerification();
-    toast('Письмо отправлено повторно.');
-  }catch(e){
-    toast(humanError(e), true);
-  }finally{
-    setBusy(btn, false);
-  }
-});
+/* ===== Firebase error mapper ===== */
+function mapError(e){
+  const code = e?.code || '';
+  const map = {
+    'auth/invalid-email':'Неверный формат email',
+    'auth/user-not-found':'Пользователь не найден',
+    'auth/wrong-password':'Неверный пароль',
+    'auth/invalid-credential':'Неверный email или пароль',
+    'auth/email-already-in-use':'Этот email уже зарегистрирован',
+    'auth/weak-password':'Слишком слабый пароль',
+    'auth/too-many-requests':'Слишком много попыток. Попробуйте позже',
+    'auth/popup-closed-by-user':'Окно Google закрыто',
+    'auth/network-request-failed':'Проблемы с сетью',
+  };
+  return map[code] || e?.message || 'Что-то пошло не так';
+}
 
-$('#changeEmailBtn')?.addEventListener('click', async () => {
-  await signOutAll();
-  activateTab('register');
-  showCard('main');
-  toast('Введите другой email для регистрации.');
-});
+/* ===== email provider link ===== */
+function mailUrlFor(email){
+  const d = (email.split('@')[1]||'').toLowerCase();
+  if(/gmail|googlemail/.test(d)) return 'https://mail.google.com';
+  if(/yandex|ya\.ru/.test(d))    return 'https://mail.yandex.ru';
+  if(/mail\.ru|inbox|bk|list/.test(d)) return 'https://e.mail.ru';
+  if(/outlook|hotmail|live|msn/.test(d)) return 'https://outlook.live.com';
+  if(/icloud|me\.com/.test(d))   return 'https://www.icloud.com/mail';
+  if(/proton/.test(d))           return 'https://mail.proton.me';
+  return `https://${d}`;
+}
 
-$('#switchAccountBtn')?.addEventListener('click', async () => {
-  await signOutAll();
-  activateTab('login');
-  showCard('main');
-});
+/* ===== FORMS ===== */
 
-// ---------- Register / Login (email) ----------
-$('#registerForm')?.addEventListener('submit', async (ev) => {
-  ev.preventDefault();
-  inlineMsg('');
-  const btn = ev.target.querySelector('button[type="submit"]');
-  const email = $('#registerEmail').value.trim();
-  const password = $('#registerPassword').value;
-  const displayName = $('#registerName').value.trim();
-  if(!email || password.length < 6){
-    inlineMsg('Заполните email и пароль (мин. 6 символов).', 'err');
-    return;
-  }
-  setBusy(btn, true, 'Создаём аккаунт…');
-  try{
-    const ref = new URLSearchParams(location.search).get('ref') || '';
-    await registerWithEmail({ email, password, displayName, referredBy: ref });
-    window.ymGoal?.('signup_complete');
-    showVerifyScreen(email);
-    toast('Аккаунт создан. Проверьте почту.');
-  }catch(e){
-    inlineMsg(humanError(e), 'err');
-    toast(humanError(e), true);
-  }finally{
-    setBusy(btn, false);
-  }
-});
-
-$('#loginForm')?.addEventListener('submit', async (ev) => {
-  ev.preventDefault();
-  inlineMsg('');
-  const btn = ev.target.querySelector('button[type="submit"]');
+// LOGIN
+$('#form-login').addEventListener('submit', async e=>{
+  e.preventDefault(); clearErrors(e.target);
   const email = $('#loginEmail').value.trim();
-  const password = $('#loginPassword').value;
-  if(!email || !password){ inlineMsg('Введите email и пароль.', 'err'); return; }
-  setBusy(btn, true, 'Входим…');
+  const pass  = $('#loginPass').value;
+  let bad=false;
+  if(!isEmail(email)){ fieldError('loginEmail','Введите корректный email'); bad=true; }
+  if(!pass){ fieldError('loginPass','Введите пароль'); bad=true; }
+  if(bad) return;
+
+  const btn = $('#loginSubmit'); setBusy(btn,true);
   try{
-    const { needsVerification } = await loginWithEmail({ email, password });
-    if(needsVerification){
-      showVerifyScreen(email);
-      toast('Подтвердите email, чтобы войти.', true);
+    const u = await fbSignIn(email, pass);
+    if(u && !u.emailVerified){
+      showVerify(email);
+      toast('Подтвердите email, чтобы войти', 'info');
       return;
     }
-    window.ymGoal?.('login_success');
-    toast('Готово! Входим…');
-    setTimeout(goApp, 400);
-  }catch(e){
-    inlineMsg(humanError(e), 'err');
-    toast(humanError(e), true);
-  }finally{
-    setBusy(btn, false);
-  }
+    toast('Добро пожаловать!','success');
+    setTimeout(()=>location.href='/dashboard.html', 500);
+  }catch(err){ toast(mapError(err),'error'); }
+  finally{ setBusy(btn,false); }
 });
 
-// ---------- Google ----------
-$('#googleBtn')?.addEventListener('click', async (ev) => {
-  const btn = ev.currentTarget;
-  setBusy(btn, true, 'Открываем Google…');
+// SIGNUP
+$('#form-signup').addEventListener('submit', async e=>{
+  e.preventDefault(); clearErrors(e.target);
+  const email = $('#suEmail').value.trim();
+  const p1 = $('#suPass').value, p2 = $('#suPass2').value;
+  let bad=false;
+  if(!isEmail(email)){ fieldError('suEmail','Введите корректный email'); bad=true; }
+  if(p1.length<8){ fieldError('suPass','Минимум 8 символов'); bad=true; }
+  if(p1!==p2){ fieldError('suPass2','Пароли не совпадают'); bad=true; }
+  if(bad) return;
+
+  const btn = $('#signupSubmit'); setBusy(btn,true);
   try{
-    const res = await signInWithGoogle({ referredBy: (localStorage.getItem('sb_ref') || '') });
-    if(res?.redirect) return; // страница перезагрузится, результат обработаем ниже
-    window.ymGoal?.('login_success');
-    toast('Готово! Входим…');
-    setTimeout(goApp, 400);
-  }catch(e){
-    toast(humanError(e), true);
-  }finally{
-    setBusy(btn, false);
-  }
+    const refBy = qs.get('ref') || localStorage.getItem('referredBy') || null;
+    await fbSignUp(email, p1, { referredBy: refBy });
+    showVerify(email);
+    toast('Письмо с подтверждением отправлено','success');
+  }catch(err){ toast(mapError(err),'error'); }
+  finally{ setBusy(btn,false); }
 });
 
-// ---------- Forgot password ----------
-$('#forgotBtn')?.addEventListener('click', () => {
-  $('#forgotEmail').value = $('#loginEmail').value || '';
-  showCard('forgot');
-});
-$('#backFromForgot')?.addEventListener('click', () => showCard('main'));
-
-$('#forgotForm')?.addEventListener('submit', async (ev) => {
-  ev.preventDefault();
-  const btn = ev.target.querySelector('button[type="submit"]');
-  const email = $('#forgotEmail').value.trim();
-  if(!email){ toast('Введите email', true); return; }
-  setBusy(btn, true, 'Отправляем…');
+// RESET
+$('#form-reset').addEventListener('submit', async e=>{
+  e.preventDefault(); clearErrors(e.target);
+  const email = $('#rsEmail').value.trim();
+  if(!isEmail(email)){ fieldError('rsEmail','Введите корректный email'); return; }
+  const btn = $('#resetSubmit'); setBusy(btn,true);
   try{
-    await sendResetEmail(email);
-    toast('Письмо с инструкцией отправлено.');
-    setTimeout(()=>showCard('main'), 600);
-  }catch(e){
-    toast(humanError(e), true);
-  }finally{
-    setBusy(btn, false);
-  }
+    await fbSendReset(email);
+    $('#resetEmailShown').textContent = email;
+    show('resetSent');
+    toast('Ссылка отправлена','success');
+  }catch(err){ toast(mapError(err),'error'); }
+  finally{ setBusy(btn,false); }
 });
 
-// ---------- Legacy login (совместимость со старыми пользователями) ----------
-$('#legacyToggle')?.addEventListener('click', () => {
-  $('#legacyPanel').classList.toggle('show');
-});
-$('#legacyLoginForm')?.addEventListener('submit', async (ev) => {
-  ev.preventDefault();
-  const btn = ev.target.querySelector('button[type="submit"]');
-  const username = $('#legacyLogin').value.trim();
-  const password = $('#legacyPassword').value;
-  setBusy(btn, true, 'Входим…');
+// GOOGLE
+document.addEventListener('click', async e=>{
+  const btn = e.target.closest('[data-google]'); if(!btn) return;
+  setBusy(btn,true);
   try{
-    const resp = await fetch('/api/auth-social-register', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ action:'login', username, password })
-    });
-    const data = await resp.json();
-    if(!resp.ok || !data.ok) throw new Error(data.error || 'Ошибка входа');
-    const user = data.user || {};
-    localStorage.setItem('sb_user', JSON.stringify({
-      ...user,
-      authType: user.authType || 'password',
-      loggedAt: new Date().toISOString()
-    }));
-    window.SBUserState?.refresh?.();
-    toast('Готово! Входим…');
-    setTimeout(goApp, 400);
-  }catch(e){
-    toast(e.message || 'Ошибка входа', true);
-  }finally{
-    setBusy(btn, false);
-  }
+    const refBy = qs.get('ref') || localStorage.getItem('referredBy') || null;
+    await fbGoogle({ referredBy: refBy });
+    toast('Добро пожаловать!','success');
+    setTimeout(()=>location.href='/dashboard.html', 500);
+  }catch(err){ toast(mapError(err),'error'); }
+  finally{ setBusy(btn,false); }
 });
 
-// ---------- Bootstrap ----------
+/* ===== verify view ===== */
+function showVerify(email){
+  $('#verifyEmail').textContent = email;
+  $('#openMail').href = mailUrlFor(email);
+  show('verify');
+}
+$('#resendMail').addEventListener('click', async (e)=>{
+  const btn = e.currentTarget;
+  try{
+    await fbResendVerification();
+    toast('Письмо отправлено повторно','success');
+    throttle(btn, 60);
+  }catch(err){ toast(mapError(err),'error'); }
+});
+$('#changeEmail').addEventListener('click', async ()=>{
+  try{ await fbSignOut(); }catch(_){}
+  selectTab('signup');
+});
+document.querySelectorAll('[data-close-verify]').forEach(b=>b.addEventListener('click', async ()=>{
+  try{ await fbSignOut(); }catch(_){}
+}));
+$('#resetResend').addEventListener('click', async (e)=>{
+  const email = $('#resetEmailShown').textContent;
+  if(!isEmail(email)) return;
+  try{ await fbSendReset(email); toast('Отправлено ещё раз','success'); throttle(e.currentTarget, 60); }
+  catch(err){ toast(mapError(err),'error'); }
+});
+
+/* ===== initial state ===== */
 (async function init(){
-  try{
-    // Показ сообщения после подтверждения через ссылку
-    if(new URLSearchParams(location.search).get('verified') === '1'){
-      inlineMsg('Email подтверждён. Войдите в аккаунт.', 'ok');
-      activateTab('login');
+  // deep-link states from reset-password.html
+  if(qs.get('state')==='reset-done')   { show('resetDone'); return; }
+  if(qs.get('state')==='verified')     { show('verified'); setTimeout(()=>location.href='/dashboard.html', 1800); return; }
+
+  const initialTab = ['login','signup','reset'].includes(qs.get('tab')) ? qs.get('tab') : 'login';
+
+  // skeleton пока Firebase инициализируется
+  fbOnAuth(user=>{
+    if(user && !user.emailVerified){
+      showVerify(user.email || '');
+      return;
     }
-    const handled = await handleActionCode();
-    if(handled) return;
-    await loadFirebase();
-    // Проверяем результат Google redirect (если был использован fallback)
-    try{
-      const res = await checkGoogleRedirectResult();
-      if(res?.user){
-        toast('Готово! Входим…');
-        setTimeout(goApp, 400);
-      }
-    }catch(e){ console.warn('[auth] redirect result', e); }
-  }catch(e){
-    console.error('[auth] init failed', e);
-    toast('Не удалось загрузить систему авторизации.', true);
-  }
+    if(user && user.emailVerified){
+      // Уже вошёл — сразу в кабинет
+      location.href = '/dashboard.html';
+      return;
+    }
+    selectTab(initialTab);
+  });
+
+  // safety: если fbOnAuth не сработал за 1.2s — показать форму
+  setTimeout(()=>{ if(!$('#skeleton').classList.contains('hidden')) selectTab(initialTab); }, 1200);
 })();
