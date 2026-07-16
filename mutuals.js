@@ -14,7 +14,7 @@ import {
 
 const firebaseConfig = {
   apiKey: "AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8",
-  authDomain: "smm-boost-905d5.firebaseapp.com",
+  authDomain: "smm-boost.pro",
   projectId: "smm-boost-905d5",
   storageBucket: "smm-boost-905d5.firebasestorage.app",
   messagingSenderId: "554912523069",

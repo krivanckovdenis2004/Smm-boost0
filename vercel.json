@@ -1,22 +1,15 @@
 {
-  "installCommand": "npm install",
-  "trailingSlash": true,
-  "cleanUrls": false,
+  "cleanUrls": true,
+  "trailingSlash": false,
   "rewrites": [
-    { "source": "/api/create-balance-yookassa", "destination": "/api/create-balance-invoice?provider=yookassa" }
-  ],
-  "redirects": [
-    { "source": "/tiktok.html", "destination": "/tiktok/", "permanent": true },
-    { "source": "/telegram.html", "destination": "/telegram/", "permanent": true },
-    { "source": "/youtube.html", "destination": "/youtube/", "permanent": true },
-    { "source": "/vk.html", "destination": "/vk/", "permanent": true },
-    { "source": "/instagram.html", "destination": "/instagram/", "permanent": true },
-    { "source": "/facebook.html", "destination": "/facebook/", "permanent": true },
-    { "source": "/twitter.html", "destination": "/twitter/", "permanent": true },
-    { "source": "/twitch.html", "destination": "/twitch/", "permanent": true },
-    { "source": "/spotify.html", "destination": "/spotify/", "permanent": true },
-    { "source": "/discord.html", "destination": "/discord/", "permanent": true },
-    { "source": "/threads.html", "destination": "/threads/", "permanent": true }
+    {
+      "source": "/__/auth/:path*",
+      "destination": "https://smm-boost-905d5.firebaseapp.com/__/auth/:path*"
+    },
+    {
+      "source": "/__/firebase/:path*",
+      "destination": "https://smm-boost-905d5.firebaseapp.com/__/firebase/:path*"
+    }
   ],
   "headers": [
     {
@@ -24,32 +17,7 @@
       "headers": [
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=(self)" },
-        { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains" },
-        {
-          "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://mc.yandex.ru https://mc.yandex.com https://yastatic.net https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https: https://fonts.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://mc.yandex.ru https://mc.yandex.com https://api.telegram.org https://justanotherpanel.com https://api.yookassa.ru https://pay.crypt.bot; frame-src 'self' https://mc.yandex.ru https://yoomoney.ru https://*.yoomoney.ru; object-src 'none'; base-uri 'self'; form-action 'self' https:; frame-ancestors 'self'"
-        }
-      ]
-    },
-    {
-      "source": "/(.*)\\.(css|js|mjs|woff2|woff|ttf|otf|png|jpg|jpeg|webp|avif|svg|ico)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
-      ]
-    },
-    {
-      "source": "/sitemap.xml",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" },
-        { "key": "Content-Type", "value": "application/xml; charset=utf-8" }
-      ]
-    },
-    {
-      "source": "/robots.txt",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=86400" }
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
       ]
     }
   ]
