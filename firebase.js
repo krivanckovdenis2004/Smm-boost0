@@ -16,9 +16,7 @@ import {
   confirmPasswordReset,
   verifyPasswordResetCode,
   applyActionCode,
-  getRedirectResult,
-  signInWithPopup,
-  signInWithRedirect,
+  signInWithCredential,
   signOut,
   updateProfile,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -36,8 +34,10 @@ export const firebaseConfig = {
 const API_SYNC_URL = "/api/auth-social-register";
 const RESEND_COOLDOWN_MS = 60_000;
 const AUTH_STORAGE_KEYS = ["sb_user", "sb_ref_pending", "sb_auth_last_error"];
-const GOOGLE_REDIRECT_PENDING_KEY = "sb_google_redirect_pending";
 const AUTH_DEBUG_PREFIX = "[SMM-Boost Auth]";
+const GOOGLE_CLIENT_ID = "554912523069-2dd4cs90rk2p5c6so2cmg9kpqc9pfi8h.apps.googleusercontent.com";
+const GOOGLE_GIS_SRC = "https://accounts.google.com/gsi/client";
+const GOOGLE_POPUP_TIMEOUT_MS = 45_000;
 
 export const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(firebaseApp);
@@ -171,6 +171,83 @@ function currentRef() {
     const ref = (params.get("ref") || sessionStorage.getItem("sb_ref") || "").trim().toLowerCase();
     return /^[0-9a-f]{32}$/.test(ref) ? ref : "";
   } catch (_) { return ""; }
+}
+
+function enforceCanonicalHost() {
+  if (typeof location !== "undefined" && location.hostname === "www.smm-boost.pro") {
+    location.replace("https://smm-boost.pro" + location.pathname + location.search + location.hash);
+  }
+}
+
+function isAllowedAuthHost() {
+  if (typeof location === "undefined") return true;
+  return location.hostname === "smm-boost.pro" || location.hostname === "localhost" || location.hostname === "127.0.0.1";
+}
+
+function rejectAfter(ms, code, message) {
+  return new Promise((_, reject) => {
+    setTimeout(() => {
+      const err = new Error(message);
+      err.code = code;
+      reject(err);
+    }, ms);
+  });
+}
+
+function loadGoogleIdentityServices() {
+  if (window.google?.accounts?.oauth2) return Promise.resolve(window.google);
+  if (window.__sbGoogleGisPromise) return window.__sbGoogleGisPromise;
+  window.__sbGoogleGisPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[src="${GOOGLE_GIS_SRC}"]`);
+    if (existing) {
+      existing.addEventListener("load", () => resolve(window.google), { once: true });
+      existing.addEventListener("error", () => reject(new Error("Не удалось загрузить Google Identity Services")), { once: true });
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = GOOGLE_GIS_SRC;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve(window.google);
+    script.onerror = () => reject(new Error("Не удалось загрузить Google Identity Services"));
+    document.head.appendChild(script);
+  });
+  return window.__sbGoogleGisPromise;
+}
+
+async function requestGoogleAccessToken() {
+  const google = await loadGoogleIdentityServices();
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const finish = (fn, value) => {
+      if (settled) return;
+      settled = true;
+      fn(value);
+    };
+    try {
+      const tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: "openid email profile",
+        prompt: "select_account",
+        callback: (response) => {
+          if (response?.access_token) finish(resolve, response.access_token);
+          else {
+            const err = new Error(response?.error_description || response?.error || "Google не вернул access_token");
+            err.code = response?.error || "auth/google-token-missing";
+            finish(reject, err);
+          }
+        },
+        error_callback: (response) => {
+          const err = new Error(response?.message || response?.type || "Google popup не завершился");
+          err.code = response?.type === "popup_closed" ? "auth/popup-closed-by-user" : "auth/google-popup-error";
+          finish(reject, err);
+        },
+      });
+      tokenClient.requestAccessToken({ prompt: "select_account" });
+    } catch (err) {
+      finish(reject, err);
+    }
+  });
 }
 
 function setState(next, { silent = false } = {}) {
@@ -356,50 +433,32 @@ export async function sendPasswordReset(email) {
 }
 
 export async function signInWithGoogleProvider() {
+  enforceCanonicalHost();
+  if (!isAllowedAuthHost()) {
+    const err = new Error("Google-вход доступен только на smm-boost.pro без www.");
+    err.code = "auth/unauthorized-domain";
+    throw err;
+  }
   await persistenceReady;
-  const provider = new GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: "select_account" });
-  logAuthInfo("signInWithGoogleProvider before popup");
+  logAuthInfo("signInWithGoogleProvider before GIS token popup");
   try {
-    const result = await signInWithPopup(auth, provider);
+    const accessToken = await Promise.race([
+      requestGoogleAccessToken(),
+      rejectAfter(GOOGLE_POPUP_TIMEOUT_MS, "auth/popup-timeout", "Google не вернул ответ за 45 секунд."),
+    ]);
+    const credential = GoogleAuthProvider.credential(null, accessToken);
+    const result = await signInWithCredential(auth, credential);
     if (result?.user) await syncFirebaseUser(result.user, { forceToken: true });
     return result;
   } catch (err) {
-    logAuthError("signInWithPopup failed", err);
-    if (err?.code === "auth/popup-blocked" || err?.code === "auth/operation-not-supported-in-this-environment" || err?.code === "auth/internal-error") {
-      const ref = currentRef();
-      if (ref) sessionStorage.setItem("sb_ref_pending", ref);
-      sessionStorage.setItem(GOOGLE_REDIRECT_PENDING_KEY, "1");
-      logAuthInfo("signInWithRedirect fallback start");
-      await signInWithRedirect(auth, provider);
-      return { redirect: true };
-    }
+    logAuthError("Google Identity Services sign-in failed", err);
     throw err;
   }
 }
 
 export async function handleGoogleRedirectResult() {
-  await persistenceReady;
-  const hasPendingRedirect = sessionStorage.getItem(GOOGLE_REDIRECT_PENDING_KEY) === "1";
-  if (!hasPendingRedirect) {
-    logAuthInfo("getRedirectResult skipped: no local redirect marker");
-    return null;
-  }
-  try {
-    logAuthInfo("getRedirectResult start");
-    const result = await getRedirectResult(auth);
-    if (result?.user) {
-      const ref = sessionStorage.getItem("sb_ref_pending") || currentRef();
-      sessionStorage.removeItem("sb_ref_pending");
-      await syncFirebaseUser(result.user, { forceToken: true, ref });
-    }
-    return result;
-  } catch (err) {
-    logAuthError("getRedirectResult failed", err);
-    throw err;
-  } finally {
-    sessionStorage.removeItem(GOOGLE_REDIRECT_PENDING_KEY);
-  }
+  logAuthInfo("Google redirect result skipped: Vercel-only auth uses GIS token popup");
+  return null;
 }
 
 export async function applyEmailVerificationCode(oobCode) {
@@ -439,12 +498,15 @@ export function humanAuthError(err) {
     "auth/too-many-requests": "Слишком много попыток. Попробуйте позже.",
     "auth/network-request-failed": "Проблема с сетью. Проверьте соединение.",
     "auth/popup-blocked": "Всплывающее окно Google заблокировано браузером.",
+    "auth/popup-timeout": "Google не вернул ответ. Разрешите всплывающие окна и попробуйте ещё раз.",
     "auth/popup-closed-by-user": "Окно Google было закрыто.",
     "auth/cancelled-popup-request": "Окно Google было закрыто.",
+    "auth/google-popup-error": "Окно Google не завершило вход. Попробуйте ещё раз.",
+    "auth/google-token-missing": "Google не вернул токен входа. Попробуйте ещё раз.",
     "auth/account-exists-with-different-credential": "Аккаунт с этим email уже существует. Войдите по email и затем используйте Google.",
     "auth/unauthorized-domain": "Текущий домен не добавлен в Firebase Authorized domains.",
     "auth/operation-not-allowed": "Этот способ входа выключен в Firebase Console.",
-    "auth/internal-error": "Внутренняя ошибка Firebase Auth. Подробный стек выведен в Console как [SMM-Boost Auth].",
+    "auth/internal-error": "Google-вход не завершился. Обновите страницу и попробуйте ещё раз; подробности в Console как [SMM-Boost Auth].",
     "auth/expired-action-code": "Ссылка устарела. Запросите новое письмо.",
     "auth/invalid-action-code": "Ссылка недействительна или уже использована.",
   };

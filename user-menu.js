@@ -2,7 +2,7 @@
 // Подключение:  <script type="module" src="/user-menu.js"></script>
 // В шапке разместить контейнер:  <div id="userMenu"></div>
 // (если контейнера нет — виджет создаст плавающий в правом верхнем углу).
-import { fbOnAuth, fbSignOut, fbCurrentUser } from '/firebase-auth.js';
+import { subscribeAuth, signOutEverywhere, getStoredUser } from '/firebase.js?v=20260716-auth-v6';
 
 const css = `
 .um-wrap{position:relative;display:inline-block;font-family:'Inter',sans-serif}
@@ -71,7 +71,7 @@ function render(user){
   document.addEventListener('click', e=>{ if(!wrap.contains(e.target)){ wrap.classList.remove('open'); btn.setAttribute('aria-expanded','false'); }});
   wrap.querySelector('[data-logout]').addEventListener('click', async ()=>{
     try{
-      await fbSignOut();
+      await signOutEverywhere();
       try{ sessionStorage.clear(); }catch(_){}
       try{
         // Чистим только auth-ключи, не трогая корзину/настройки сайта
@@ -84,4 +84,4 @@ function render(user){
   });
 }
 
-fbOnAuth(u => render(u || null));
+subscribeAuth(state => render((state && state.user) || getStoredUser() || null));

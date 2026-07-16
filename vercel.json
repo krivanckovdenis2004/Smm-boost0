@@ -3,11 +3,12 @@
   "trailingSlash": true,
   "cleanUrls": false,
   "rewrites": [
-    { "source": "/__/auth/:path*", "destination": "https://smm-boost-905d5.firebaseapp.com/__/auth/:path*" },
-    { "source": "/__/firebase/:path*", "destination": "https://smm-boost-905d5.firebaseapp.com/__/firebase/:path*" },
     { "source": "/api/create-balance-yookassa", "destination": "/api/create-balance-invoice?provider=yookassa" }
   ],
   "redirects": [
+    { "source": "/(.*)", "has": [{ "type": "host", "value": "www.smm-boost.pro" }], "destination": "https://smm-boost.pro/$1", "statusCode": 308 },
+    { "source": "/__/auth/:path*", "destination": "/auth.html", "statusCode": 308 },
+    { "source": "/__/firebase/:path*", "destination": "/auth.html", "statusCode": 308 },
     { "source": "/tiktok.html", "destination": "/tiktok/", "permanent": true },
     { "source": "/telegram.html", "destination": "/telegram/", "permanent": true },
     { "source": "/youtube.html", "destination": "/youtube/", "permanent": true },
@@ -31,7 +32,7 @@
         { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains" },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://mc.yandex.ru https://mc.yandex.com https://yastatic.net https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https: https://fonts.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://mc.yandex.ru https://mc.yandex.com https://api.telegram.org https://justanotherpanel.com https://api.yookassa.ru https://pay.crypt.bot; frame-src 'self' https://mc.yandex.ru https://yoomoney.ru https://*.yoomoney.ru; object-src 'none'; base-uri 'self'; form-action 'self' https:; frame-ancestors 'self'"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://accounts.google.com https://mc.yandex.ru https://mc.yandex.com https://yastatic.net https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https: https://fonts.gstatic.com; connect-src 'self' https://accounts.google.com https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://mc.yandex.ru https://mc.yandex.com https://api.telegram.org https://justanotherpanel.com https://api.yookassa.ru https://pay.crypt.bot; frame-src 'self' https://accounts.google.com https://mc.yandex.ru https://yoomoney.ru https://*.yoomoney.ru; object-src 'none'; base-uri 'self'; form-action 'self' https:; frame-ancestors 'self'"
         }
       ]
     },

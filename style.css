@@ -6,6 +6,14 @@ body {
 
 }
 
+html.sb-auth-booting .main-nav-links > a[href="auth.html"],
+html.sb-auth-booting .main-nav-links > a[href="/auth.html"],
+html.sb-auth-booting .main-nav-links > .nav-register-link,
+html.sb-auth-booting .main-nav-links > .nav-user-badge {
+  display: none !important;
+}
+
+
 .bg-animation {
 
   position: fixed;

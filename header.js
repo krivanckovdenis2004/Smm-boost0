@@ -2,8 +2,7 @@
 // «Зарегистрироваться» vs пользовательского меню. Использует authReady как
 // единственный источник истины, чтобы полностью исключить мерцание.
 
-import { auth, authReady, subscribeAuth } from "./firebase.js";
-import { signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { authReady, subscribeAuth, signOutEverywhere } from "./firebase.js";
 
 const MOUNT_SELECTOR = "[data-auth-slot]"; // <div data-auth-slot></div> в шапке
 
@@ -87,7 +86,7 @@ function wireMenu(slot) {
     signoutBtn.textContent = "Выход...";
     try {
       await Promise.race([
-        signOut(auth),
+        signOutEverywhere(),
         new Promise((_, r) => setTimeout(() => r(new Error("signout-timeout")), 5000)),
       ]);
     } catch (err) {
@@ -110,12 +109,12 @@ async function mount() {
   });
 
   // 2. Ждём первичное определение состояния (с внутренним таймаутом 6с).
-  const initialUser = await authReady;
-  slots.forEach((s) => render(s, initialUser));
+  const initialState = await authReady;
+  slots.forEach((s) => render(s, initialState?.user || null));
 
   // 3. Подписываемся на дальнейшие изменения — единственная подписка в шапке.
-  subscribeAuth((user) => {
-    slots.forEach((s) => render(s, user));
+  subscribeAuth((state) => {
+    slots.forEach((s) => render(s, state?.user || null));
   });
 }
 

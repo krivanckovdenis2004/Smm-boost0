@@ -5,6 +5,7 @@
   var latestState = { ready: false, loading: true, user: null, source: "unknown" };
 
   injectStyles();
+  markAuthBooting();
   exposeApi();
 
   if (document.readyState === "loading") {
@@ -100,6 +101,17 @@
     document.head.appendChild(style);
   }
 
+  function markAuthBooting() {
+    try { document.documentElement.classList.add("sb-auth-booting"); } catch (e) {}
+  }
+
+  function markAuthReady() {
+    try {
+      document.documentElement.classList.remove("sb-auth-booting");
+      document.documentElement.classList.add("sb-auth-ready");
+    } catch (e) {}
+  }
+
   function renderLoading() {
     document.querySelectorAll(".main-nav-links").forEach(function (nav) {
       removeAuthControls(nav);
@@ -116,6 +128,7 @@
   function renderFromState(state) {
     bindMenuOnce();
     if (!state || !state.ready || state.loading) { renderLoading(); return; }
+    markAuthReady();
     var user = isLoggedIn(state.user) ? state.user : null;
     renderTopNav(user);
     renderDropMenu(user);

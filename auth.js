@@ -299,6 +299,10 @@ function bindHandlers() {
 }
 
 async function init() {
+  if (location.hostname === "www.smm-boost.pro") {
+    location.replace("https://smm-boost.pro" + location.pathname + location.search + location.hash);
+    return;
+  }
   setSplash(true);
   bindHandlers();
 

@@ -1,3 +1,20 @@
+# Auth v8 — Changelog
+
+## 2026-07-16 — root-cause fix Google Auth
+
+- Google Login переведён с Firebase `/__/auth/handler` helper на Google Identity Services + `signInWithCredential()`.
+- Убраны `signInWithRedirect()` fallback и активный `getRedirectResult()`.
+- Удалён Vercel rewrite `/__/auth/*` и `/__/firebase/*` на `*.firebaseapp.com`.
+- Старые helper URL `/__/auth/*` и `/__/firebase/*` теперь уходят 308 на `/auth.html`, чтобы не показывать 404.
+- Добавлен 308 redirect `www.smm-boost.pro` → `smm-boost.pro`.
+- Добавлена runtime-защита от Google-входа на `www`.
+- CSP обновлён для `https://accounts.google.com`.
+- Исправлен FOUC кнопки «Зарегистрироваться» через классы `sb-auth-booting` / `sb-auth-ready`.
+- Добавлен timeout 45 секунд для Google popup.
+- Firestore, баланс, JAP API, платежи, заказы и SEO не изменялись.
+
+---
+
 # Auth v4 — Changelog
 
 ## Найденные ошибки
