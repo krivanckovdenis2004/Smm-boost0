@@ -3,9 +3,8 @@
 
 import {
   signInWithGoogleProvider,
-  handleGoogleRedirectResult,
   humanAuthError,
-} from "./firebase.js?v=20260716-auth-v6";
+} from "./firebase.js?v=20260716-auth-v9";
 
 function setMsg(text, ok = false) {
   const el = document.getElementById("authMessage") || document.querySelector("[data-auth-error]");
@@ -31,8 +30,7 @@ function logAuthError(label, error) {
 async function signInWithGoogle() {
   setMsg("Открываем Google...", true);
   try {
-    const result = await signInWithGoogleProvider();
-    if (result?.redirect) return;
+    await signInWithGoogleProvider();
     setMsg("Вход через Google выполнен.", true);
     setTimeout(() => { window.location.href = "/wallet.html"; }, 650);
   } catch (err) {
@@ -44,14 +42,5 @@ async function signInWithGoogle() {
     setMsg(humanAuthError(err));
   }
 }
-
-handleGoogleRedirectResult().then((result) => {
-  if (result?.user) {
-    setMsg("Вход через Google выполнен.", true);
-    setTimeout(() => { window.location.href = "/wallet.html"; }, 650);
-  }
-}).catch((err) => {
-  if (err?.code !== "auth/no-auth-event") logAuthError("handleGoogleRedirectResult failed", err);
-});
 
 window.SBGoogleAuth = { signInWithGoogle };

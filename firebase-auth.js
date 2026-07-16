@@ -17,13 +17,12 @@ export {
   resendVerificationEmail,
   sendPasswordReset,
   signInWithGoogleProvider,
-  handleGoogleRedirectResult,
   applyEmailVerificationCode,
   verifyResetCode,
   confirmPasswordResetCode,
   signOutEverywhere,
   humanAuthError,
-} from './firebase.js?v=20260716-auth-v6';
+} from './firebase.js?v=20260716-auth-v9';
 
 import {
   auth,
@@ -35,13 +34,12 @@ import {
   resendVerificationEmail,
   sendPasswordReset,
   signInWithGoogleProvider,
-  handleGoogleRedirectResult,
   applyEmailVerificationCode,
   verifyResetCode,
   confirmPasswordResetCode,
   signOutEverywhere,
   humanAuthError,
-} from './firebase.js?v=20260716-auth-v6';
+} from './firebase.js?v=20260716-auth-v9';
 
 export function loadFirebase() {
   return Promise.resolve({ app: firebaseApp, auth });
@@ -85,7 +83,6 @@ export function resendCooldownLeft(email) {
 export const resendVerification = resendVerificationEmail;
 export const sendResetEmail = sendPasswordReset;
 export const signInWithGoogle = signInWithGoogleProvider;
-export const checkGoogleRedirectResult = handleGoogleRedirectResult;
 export const applyVerification = applyEmailVerificationCode;
 export const confirmReset = confirmPasswordResetCode;
 export const signOutAll = signOutEverywhere;

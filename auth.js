@@ -10,11 +10,10 @@ import {
   resendVerificationEmail,
   sendPasswordReset,
   signInWithGoogleProvider,
-  handleGoogleRedirectResult,
   applyEmailVerificationCode,
   signOutEverywhere,
   humanAuthError,
-} from "./firebase.js?v=20260716-auth-v6";
+} from "./firebase.js?v=20260716-auth-v9";
 
 const REDIRECT_AFTER_LOGIN = new URLSearchParams(location.search).get("next") || "/wallet.html";
 const AUTH_INIT_TIMEOUT_MS = 12_000;
@@ -256,8 +255,7 @@ function bindHandlers() {
       showError("");
       setBusy(button, true, "Открываем Google...");
       try {
-        const result = await signInWithGoogleProvider();
-        if (result?.redirect) return;
+        await signInWithGoogleProvider();
         toast("Вход через Google выполнен.", "success");
         setTimeout(() => { location.href = REDIRECT_AFTER_LOGIN; }, 450);
       } catch (err) {
@@ -305,13 +303,6 @@ async function init() {
   }
   setSplash(true);
   bindHandlers();
-
-  try { await handleGoogleRedirectResult(); } catch (err) {
-    if (err?.code !== "auth/no-auth-event") {
-      logAuthError("handleGoogleRedirectResult failed", err);
-      showError(humanAuthError(err));
-    }
-  }
 
   const handledAction = await handleUrlActionCodes();
   const snapshot = await withTimeout(waitForAuthState(), AUTH_INIT_TIMEOUT_MS, "Firebase Auth init").catch((err) => {

@@ -1,4 +1,4 @@
-import { firebaseApp } from "./firebase.js?v=20260716-auth-v6";
+import { firebaseApp } from "./firebase.js?v=20260716-auth-v9";
 
 import {
   getFirestore,

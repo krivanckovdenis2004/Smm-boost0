@@ -29,7 +29,7 @@
   }
 
   function loadAuthModule() {
-    if (!authModulePromise) authModulePromise = import("/firebase.js?v=20260716-auth-v6");
+    if (!authModulePromise) authModulePromise = import("/firebase.js?v=20260716-auth-v9");
     return authModulePromise;
   }
 

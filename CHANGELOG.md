@@ -1,9 +1,11 @@
-# Auth v8 — Changelog
+# Auth v9 — Changelog
 
-## 2026-07-16 — root-cause fix Google Auth
+## 2026-07-16 — full removal of Firebase Redirect Auth
 
 - Google Login переведён с Firebase `/__/auth/handler` helper на Google Identity Services + `signInWithCredential()`.
-- Убраны `signInWithRedirect()` fallback и активный `getRedirectResult()`.
+- Полностью удалён старый Firebase redirect flow и обработчик результата redirect-flow из runtime-кода.
+- Кнопка Google вызывает только Google Identity Services token popup, затем `GoogleAuthProvider.credential()` и `signInWithCredential()`.
+- Обновлены версии всех подключений auth-скриптов до `20260716-auth-v9`, чтобы Vercel/CDN/браузер не брали старый JS из кэша.
 - Удалён Vercel rewrite `/__/auth/*` и `/__/firebase/*` на `*.firebaseapp.com`.
 - Старые helper URL `/__/auth/*` и `/__/firebase/*` теперь уходят 308 на `/auth.html`, чтобы не показывать 404.
 - Добавлен 308 redirect `www.smm-boost.pro` → `smm-boost.pro`.
@@ -15,7 +17,7 @@
 
 ---
 
-# Auth v4 — Changelog
+# Исторический changelog старой v4-архитектуры
 
 ## Найденные ошибки
 
@@ -34,8 +36,7 @@
    расходились по состоянию — где-то показывался гость, где-то — юзер.
 5. **`signOut` не обновлял UI без перезагрузки** — событие уходило,
    но слот шапки перерисовывался только после reload.
-6. **Google-вход падал в WebView / при блокировке попапа** без фолбэка
-   на `signInWithRedirect`.
+6. **Google-вход падал в WebView / при блокировке попапа** из-за старого Firebase redirect fallback.
 
 ## Что исправлено
 
@@ -50,9 +51,7 @@
 - Persistence переключается на `inMemoryPersistence`, если `localStorage`
   недоступен (Safari Private, встроенные WebView) — устраняет случаи
   «не открывается вообще».
-- Google-логин: попап → фолбэк на `signInWithRedirect` при
-  `popup-blocked` / `operation-not-supported-in-this-environment`.
-  Обработка `getRedirectResult` при возврате.
+- Google-логин в v9 больше не использует Firebase redirect fallback и не обрабатывает redirect-состояние.
 - `signOut` в `header.js` немедленно перерисовывает слот в гостевое
   состояние (не ждёт события) + `onAuthStateChanged` синхронно
   подтверждает. Никаких перезагрузок.
@@ -68,7 +67,7 @@
 | `firebase.js` | Единая инициализация Firebase, `authReady`, `subscribeAuth`. Единственный источник истины. |
 | `header.js` | Контроллер слота `[data-auth-slot]` в шапке. Skeleton → guest/user, меню, выход. |
 | `header-auth.css` | Стили для skeleton, кнопки регистрации и меню пользователя. |
-| `auth.js` | Контроллер `/auth.html`. Skeleton + hard timeout, вкладки, Google popup/redirect, verify/resend. |
+| `auth.js` | Контроллер `/auth.html`. Skeleton + hard timeout, вкладки, Google Identity Services, verify/resend. |
 | `auth.html` | Разметка страницы авторизации со skeleton-состоянием. |
 | `reset-password.html` | Универсальный обработчик `resetPassword` / `verifyEmail` / `recoverEmail`. |
 
@@ -112,7 +111,7 @@
 - ✅ Клик по ссылке из письма → `/reset-password.html?mode=verifyEmail&oobCode=...` → редирект на `/auth.html?verified=1` с тостом.
 - ✅ Вход Email/пароль → редирект в кабинет.
 - ✅ Забыли пароль → экран «Письмо отправлено» → страница сброса → редирект ко входу.
-- ✅ Google-логин: обычный поток (popup) + фолбэк на redirect в WebView/Safari.
+- ✅ Google-логин: Google Identity Services token popup + `signInWithCredential()`.
 - ✅ Выход: моментальная перерисовка шапки без перезагрузки.
 - ✅ Уже авторизованный пользователь заходит на `/auth.html` → мгновенный редирект в кабинет, форма не мигает.
 - ✅ Гость: skeleton → кнопка «Зарегистрироваться», без мерцаний.

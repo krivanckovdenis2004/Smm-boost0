@@ -2,7 +2,7 @@
 // Подключение:  <script type="module" src="/user-menu.js"></script>
 // В шапке разместить контейнер:  <div id="userMenu"></div>
 // (если контейнера нет — виджет создаст плавающий в правом верхнем углу).
-import { subscribeAuth, signOutEverywhere, getStoredUser } from '/firebase.js?v=20260716-auth-v6';
+import { subscribeAuth, signOutEverywhere, getStoredUser } from '/firebase.js?v=20260716-auth-v9';
 
 const css = `
 .um-wrap{position:relative;display:inline-block;font-family:'Inter',sans-serif}

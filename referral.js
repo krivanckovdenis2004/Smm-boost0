@@ -1,6 +1,6 @@
 // Реферальный кабинет — читает пользователя из localStorage и подписывается
 // на его документ в Firestore, чтобы показывать актуальные счётчики.
-import { firebaseApp } from "./firebase.js?v=20260716-auth-v6";
+import { firebaseApp } from "./firebase.js?v=20260716-auth-v9";
 import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const db = getFirestore(firebaseApp);

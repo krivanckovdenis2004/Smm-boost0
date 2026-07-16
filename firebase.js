@@ -1,4 +1,5 @@
 // firebase.js — единый AuthManager для SMM-Boost.
+// Google-вход работает только через Google Identity Services token popup + signInWithCredential.
 // В проекте должен быть только один onAuthStateChanged: здесь.
 
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -454,11 +455,6 @@ export async function signInWithGoogleProvider() {
     logAuthError("Google Identity Services sign-in failed", err);
     throw err;
   }
-}
-
-export async function handleGoogleRedirectResult() {
-  logAuthInfo("Google redirect result skipped: Vercel-only auth uses GIS token popup");
-  return null;
 }
 
 export async function applyEmailVerificationCode(oobCode) {
