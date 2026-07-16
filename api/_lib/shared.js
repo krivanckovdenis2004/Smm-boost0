@@ -1,15 +1,18 @@
 import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import crypto from 'crypto';
 
 // Shared Firebase initialization — uses env vars, no hardcoded secrets
+// Публичный Firebase-config: env-переменные приоритетнее, но с проверенным дефолтом,
+// чтобы серверные API не падали, если переменные не заданы в Vercel.
 const firebaseConfig = {
-  apiKey: process.env.FIREBASE_API_KEY || '',
-  authDomain: process.env.FIREBASE_AUTH_DOMAIN || '',
-  projectId: process.env.FIREBASE_PROJECT_ID || '',
-  storageBucket: process.env.FIREBASE_STORAGE_BUCKET || '',
-  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: process.env.FIREBASE_APP_ID || '',
-  measurementId: process.env.FIREBASE_MEASUREMENT_ID || ''
+  apiKey: process.env.FIREBASE_API_KEY || 'AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8',
+  authDomain: process.env.FIREBASE_AUTH_DOMAIN || 'smm-boost.pro',
+  projectId: process.env.FIREBASE_PROJECT_ID || 'smm-boost-905d5',
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET || 'smm-boost-905d5.firebasestorage.app',
+  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || '554912523069',
+  appId: process.env.FIREBASE_APP_ID || '1:554912523069:web:26d405b696b9d45e5edb54',
+  measurementId: process.env.FIREBASE_MEASUREMENT_ID || 'G-E6SRLXZW5V'
 };
 
 const firebaseApp = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
@@ -58,6 +61,131 @@ export async function verifySession(db, userId, sessionToken) {
   }
 
   return { ok: true, user, userRef };
+}
+
+// ---------------------------------------------------------------------------
+// Firebase ID Token auth resolver — стабильный userId = sha256('email:'+email)
+// Позволяет API идентифицировать уже авторизованного (Email/Google) юзера
+// даже если локальный sessionToken устарел или отсутствует.
+// ---------------------------------------------------------------------------
+
+function uidFromEmail(email) {
+  return crypto.createHash('sha256').update('email:' + String(email).toLowerCase()).digest('hex').slice(0, 32);
+}
+
+async function verifyFirebaseIdToken(idToken) {
+  const apiKey = process.env.FIREBASE_API_KEY || 'AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8';
+  const token = String(idToken || '').trim().slice(0, 6000);
+  if (!token) return null;
+  try {
+    const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(apiKey)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken: token })
+    });
+    const data = await response.json().catch(() => ({}));
+    const fb = Array.isArray(data.users) ? data.users[0] : null;
+    if (!response.ok || !fb || !fb.localId) return null;
+    return {
+      uid: fb.localId,
+      email: String(fb.email || '').toLowerCase(),
+      emailVerified: !!fb.emailVerified,
+      displayName: fb.displayName || '',
+      photoURL: fb.photoUrl || '',
+      providerIds: Array.isArray(fb.providerUserInfo) ? fb.providerUserInfo.map((p) => p.providerId).filter(Boolean) : []
+    };
+  } catch (err) {
+    console.warn('[shared:verifyFirebaseIdToken]', err?.message);
+    return null;
+  }
+}
+
+async function ensureFirebaseUserDoc(db, fb) {
+  const userId = uidFromEmail(fb.email || fb.uid);
+  const userRef = doc(db, 'users', userId);
+  const snap = await getDoc(userRef);
+  const sessionToken = `firebase:${fb.uid}`;
+  const providerId = fb.providerIds.includes('google.com') ? 'google.com' : 'password';
+  const authType = providerId === 'google.com' ? 'google' : 'email';
+
+  if (!snap.exists()) {
+    const created = {
+      userId,
+      firebaseUid: fb.uid,
+      authType,
+      authProviders: [providerId],
+      username: fb.email || userId,
+      usernameLower: (fb.email || '').toLowerCase(),
+      displayName: fb.displayName || (fb.email ? fb.email.split('@')[0] : 'Пользователь'),
+      email: fb.email || '',
+      photoURL: fb.photoURL || '',
+      emailVerified: fb.emailVerified,
+      pendingEmailVerification: !fb.emailVerified,
+      sessionToken,
+      referralCode: userId,
+      referredBy: '',
+      balance: 0,
+      bonusBalance: 0,
+      registrationBonus: 0,
+      referralsCount: 0,
+      referralEarned: 0,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      lastLoginAt: serverTimestamp()
+    };
+    await setDoc(userRef, created);
+    return { userId, userRef, user: created };
+  }
+
+  const existing = snap.data();
+  // Обновляем sessionToken/firebaseUid только при необходимости, ничего денежного не трогаем.
+  if (existing.sessionToken !== sessionToken || existing.firebaseUid !== fb.uid) {
+    try {
+      await setDoc(userRef, {
+        userId,
+        firebaseUid: fb.uid,
+        authType: existing.authType && existing.authType !== 'password' ? existing.authType : authType,
+        authProviders: Array.from(new Set([...(Array.isArray(existing.authProviders) ? existing.authProviders : []), providerId])),
+        username: existing.username || fb.email || userId,
+        usernameLower: (existing.usernameLower || fb.email || '').toLowerCase(),
+        displayName: existing.displayName || fb.displayName || (fb.email ? fb.email.split('@')[0] : 'Пользователь'),
+        email: existing.email || fb.email || '',
+        photoURL: existing.photoURL || fb.photoURL || '',
+        emailVerified: existing.emailVerified || fb.emailVerified,
+        pendingEmailVerification: !(existing.emailVerified || fb.emailVerified),
+        sessionToken,
+        updatedAt: serverTimestamp(),
+        lastLoginAt: serverTimestamp()
+      }, { merge: true });
+    } catch (err) {
+      console.warn('[shared:ensureFirebaseUserDoc] token refresh failed', err?.message);
+    }
+  }
+  return { userId, userRef, user: { ...existing, sessionToken, firebaseUid: fb.uid } };
+}
+
+/**
+ * Универсальная идентификация пользователя для API.
+ * Приоритет: Firebase ID Token (idToken) → legacy sessionToken.
+ * Возвращает { ok, user, userRef, userId, source } либо { ok: false, error, status }.
+ */
+export async function resolveAuthedUser(db, req) {
+  const body = req.body || {};
+  const idToken = String(body.idToken || '').trim();
+  if (idToken) {
+    const fb = await verifyFirebaseIdToken(idToken);
+    if (fb) {
+      const ensured = await ensureFirebaseUserDoc(db, fb);
+      return { ok: true, user: ensured.user, userRef: ensured.userRef, userId: ensured.userId, source: 'firebase' };
+    }
+    // idToken невалидный — не падаем сразу, пробуем legacy как fallback.
+  }
+
+  const userId = String(body.userId || '').trim();
+  const sessionToken = String(body.sessionToken || '').trim();
+  const legacy = await verifySession(db, userId, sessionToken);
+  if (!legacy.ok) return legacy;
+  return { ok: true, user: legacy.user, userRef: legacy.userRef, userId, source: 'legacy' };
 }
 
 // Send Telegram notification (uses env vars only)
