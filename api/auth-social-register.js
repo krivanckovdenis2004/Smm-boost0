@@ -1,200 +1,137 @@
-import crypto from 'crypto';
-import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+// /api/auth-social-register.js
+// Серверная регистрация/вход Google (и legacy email/password) с ЕДИНЫМ userId.
+// - Верифицирует Google ID Token через tokeninfo.
+// - userId = sha256('email:' + emailLower).slice(0,32) — совпадает с клиентом.
+// - При создании нового документа инкрементирует referralsCount у пригласившего
+//   (та же логика, что и в старом /api/auth-register).
 
-const firebaseConfig = {
-  apiKey: 'AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8',
-  authDomain: 'smm-boost-905d5.firebaseapp.com',
-  projectId: 'smm-boost-905d5',
-  storageBucket: 'smm-boost-905d5.firebasestorage.app',
-  messagingSenderId: '554912523069',
-  appId: '1:554912523069:web:26d405b696b9d45e5edb54',
-  measurementId: 'G-E6SRLXZW5V'
-};
+import { createHash } from 'crypto';
 
-const firebaseApp = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-const db = getFirestore(firebaseApp);
+const FIREBASE_PROJECT = process.env.FIREBASE_PROJECT_ID || 'smm-boost-905d5';
+const FS_BASE = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents`;
 
-function safeText(value = '', max = 80) {
-  return String(value || '').trim().slice(0, max);
+function deterministicUserId(email){
+  return createHash('sha256').update('email:' + String(email || '').trim().toLowerCase()).digest('hex').slice(0, 32);
 }
 
-function uidFromKey(key) {
-  return crypto.createHash('sha256').update(String(key).toLowerCase()).digest('hex').slice(0, 32);
+async function verifyGoogleIdToken(idToken){
+  const r = await fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(idToken));
+  if (!r.ok) throw new Error('Google token verification failed');
+  const data = await r.json();
+  if (!data.email || data.email_verified === 'false') throw new Error('Email not verified by Google');
+  return { email: data.email, name: data.name || '', picture: data.picture || '', sub: data.sub };
 }
 
-function newToken() {
-  return crypto.randomBytes(32).toString('hex');
+// --- Firestore REST (без SDK, работает в Vercel Edge/Node) ---
+function toFsValue(v){
+  if (v === null || v === undefined) return { nullValue: null };
+  if (typeof v === 'string') return { stringValue: v };
+  if (typeof v === 'boolean') return { booleanValue: v };
+  if (typeof v === 'number') return Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v };
+  if (v instanceof Date) return { timestampValue: v.toISOString() };
+  if (Array.isArray(v)) return { arrayValue: { values: v.map(toFsValue) } };
+  if (typeof v === 'object') return { mapValue: { fields: Object.fromEntries(Object.entries(v).map(([k, x]) => [k, toFsValue(x)])) } };
+  return { stringValue: String(v) };
 }
-
-function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
-  const hash = crypto.pbkdf2Sync(String(password), salt, 120000, 64, 'sha512').toString('hex');
-  return { salt, hash };
+function fromFsValue(v){
+  if (!v) return null;
+  if ('stringValue' in v) return v.stringValue;
+  if ('integerValue' in v) return parseInt(v.integerValue, 10);
+  if ('doubleValue' in v) return v.doubleValue;
+  if ('booleanValue' in v) return v.booleanValue;
+  if ('nullValue' in v) return null;
+  if ('timestampValue' in v) return v.timestampValue;
+  if ('arrayValue' in v) return (v.arrayValue.values || []).map(fromFsValue);
+  if ('mapValue' in v) return Object.fromEntries(Object.entries(v.mapValue.fields || {}).map(([k, x]) => [k, fromFsValue(x)]));
+  return null;
 }
-
-function verifyPassword(password, salt, expectedHash) {
-  if (!salt || !expectedHash) return false;
-  const { hash } = hashPassword(password, salt);
-  try {
-    return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(expectedHash, 'hex'));
-  } catch {
-    return false;
-  }
+async function fsGet(path){
+  const r = await fetch(`${FS_BASE}/${path}`);
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error('firestore get ' + r.status);
+  const j = await r.json();
+  return Object.fromEntries(Object.entries(j.fields || {}).map(([k, v]) => [k, fromFsValue(v)]));
 }
-
-function publicUser(user) {
-  return {
-    userId: user.userId,
-    authType: 'password',
-    username: user.username,
-    displayName: user.displayName || user.username || 'Пользователь',
-    email: user.email || `${user.userId}@smmboost.local`,
-    balance: Number(user.balance || 0),
-    bonusBalance: Number(user.bonusBalance || 0),
-    registrationBonus: Number(user.registrationBonus || 0),
-    referralCode: user.referralCode || user.userId,
-    referredBy: user.referredBy || '',
-    referralsCount: Number(user.referralsCount || 0),
-    referralEarned: Number(user.referralEarned || 0),
-    sessionToken: user.sessionToken
-  };
-}
-
-function validateUsername(username) {
-  return /^[a-zA-Z0-9_а-яА-ЯёЁ.-]{3,32}$/.test(username);
-}
-
-function tagAuthError(error, step) {
-  if (error && typeof error === 'object' && !error.authStep) error.authStep = step;
-  return error;
-}
-
-function logAuthError(error) {
-  console.error('[auth-social-register]', {
-    step: error?.authStep || 'handler',
-    code: error?.code,
-    name: error?.name,
-    message: error?.message,
-    stack: error?.stack
+async function fsCreate(path, data){
+  const r = await fetch(`${FS_BASE}/${path}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, toFsValue(v)])) })
   });
+  if (!r.ok) throw new Error('firestore create ' + r.status + ' ' + await r.text());
+}
+async function fsUpdate(path, data){
+  // updateMask.fieldPaths, чтобы не перезаписать баланс/рефералы.
+  const keys = Object.keys(data);
+  const qs = keys.map(k => 'updateMask.fieldPaths=' + encodeURIComponent(k)).join('&');
+  const r = await fetch(`${FS_BASE}/${path}?${qs}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, toFsValue(v)])) })
+  });
+  if (!r.ok) throw new Error('firestore update ' + r.status + ' ' + await r.text());
 }
 
-async function readUserDoc(userRef, step) {
+export default async function handler(req, res){
+  if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
   try {
-    return await getDoc(userRef);
-  } catch (error) {
-    throw tagAuthError(error, step);
-  }
-}
+    const { idToken, referredBy = '' } = req.body || {};
+    if (!idToken) return res.status(400).json({ error: 'idToken required' });
 
-async function registerPasswordUser(req, res) {
-  const usernameRaw = safeText(req.body?.username, 32);
-  const password = String(req.body?.password || '');
-  const passwordConfirm = String(req.body?.passwordConfirm || '');
-  const username = usernameRaw.replace(/\s+/g, '');
-  const usernameLower = username.toLowerCase();
+    const g = await verifyGoogleIdToken(idToken);
+    const email = g.email.toLowerCase();
+    const userId = deterministicUserId(email);
+    const now = new Date();
 
-  if (!validateUsername(username)) {
-    return res.status(400).json({ error: 'Логин должен быть от 3 до 32 символов: буквы, цифры, _, . или -' });
-  }
-  if (password.length < 6) return res.status(400).json({ error: 'Пароль должен быть минимум 6 символов' });
-  if (password !== passwordConfirm) return res.status(400).json({ error: 'Пароли не совпадают' });
+    const existing = await fsGet('users/' + userId);
 
-  const userId = uidFromKey(`password:${usernameLower}`);
-  const userRef = doc(db, 'users', userId);
-  const userSnap = await readUserDoc(userRef, 'register:getDoc users/{userId}');
-  if (userSnap.exists()) return res.status(409).json({ error: 'Такой логин уже зарегистрирован. Нажмите «Войти».' });
-
-  // Обработка реферальной ссылки: ref = userId пригласившего.
-  const refRaw = safeText(req.body?.ref, 64).toLowerCase();
-  let referredBy = '';
-  if (/^[0-9a-f]{32}$/.test(refRaw) && refRaw !== userId) {
-    try {
-      const refSnap = await getDoc(doc(db, 'users', refRaw));
-      if (refSnap.exists()) referredBy = refRaw;
-    } catch (e) {
-      console.warn('[auth] referrer lookup failed', e?.message);
-    }
-  }
-
-  const { salt, hash } = hashPassword(password);
-  const sessionToken = newToken();
-  const user = {
-    userId,
-    authType: 'password',
-    username,
-    usernameLower,
-    displayName: username,
-    email: `login_${userId}@smmboost.local`,
-    balance: 0,
-    bonusBalance: 0,
-    registrationBonus: 0,
-    referralCode: userId,
-    referredBy,
-    referralsCount: 0,
-    referralEarned: 0,
-    passwordSalt: salt,
-    passwordHash: hash,
-    sessionToken,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-    lastLoginAt: serverTimestamp()
-  };
-  await setDoc(userRef, user);
-
-  // Увеличиваем счётчик рефералов у пригласившего.
-  if (referredBy) {
-    try {
-      const refRef = doc(db, 'users', referredBy);
-      const refSnap = await getDoc(refRef);
-      if (refSnap.exists()) {
-        const prev = Number(refSnap.data().referralsCount || 0);
-        await setDoc(refRef, { referralsCount: prev + 1, updatedAt: serverTimestamp() }, { merge: true });
+    if (!existing){
+      await fsCreate('users/' + userId, {
+        userId,
+        firebaseUid: g.sub,
+        email,
+        usernameLower: email,
+        displayName: g.name || email.split('@')[0],
+        photoURL: g.picture,
+        emailVerified: true,
+        authType: 'google',
+        authProviders: ['google.com'],
+        referralCode: userId,
+        referredBy: referredBy || '',
+        balance: 0,
+        bonusBalance: 0,
+        registrationBonus: 0,
+        referralsCount: 0,
+        referralEarned: 0,
+        createdAt: now,
+        updatedAt: now,
+        lastLoginAt: now
+      });
+      // Реферальный инкремент — как в legacy.
+      if (referredBy && referredBy !== userId){
+        const inv = await fsGet('users/' + referredBy);
+        if (inv){
+          await fsUpdate('users/' + referredBy, {
+            referralsCount: (inv.referralsCount || 0) + 1,
+            updatedAt: now
+          });
+        }
       }
-    } catch (e) {
-      console.warn('[auth] increment referralsCount failed', e?.message);
+      return res.status(200).json({ ok: true, created: true, userId, email, displayName: g.name });
     }
-  }
 
-  return res.status(200).json({ ok: true, user: publicUser(user) });
-}
-
-async function loginPasswordUser(req, res) {
-  const usernameRaw = safeText(req.body?.username, 32);
-  const password = String(req.body?.password || '');
-  const username = usernameRaw.replace(/\s+/g, '');
-  const usernameLower = username.toLowerCase();
-
-  if (!validateUsername(username) || password.length < 1) {
-    return res.status(400).json({ error: 'Введите логин и пароль' });
-  }
-
-  const userId = uidFromKey(`password:${usernameLower}`);
-  const userRef = doc(db, 'users', userId);
-  const userSnap = await readUserDoc(userRef, 'login:getDoc users/{userId}');
-  if (!userSnap.exists()) return res.status(404).json({ error: 'Пользователь не найден. Зарегистрируйтесь.' });
-
-  const savedUser = { userId, ...userSnap.data() };
-  if (!verifyPassword(password, savedUser.passwordSalt, savedUser.passwordHash)) {
-    return res.status(401).json({ error: 'Неверный логин или пароль' });
-  }
-
-  const sessionToken = newToken();
-  await updateDoc(userRef, { sessionToken, lastLoginAt: serverTimestamp(), updatedAt: serverTimestamp() });
-  return res.status(200).json({ ok: true, user: publicUser({ ...savedUser, sessionToken }) });
-}
-
-export default async function handler(req, res) {
-  try {
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
-    const action = safeText(req.body?.action || req.body?.platform, 40).toLowerCase();
-    if (action === 'password' || action === 'register') return await registerPasswordUser(req, res);
-    if (action === 'login') return await loginPasswordUser(req, res);
-
-    return res.status(400).json({ error: 'Неверное действие. Доступны register и login.' });
-  } catch (e) {
-    logAuthError(e);
-    return res.status(500).json({ error: e.message || 'Server error' });
+    // Обновляем только служебные поля.
+    await fsUpdate('users/' + userId, {
+      email,
+      displayName: g.name || existing.displayName || email.split('@')[0],
+      photoURL: g.picture || existing.photoURL || '',
+      emailVerified: true,
+      lastLoginAt: now,
+      updatedAt: now
+    });
+    return res.status(200).json({ ok: true, created: false, userId, email, displayName: existing.displayName });
+  } catch (e){
+    console.error('[auth-social-register]', e);
+    return res.status(400).json({ error: e.message || 'error' });
   }
 }
