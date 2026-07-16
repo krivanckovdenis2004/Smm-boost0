@@ -73,26 +73,62 @@ function uidFromEmail(email) {
   return crypto.createHash('sha256').update('email:' + String(email).toLowerCase()).digest('hex').slice(0, 32);
 }
 
+// Кэш сертификатов Google securetoken (обновляем по TTL из Cache-Control).
+let __fbCerts = { keys: null, exp: 0 };
+async function loadSecureTokenCerts() {
+  const now = Date.now();
+  if (__fbCerts.keys && __fbCerts.exp > now) return __fbCerts.keys;
+  const res = await fetch('https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com');
+  if (!res.ok) throw new Error('securetoken certs unavailable: ' + res.status);
+  const keys = await res.json();
+  const cc = String(res.headers.get('cache-control') || '');
+  const m = cc.match(/max-age=(\d+)/i);
+  __fbCerts = { keys, exp: now + (m ? Number(m[1]) * 1000 : 3600 * 1000) };
+  return keys;
+}
+
+function b64urlToBuf(s) {
+  const pad = s.length % 4 === 0 ? '' : '='.repeat(4 - (s.length % 4));
+  return Buffer.from(s.replace(/-/g, '+').replace(/_/g, '/') + pad, 'base64');
+}
+
+// Верификация Firebase ID Token: RS256, ключи securetoken@system.gserviceaccount.com.
+// Не требует API-key, не требует firebase-admin — работает на любом Vercel-функции.
 async function verifyFirebaseIdToken(idToken) {
-  const apiKey = process.env.FIREBASE_API_KEY || 'AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8';
-  const token = String(idToken || '').trim().slice(0, 6000);
-  if (!token) return null;
+  const token = String(idToken || '').trim();
+  if (!token || token.split('.').length !== 3) return null;
+  const projectId = process.env.FIREBASE_PROJECT_ID || 'smm-boost-905d5';
   try {
-    const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(apiKey)}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idToken: token })
-    });
-    const data = await response.json().catch(() => ({}));
-    const fb = Array.isArray(data.users) ? data.users[0] : null;
-    if (!response.ok || !fb || !fb.localId) return null;
+    const [headerB64, payloadB64, sigB64] = token.split('.');
+    const header = JSON.parse(b64urlToBuf(headerB64).toString('utf8'));
+    const payload = JSON.parse(b64urlToBuf(payloadB64).toString('utf8'));
+    if (header.alg !== 'RS256' || !header.kid) return null;
+
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp && payload.exp < now - 30) return null;
+    if (payload.iat && payload.iat > now + 60) return null;
+    if (payload.aud !== projectId) return null;
+    if (payload.iss !== `https://securetoken.google.com/${projectId}`) return null;
+    if (!payload.sub) return null;
+
+    const certs = await loadSecureTokenCerts();
+    const pem = certs[header.kid];
+    if (!pem) return null;
+
+    const verifier = crypto.createVerify('RSA-SHA256');
+    verifier.update(`${headerB64}.${payloadB64}`);
+    verifier.end();
+    const ok = verifier.verify(pem, b64urlToBuf(sigB64));
+    if (!ok) return null;
+
+    const providerId = payload.firebase?.sign_in_provider || 'password';
     return {
-      uid: fb.localId,
-      email: String(fb.email || '').toLowerCase(),
-      emailVerified: !!fb.emailVerified,
-      displayName: fb.displayName || '',
-      photoURL: fb.photoUrl || '',
-      providerIds: Array.isArray(fb.providerUserInfo) ? fb.providerUserInfo.map((p) => p.providerId).filter(Boolean) : []
+      uid: payload.sub,
+      email: String(payload.email || '').toLowerCase(),
+      emailVerified: !!payload.email_verified,
+      displayName: payload.name || '',
+      photoURL: payload.picture || '',
+      providerIds: [providerId]
     };
   } catch (err) {
     console.warn('[shared:verifyFirebaseIdToken]', err?.message);
