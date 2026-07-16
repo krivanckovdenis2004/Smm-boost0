@@ -1,14 +1,16 @@
 rules_version = '2';
 
-// Правила соответствуют состоянию до Google Auth / Admin SDK.
-// Серверный API (api/auth-social-register.js) пишет в /users клиентским
-// Firebase SDK без Firebase Auth — поэтому write разрешён неавторизованному
-// клиенту, но только для документов правильной формы (обязательные поля
-// хэша пароля и userId). Чтение чужих документов запрещено.
+// SMM-Boost — Firestore правила.
+// Поддерживаются два типа аккаунтов:
+//   1) Старые пользователи (логин+пароль через /api/auth-social-register):
+//      документ /users/{userId}, где userId = 32-символьный hex.
+//      Пишутся клиентским SDK без Firebase Auth, поэтому пропускаем по форме
+//      документа (обязательные поля passwordHash/passwordSalt/username).
+//   2) Новые пользователи (Firebase Authentication — email или Google):
+//      документ /users/{uid}, где uid = auth.uid.
+//      Разрешаем читать/писать только владельцу (request.auth.uid == uid).
 //
-// Задеплой:
-//   firebase deploy --only firestore:rules --project smm-boost-905d5
-// либо Firebase Console → Firestore Database → Rules → Publish.
+// Задеплой: firebase deploy --only firestore:rules --project smm-boost-905d5
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -16,25 +18,44 @@ service cloud.firestore {
     function isPasswordUserId(userId) {
       return userId.matches('^[0-9a-f]{32}$');
     }
+    function isFirebaseAuthOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
 
     // ---- Пользователи ----
     match /users/{userId} {
-      // API регистрации/входа читает один документ по детерминированному id
-      // для проверки существования логина и пароля. Список /users закрыт.
-      allow get: if isPasswordUserId(userId);
+      // Чтение: свой документ (Firebase Auth) или существующий legacy-документ по id.
+      allow get: if isPasswordUserId(userId) || isFirebaseAuthOwner(userId);
       allow list: if false;
 
-      // Регистрация: документ должен содержать userId и хэш пароля,
-      // userId в документе должен совпадать с id документа.
+      // Создание документа Firebase-Auth пользователем (email/Google upsert):
+      // владелец создаёт свой документ, не задавая passwordHash/passwordSalt,
+      // и userId в документе совпадает с auth.uid.
+      allow create: if isFirebaseAuthOwner(userId)
+                    && request.resource.data.userId == userId
+                    && !('passwordHash' in request.resource.data)
+                    && !('passwordSalt' in request.resource.data);
+
+      // Создание legacy-документа (серверный API без Firebase Auth):
       allow create: if isPasswordUserId(userId)
                     && request.resource.data.userId == userId
                     && request.resource.data.keys().hasAll(
                          ['userId', 'passwordHash', 'passwordSalt', 'username']
                        );
 
-      // Обновление: нельзя менять хэш/соль/логин чужим writer'ом,
-      // разрешаем только обновление сессионного токена и служебных полей.
-      allow update: if request.resource.data.userId == resource.data.userId
+      // Обновление Firebase-Auth пользователем — только своего документа,
+      // нельзя добавлять passwordHash/passwordSalt и менять баланс произвольно.
+      allow update: if isFirebaseAuthOwner(userId)
+                    && request.resource.data.userId == resource.data.userId
+                    && !('passwordHash' in request.resource.data)
+                    && !('passwordSalt' in request.resource.data)
+                    && request.resource.data.balance == resource.data.balance
+                    && request.resource.data.bonusBalance == resource.data.bonusBalance;
+
+      // Обновление legacy-документа (серверный API): нельзя менять
+      // хэш/соль/логин чужим writer'ом.
+      allow update: if isPasswordUserId(userId)
+                    && request.resource.data.userId == resource.data.userId
                     && request.resource.data.passwordHash == resource.data.passwordHash
                     && request.resource.data.passwordSalt == resource.data.passwordSalt
                     && request.resource.data.usernameLower == resource.data.usernameLower;
@@ -43,28 +64,18 @@ service cloud.firestore {
     }
 
     // ---- Заказы ----
-    // Серверный API (api/balance-order.js, api/list-orders.js, api/check-status.js)
-    // работает клиентским Firebase SDK без Firebase Auth, поэтому правила
-    // валидируют форму документа, а не request.auth. Сессия пользователя
-    // проверяется в API до записи.
     match /orders/{orderId} {
-      // get разрешён по id (track.html и одиночная подписка в orders.js),
-      // list нужен серверному list-orders (query where userId==...).
       allow get: if true;
       allow list: if true;
-      // create: обязательные поля заказа, publicOrderId и корректный userId
       allow create: if request.resource.data.keys().hasAll(
                          ['userId', 'publicOrderId', 'service', 'amount', 'price', 'status', 'createdAt']
                        );
-      // update: нельзя менять владельца и публичный id заказа
       allow update: if request.resource.data.userId == resource.data.userId
                     && request.resource.data.publicOrderId == resource.data.publicOrderId;
       allow delete: if false;
     }
 
     // ---- Идемпотентность заказов ----
-    // api/balance-order.js кладёт маркер order_requests/{userId}_{requestId}
-    // до создания заказа, чтобы повторный клик не создал дубль в JAP.
     match /order_requests/{reqId} {
       allow get: if true;
       allow list: if false;
@@ -74,14 +85,7 @@ service cloud.firestore {
     }
 
     // ---- Пополнения ----
-    // Webhook ЮKassa/CryptoBot пишет сюда клиентским SDK без Firebase Auth,
-    // поэтому create/update разрешены, но только для документа правильной
-    // формы (обязательные поля userId/amount/status/paymentId).
     match /topups/{topupId} {
-      // get одного документа по id разрешён всем: webhook ЮKassa/CryptoBot
-      // выполняет tx.get(topups/{paymentId}) клиентским SDK без Firebase Auth
-      // для проверки идемпотентности (повторный webhook). list остаётся закрыт,
-      // поэтому перечислить коллекцию нельзя.
       allow get: if true;
       allow list: if false;
       allow create: if request.resource.data.keys().hasAll(
@@ -99,19 +103,16 @@ service cloud.firestore {
     }
 
     // ---- Бесплатные услуги (free.html) ----
-    // Один документ на пользователя. API /api/free-service делает
-    // транзакцию на 30-минутный кулдаун и пишет историю. Ключ документа = userId.
     match /free_claims/{userId} {
-      allow get: if isPasswordUserId(userId);
+      allow get: if isPasswordUserId(userId) || isFirebaseAuthOwner(userId);
       allow list: if false;
-      allow create: if isPasswordUserId(userId)
+      allow create: if (isPasswordUserId(userId) || isFirebaseAuthOwner(userId))
                     && request.resource.data.userId == userId;
-      allow update: if isPasswordUserId(userId)
+      allow update: if (isPasswordUserId(userId) || isFirebaseAuthOwner(userId))
                     && request.resource.data.userId == resource.data.userId;
       allow delete: if false;
     }
 
-    // ---- Всё остальное закрыто ----
     match /{document=**} {
       allow read, write: if false;
     }

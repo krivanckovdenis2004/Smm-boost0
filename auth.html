@@ -1,39 +1,44 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Регистрация и вход — SMM-Boost</title>
-<meta name="description" content="Регистрация и вход в личный кабинет SMM-Boost. Быстрая регистрация по email или Google. Приветственный бонус на баланс после подтверждения." />
-<meta name="keywords" content="регистрация smm-boost, вход smm-boost, личный кабинет, google вход" />
-<meta name="robots" content="index, follow" />
-<meta name="theme-color" content="#0b0716" />
-<meta name="format-detection" content="telephone=no" />
-<meta name="yandex-verification" content="78f301f98d510d8b" />
-<link rel="canonical" href="https://smm-boost.pro/auth.html" />
-<link rel="alternate" hreflang="ru" href="https://smm-boost.pro/auth.html" />
-<link rel="alternate" hreflang="x-default" href="https://smm-boost.pro/auth.html" />
-<meta property="og:type" content="website" />
-<meta property="og:site_name" content="SMM-Boost" />
-<meta property="og:locale" content="ru_RU" />
-<meta property="og:title" content="Регистрация и вход — SMM-Boost" />
-<meta property="og:description" content="Регистрация и вход в личный кабинет SMM-Boost. Быстрая регистрация по email или Google. Приветственный бонус на баланс после подтверждения." />
-<meta property="og:image" content="https://smm-boost.pro/preview.jpg" />
-<meta property="og:url" content="https://smm-boost.pro/auth.html" />
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Регистрация и вход — SMM-Boost" />
-<meta name="twitter:description" content="Регистрация и вход в личный кабинет SMM-Boost. Быстрая регистрация по email или Google. Приветственный бонус на баланс после подтверждения." />
-<meta name="twitter:image" content="https://smm-boost.pro/preview.jpg" />
-<link rel="icon" href="/favicon.ico" type="image/x-icon" />
-<link rel="icon" type="image/png" href="/logo.png" />
-<link rel="apple-touch-icon" href="/logo.png" />
-<link rel="manifest" href="/manifest.webmanifest" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Вход и регистрация | SMM-BOOST</title>
+<meta name="description" content="Вход и регистрация SMM-Boost. Email или Google, безопасно через Firebase Authentication.">
+<link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="stylesheet" href="style.css?v=20260711-premium">
 <script src="metrika-goals.js"></script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Главная","item":"https://smm-boost.pro/"},{"@type":"ListItem","position":2,"name":"Вход","item":"https://smm-boost.pro/auth.html"}]}</script>
+<style>
+/* Локальные стили новой авторизации — не трогают глобальную тему. */
+.auth-card{max-width:460px}
+.google-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:#fff;color:#1f1f1f;font-weight:600;font-size:15px;cursor:pointer;transition:transform .12s ease, box-shadow .2s ease;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.google-btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(0,0,0,.18)}
+.google-btn:disabled{opacity:.7;cursor:progress}
+.google-btn svg{width:20px;height:20px;flex-shrink:0}
+.auth-divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--muted,#8a92a6);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.auth-divider::before,.auth-divider::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.1)}
+.auth-link{background:none;border:0;color:#7cc4ff;cursor:pointer;font-size:14px;padding:0;text-decoration:underline}
+.auth-link:hover{color:#a9daff}
+.auth-inline-row{display:flex;justify-content:space-between;align-items:center;margin:-4px 0 4px;font-size:13px}
+.auth-secondary-row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:14px}
+.auth-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);opacity:0;background:#16a34a;color:#fff;padding:12px 18px;border-radius:12px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:9999;transition:.25s ease;pointer-events:none;max-width:92vw;text-align:center}
+.auth-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.auth-toast.err{background:#dc2626}
+.verify-screen{text-align:center;padding:10px 4px}
+.verify-screen .verify-emoji{font-size:56px;line-height:1;margin-bottom:12px}
+.verify-screen h2{margin:0 0 8px;font-size:22px}
+.verify-screen .verify-email{font-weight:700;color:#7cc4ff;word-break:break-all}
+.verify-screen .verify-actions{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+.legacy-toggle{margin-top:14px;text-align:center;font-size:13px;color:var(--muted,#8a92a6)}
+.legacy-panel{display:none;margin-top:14px;padding:14px;border:1px dashed rgba(255,255,255,.14);border-radius:12px}
+.legacy-panel.show{display:block}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (max-width:520px){
+  .auth-card{padding:20px 16px}
+  .google-btn{font-size:14px;padding:11px 14px}
+}
+</style>
 </head>
 <body>
 <div class="bg-animation"><span></span><span></span><span></span><span></span></div>
@@ -57,12 +62,18 @@
 </nav>
 
 <main class="auth-page">
-  <section class="auth-card">
+  <!-- Основной экран: регистрация/вход по email + Google -->
+  <section class="auth-card" id="mainCard">
     <div class="auth-badge">🎁 Бесплатная накрутка после регистрации</div>
     <h1>Вход / регистрация</h1>
-    <p>Аккаунт сохраняется в базе. После регистрации можно войти с другого устройства по логину и паролю, а также получить бесплатную накрутку в разделе «Бесплатная накрутка».</p>
+    <p>Регистрация по email — с подтверждением по ссылке из письма. Или войдите одним кликом через Google.</p>
 
+    <button id="googleBtn" class="google-btn" type="button">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      <span>Продолжить через Google</span>
+    </button>
 
+    <div class="auth-divider">или</div>
 
     <div class="auth-tabs" role="tablist">
       <button class="auth-tab active" type="button" data-auth-tab="register">Регистрация</button>
@@ -70,36 +81,87 @@
     </div>
 
     <form id="registerForm" class="auth-form" autocomplete="on" data-auth-panel="register">
-      <label for="registerLogin">Логин</label>
-      <input id="registerLogin" name="username" type="text" autocomplete="username" placeholder="Придумайте логин" required minlength="3" maxlength="32">
+      <label for="registerName">Имя</label>
+      <input id="registerName" name="displayName" type="text" autocomplete="name" placeholder="Как к вам обращаться" maxlength="60">
+
+      <label for="registerEmail">Email</label>
+      <input id="registerEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
 
       <label for="registerPassword">Пароль</label>
       <input id="registerPassword" name="password" type="password" autocomplete="new-password" placeholder="Минимум 6 символов" required minlength="6">
-
-      <label for="registerPasswordConfirm">Подтверждение пароля</label>
-      <input id="registerPasswordConfirm" name="passwordConfirm" type="password" autocomplete="new-password" placeholder="Повторите пароль" required minlength="6">
 
       <button class="primary-wide-btn" type="submit">Зарегистрироваться</button>
     </form>
 
     <form id="loginForm" class="auth-form hidden" autocomplete="on" data-auth-panel="login">
-      <label for="loginName">Логин</label>
-      <input id="loginName" name="username" type="text" autocomplete="username" placeholder="Ваш логин" required minlength="3" maxlength="32">
+      <label for="loginEmail">Email</label>
+      <input id="loginEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
 
       <label for="loginPassword">Пароль</label>
       <input id="loginPassword" name="password" type="password" autocomplete="current-password" placeholder="Ваш пароль" required>
+
+      <div class="auth-inline-row">
+        <span></span>
+        <button type="button" class="auth-link" id="forgotBtn">Забыли пароль?</button>
+      </div>
 
       <button class="primary-wide-btn" type="submit">Войти</button>
     </form>
 
     <div id="authMessage" class="auth-message"></div>
 
+    <div class="legacy-toggle">
+      Старый аккаунт с логином и паролем?
+      <button type="button" class="auth-link" id="legacyToggle">Войти по логину</button>
+    </div>
+
+    <div class="legacy-panel" id="legacyPanel">
+      <form id="legacyLoginForm" class="auth-form" autocomplete="on">
+        <label for="legacyLogin">Логин</label>
+        <input id="legacyLogin" name="username" type="text" autocomplete="username" placeholder="Ваш логин" required minlength="3" maxlength="32">
+        <label for="legacyPassword">Пароль</label>
+        <input id="legacyPassword" name="password" type="password" autocomplete="current-password" placeholder="Ваш пароль" required>
+        <button class="primary-wide-btn" type="submit">Войти по логину</button>
+      </form>
+    </div>
+
     <div class="auth-note">
-      После входа на верхней панели будет показан только ваш логин. Баланс, заказы и остальные разделы находятся в меню.
+      После входа в верхней панели будет показан только ваш профиль. Баланс, заказы и другие разделы находятся в меню.
+    </div>
+  </section>
+
+  <!-- Экран «подтвердите email» -->
+  <section class="auth-card verify-screen hidden" id="verifyCard">
+    <div class="verify-emoji">📩</div>
+    <h2>Подтвердите адрес электронной почты</h2>
+    <p>Мы отправили письмо на <span class="verify-email" id="verifyEmailText">—</span>.<br>
+    Откройте письмо и нажмите на ссылку, чтобы активировать аккаунт.</p>
+    <p style="font-size:13px;color:var(--muted,#8a92a6)">Не пришло письмо? Проверьте папку «Спам» или отправьте повторно.</p>
+    <div class="verify-actions">
+      <button class="primary-wide-btn" type="button" id="resendBtn">Отправить письмо повторно</button>
+      <button class="auth-link" type="button" id="changeEmailBtn">Изменить email</button>
+      <button class="auth-link" type="button" id="switchAccountBtn">Войти под другой учётной записью</button>
+    </div>
+  </section>
+
+  <!-- Экран восстановления пароля -->
+  <section class="auth-card hidden" id="forgotCard">
+    <h2>Восстановление пароля</h2>
+    <p>Укажите email — мы пришлём ссылку для установки нового пароля.</p>
+    <form id="forgotForm" class="auth-form" autocomplete="on">
+      <label for="forgotEmail">Email</label>
+      <input id="forgotEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+      <button class="primary-wide-btn" type="submit">Отправить письмо</button>
+    </form>
+    <div style="text-align:center;margin-top:12px">
+      <button type="button" class="auth-link" id="backFromForgot">← Вернуться ко входу</button>
     </div>
   </section>
 </main>
-<script type="module" src="auth.js"></script>
+
+<div id="authToast" class="auth-toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="auth.js?v=20260716-fbauth"></script>
 
 <script>
 (function(){
