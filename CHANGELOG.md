@@ -1,30 +1,19 @@
-# smm-boost-auth-v10 — Fix "Аккаунт не найден"
+# smm-boost-auth-v11 — Надёжная проверка Firebase ID Token
 
 ## Причина
-API проверяли только legacy `sessionToken` из Firestore. Если документ пользователя
-не был создан (sync упал / инкогнито / первое подключение через Google) — все
-операции возвращали "Аккаунт не найден. Войдите заново."
+В v10 верификация ID Token шла через `identitytoolkit.googleapis.com/v1/accounts:lookup`
+с публичным Web API Key. У этого ключа в Google Cloud стоят HTTP-referer restrictions
+(smm-boost.pro), поэтому server-side вызов с Vercel возвращает 403 → resolveAuthedUser
+падает на legacy sessionToken → API отдаёт "Аккаунт не найден" / "Ошибка создания оплаты".
 
-## Что исправлено
-1. **api/_lib/shared.js** — новый универсальный резолвер `resolveAuthedUser(db, req)`:
-   - Проверяет Firebase **ID Token** (через Identity Toolkit `accounts:lookup`).
-   - Детерминированный `userId = sha256('email:'+email).slice(0,32)`.
-   - **Автосоздаёт документ** в `users/{userId}`, если его нет.
-   - Обновляет `sessionToken`/`firebaseUid` без затирания баланса.
-   - Fallback на legacy `userId+sessionToken`, если ID Token отсутствует.
+## Фикс (только 1 файл)
+`api/_lib/shared.js` — verifyFirebaseIdToken теперь проверяет подпись JWT напрямую:
+  - Тянет публичные сертификаты Google securetoken (`.../x509/securetoken@system.gserviceaccount.com`)
+  - Кэширует по Cache-Control max-age
+  - Проверяет alg=RS256, kid, exp/iat, aud=projectId, iss=securetoken.google.com/<projectId>
+  - Верифицирует RSA-SHA256 подпись через node:crypto
 
-2. **API-эндпоинты** переведены на общий резолвер:
-   - `api/create-balance-invoice.js` (YooKassa + CryptoBot)
-   - `api/balance-order.js` (JAP заказы)
-   - `api/list-orders.js`
-   - `api/free-service.js` (GET + POST)
-
-3. **Клиенты** теперь всегда прикладывают `idToken` от `auth.currentUser`:
-   - `wallet.js` — пополнение
-   - `app.js` — заказ через баланс
-   - `orders.js` — список заказов
-   - `free.js` — бесплатные услуги
+Не нужен ни firebase-admin, ни разблокировка API-ключа. Работает на Vercel serverless.
 
 ## Как заменить
-Скопировать файлы из архива с сохранением путей (перезаписывая).
-Никакие переменные окружения не требуются.
+Просто перезаписать один файл: `api/_lib/shared.js`.
