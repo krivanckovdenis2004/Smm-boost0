@@ -239,8 +239,8 @@ const FOOTER = `
 <a href="https://t.me/smm_boost_vesty" class="telegram-support telegram-channel-fab" target="_blank" rel="noopener" aria-label="Telegram канал"><img src="https://cdn.simpleicons.org/telegram/FFFFFF" alt="Telegram канал" loading="lazy" decoding="async" /></a>
 <a href="https://t.me/smm_boost_support0" class="telegram-support" target="_blank" rel="noopener" aria-label="Telegram поддержка"><img src="https://cdn.simpleicons.org/telegram/FFFFFF" alt="Telegram поддержка" loading="lazy" decoding="async" /></a>
 <div id="live-orders"></div>
-<script type="module" src="/app.js?v=20260714-seo"></script>
-<script src="/user-state.js?v=20260714-seo"></script>
+<script type="module" src="/app.js?v=20260716-auth-v6"></script>
+<script src="/user-state.js?v=20260716-auth-v6"></script>
 <script>
 (function(){
   const btn=document.querySelector('.menu-toggle'),menu=document.querySelector('.nav-menu');

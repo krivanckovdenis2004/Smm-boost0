@@ -25,7 +25,7 @@ import {
 
 export const firebaseConfig = {
   apiKey: "AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8",
-  authDomain: "smm-boost-905d5.firebaseapp.com",
+  authDomain: "smm-boost.pro",
   projectId: "smm-boost-905d5",
   storageBucket: "smm-boost-905d5.firebasestorage.app",
   messagingSenderId: "554912523069",
@@ -36,16 +36,41 @@ export const firebaseConfig = {
 const API_SYNC_URL = "/api/auth-social-register";
 const RESEND_COOLDOWN_MS = 60_000;
 const AUTH_STORAGE_KEYS = ["sb_user", "sb_ref_pending", "sb_auth_last_error"];
+const GOOGLE_REDIRECT_PENDING_KEY = "sb_google_redirect_pending";
+const AUTH_DEBUG_PREFIX = "[SMM-Boost Auth]";
 
 export const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(firebaseApp);
 try { auth.languageCode = "ru"; } catch (_) {}
 
+function logAuthError(label, error) {
+  console.groupCollapsed(`${AUTH_DEBUG_PREFIX} ${label}`);
+  console.error(error);
+  console.error(error?.code || "NO_ERROR_CODE");
+  console.error(error?.message || "NO_ERROR_MESSAGE");
+  console.error(error?.stack || "NO_ERROR_STACK");
+  if (error?.customData) console.error("customData:", error.customData);
+  console.groupEnd();
+}
+
+function logAuthInfo(label, data = {}) {
+  try {
+    console.info(`${AUTH_DEBUG_PREFIX} ${label}`, {
+      apps: getApps().length,
+      appName: firebaseApp?.name || "[DEFAULT]",
+      authDomain: auth?.config?.authDomain,
+      currentUser: auth?.currentUser?.uid || null,
+      ...data,
+    });
+  } catch (_) {}
+}
+
 const persistenceReady = (async () => {
   try {
     await setPersistence(auth, browserLocalPersistence);
-  } catch (_) {
-    try { await setPersistence(auth, inMemoryPersistence); } catch (_) {}
+  } catch (err) {
+    logAuthError("browserLocalPersistence failed, falling back to memory", err);
+    try { await setPersistence(auth, inMemoryPersistence); } catch (fallbackErr) { logAuthError("inMemoryPersistence failed", fallbackErr); }
   }
 })();
 
@@ -235,14 +260,17 @@ export function startAuthManager() {
   if (started) return authReady;
   started = true;
   persistenceReady.finally(() => {
+    logAuthInfo("startAuthManager:onAuthStateChanged subscribe");
     onAuthStateChanged(
       auth,
       (firebaseUser) => { handleFirebaseState(firebaseUser || null).catch((err) => {
+        logAuthError("handleFirebaseState failed", err);
         const legacyUser = getStoredUser();
         setState({ ready: true, loading: false, firebaseUser: firebaseUser || null, user: legacyUser, source: legacyUser ? "legacy" : "guest", error: err });
         finishInitial();
       }); },
       (err) => {
+        logAuthError("onAuthStateChanged error", err);
         const legacyUser = getStoredUser();
         setState({ ready: true, loading: false, firebaseUser: null, user: legacyUser, source: legacyUser ? "legacy" : "guest", error: err });
         finishInitial();
@@ -331,14 +359,18 @@ export async function signInWithGoogleProvider() {
   await persistenceReady;
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
+  logAuthInfo("signInWithGoogleProvider before popup");
   try {
     const result = await signInWithPopup(auth, provider);
     if (result?.user) await syncFirebaseUser(result.user, { forceToken: true });
     return result;
   } catch (err) {
-    if (err?.code === "auth/popup-blocked" || err?.code === "auth/operation-not-supported-in-this-environment") {
+    logAuthError("signInWithPopup failed", err);
+    if (err?.code === "auth/popup-blocked" || err?.code === "auth/operation-not-supported-in-this-environment" || err?.code === "auth/internal-error") {
       const ref = currentRef();
       if (ref) sessionStorage.setItem("sb_ref_pending", ref);
+      sessionStorage.setItem(GOOGLE_REDIRECT_PENDING_KEY, "1");
+      logAuthInfo("signInWithRedirect fallback start");
       await signInWithRedirect(auth, provider);
       return { redirect: true };
     }
@@ -348,13 +380,26 @@ export async function signInWithGoogleProvider() {
 
 export async function handleGoogleRedirectResult() {
   await persistenceReady;
-  const result = await getRedirectResult(auth);
-  if (result?.user) {
-    const ref = sessionStorage.getItem("sb_ref_pending") || currentRef();
-    sessionStorage.removeItem("sb_ref_pending");
-    await syncFirebaseUser(result.user, { forceToken: true, ref });
+  const hasPendingRedirect = sessionStorage.getItem(GOOGLE_REDIRECT_PENDING_KEY) === "1";
+  if (!hasPendingRedirect) {
+    logAuthInfo("getRedirectResult skipped: no local redirect marker");
+    return null;
   }
-  return result;
+  try {
+    logAuthInfo("getRedirectResult start");
+    const result = await getRedirectResult(auth);
+    if (result?.user) {
+      const ref = sessionStorage.getItem("sb_ref_pending") || currentRef();
+      sessionStorage.removeItem("sb_ref_pending");
+      await syncFirebaseUser(result.user, { forceToken: true, ref });
+    }
+    return result;
+  } catch (err) {
+    logAuthError("getRedirectResult failed", err);
+    throw err;
+  } finally {
+    sessionStorage.removeItem(GOOGLE_REDIRECT_PENDING_KEY);
+  }
 }
 
 export async function applyEmailVerificationCode(oobCode) {
@@ -399,6 +444,7 @@ export function humanAuthError(err) {
     "auth/account-exists-with-different-credential": "Аккаунт с этим email уже существует. Войдите по email и затем используйте Google.",
     "auth/unauthorized-domain": "Текущий домен не добавлен в Firebase Authorized domains.",
     "auth/operation-not-allowed": "Этот способ входа выключен в Firebase Console.",
+    "auth/internal-error": "Внутренняя ошибка Firebase Auth. Подробный стек выведен в Console как [SMM-Boost Auth].",
     "auth/expired-action-code": "Ссылка устарела. Запросите новое письмо.",
     "auth/invalid-action-code": "Ссылка недействительна или уже использована.",
   };

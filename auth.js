@@ -14,9 +14,10 @@ import {
   applyEmailVerificationCode,
   signOutEverywhere,
   humanAuthError,
-} from "./firebase.js";
+} from "./firebase.js?v=20260716-auth-v6";
 
 const REDIRECT_AFTER_LOGIN = new URLSearchParams(location.search).get("next") || "/wallet.html";
+const AUTH_INIT_TIMEOUT_MS = 12_000;
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
@@ -61,6 +62,29 @@ function showError(message = "") {
   if (!els.error) return;
   els.error.textContent = message;
   els.error.hidden = !message;
+}
+
+function logAuthError(label, error) {
+  console.groupCollapsed(`[SMM-Boost Auth Page] ${label}`);
+  console.error(error);
+  console.error(error?.code || "NO_ERROR_CODE");
+  console.error(error?.message || "NO_ERROR_MESSAGE");
+  console.error(error?.stack || "NO_ERROR_STACK");
+  if (error?.customData) console.error("customData:", error.customData);
+  console.groupEnd();
+}
+
+function withTimeout(promise, timeoutMs, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(() => {
+        const err = new Error(`${label} не ответил за ${Math.round(timeoutMs / 1000)}с`);
+        err.code = "auth/init-timeout";
+        reject(err);
+      }, timeoutMs);
+    }),
+  ]);
 }
 
 function toast(message, type = "info") {
@@ -146,6 +170,7 @@ async function handleUrlActionCodes() {
       toast("Email подтверждён. Теперь можно войти.", "success");
       activatePanel("signin");
     } catch (err) {
+      logAuthError("loginWithEmail failed", err);
       showError(humanAuthError(err));
       activatePanel("signin");
     }
@@ -179,6 +204,7 @@ function bindHandlers() {
       toast("Вход выполнен.", "success");
       setTimeout(() => { location.href = REDIRECT_AFTER_LOGIN; }, 450);
     } catch (err) {
+      logAuthError("registerWithEmail failed", err);
       showError(humanAuthError(err));
     } finally {
       setBusy(form, false);
@@ -199,6 +225,7 @@ function bindHandlers() {
       renderVerify(email);
       toast("Аккаунт создан. Проверьте почту.", "success");
     } catch (err) {
+      logAuthError("sendPasswordReset failed", err);
       showError(humanAuthError(err));
     } finally {
       setBusy(form, false);
@@ -234,6 +261,7 @@ function bindHandlers() {
         toast("Вход через Google выполнен.", "success");
         setTimeout(() => { location.href = REDIRECT_AFTER_LOGIN; }, 450);
       } catch (err) {
+        logAuthError("signInWithGoogleProvider failed", err);
         if (err?.code !== "auth/popup-closed-by-user" && err?.code !== "auth/cancelled-popup-request") {
           showError(humanAuthError(err));
         }
@@ -249,6 +277,7 @@ function bindHandlers() {
       await resendVerificationEmail();
       toast("Письмо отправлено повторно.", "success");
     } catch (err) {
+      logAuthError("resendVerificationEmail failed", err);
       toast(humanAuthError(err), "error");
     } finally {
       setBusy(els.resendBtn, false);
@@ -274,11 +303,17 @@ async function init() {
   bindHandlers();
 
   try { await handleGoogleRedirectResult(); } catch (err) {
-    if (err?.code !== "auth/no-auth-event") console.warn("[auth] Google redirect result:", err);
+    if (err?.code !== "auth/no-auth-event") {
+      logAuthError("handleGoogleRedirectResult failed", err);
+      showError(humanAuthError(err));
+    }
   }
 
   const handledAction = await handleUrlActionCodes();
-  const snapshot = await waitForAuthState();
+  const snapshot = await withTimeout(waitForAuthState(), AUTH_INIT_TIMEOUT_MS, "Firebase Auth init").catch((err) => {
+    logAuthError("waitForAuthState failed", err);
+    return { ready: true, loading: false, firebaseUser: null, user: null, source: "guest", error: err };
+  });
   setSplash(false);
 
   if (snapshot.user && snapshot.firebaseUser && !snapshot.firebaseUser.emailVerified && !handledAction) {
@@ -309,7 +344,7 @@ async function init() {
 window.addEventListener("pagehide", () => { try { unsubscribeAuth?.(); } catch (_) {} });
 
 init().catch((err) => {
-  console.error("[auth] init failed", err);
+  logAuthError("init failed", err);
   setSplash(false);
   showError("Не удалось запустить авторизацию. Обновите страницу или проверьте соединение.");
   activatePanel("signin");

@@ -8,7 +8,7 @@
 
 const firebaseConfig = {
   apiKey: 'AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8',
-  authDomain: 'smm-boost-905d5.firebaseapp.com',
+  authDomain: 'smm-boost.pro',
   projectId: 'smm-boost-905d5',
   storageBucket: 'smm-boost-905d5.firebasestorage.app',
   messagingSenderId: '554912523069',
@@ -18,8 +18,21 @@ const firebaseConfig = {
 
 const SDK_VERSION = '10.12.2';
 const CDN = `https://www.gstatic.com/firebasejs/${SDK_VERSION}`;
+const GOOGLE_REDIRECT_PENDING_KEY = 'sb_google_redirect_pending';
+const AUTH_DEBUG_PREFIX = '[SMM-Boost Auth Legacy]';
 
 let _sdkPromise = null;
+
+function logAuthError(label, error) {
+  console.groupCollapsed(`${AUTH_DEBUG_PREFIX} ${label}`);
+  console.error(error);
+  console.error(error?.code || 'NO_ERROR_CODE');
+  console.error(error?.message || 'NO_ERROR_MESSAGE');
+  console.error(error?.stack || 'NO_ERROR_STACK');
+  if (error?.customData) console.error('customData:', error.customData);
+  console.groupEnd();
+}
+
 export function loadFirebase() {
   if (_sdkPromise) return _sdkPromise;
   _sdkPromise = (async () => {
@@ -238,9 +251,11 @@ export async function signInWithGoogle({ referredBy } = {}) {
     persistSession(result.user, { authType: 'google', userId: res.userId });
     return { user: result.user, created: res.created, userId: res.userId };
   } catch (e) {
+    logAuthError('signInWithPopup failed', e);
     const code = e?.code || '';
-    if (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment') {
+    if (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment' || code === 'auth/internal-error') {
       if (referredBy) sessionStorage.setItem('sb_ref_pending', referredBy);
+      sessionStorage.setItem(GOOGLE_REDIRECT_PENDING_KEY, '1');
       await authMod.signInWithRedirect(auth, provider);
       return { redirect: true };
     }
@@ -251,15 +266,24 @@ export async function signInWithGoogle({ referredBy } = {}) {
 export async function checkGoogleRedirectResult() {
   const sdk = await loadFirebase();
   const { authMod, auth } = sdk;
-  const result = await authMod.getRedirectResult(auth);
-  if (result?.user) {
-    const referredBy = sessionStorage.getItem('sb_ref_pending') || '';
-    sessionStorage.removeItem('sb_ref_pending');
-    const res = await upsertUserDoc(sdk, result.user, { authType: 'google', referredBy });
-    persistSession(result.user, { authType: 'google', userId: res.userId });
-    return { user: result.user, userId: res.userId };
+  const hasPendingRedirect = sessionStorage.getItem(GOOGLE_REDIRECT_PENDING_KEY) === '1';
+  if (!hasPendingRedirect) return null;
+  try {
+    const result = await authMod.getRedirectResult(auth);
+    if (result?.user) {
+      const referredBy = sessionStorage.getItem('sb_ref_pending') || '';
+      sessionStorage.removeItem('sb_ref_pending');
+      const res = await upsertUserDoc(sdk, result.user, { authType: 'google', referredBy });
+      persistSession(result.user, { authType: 'google', userId: res.userId });
+      return { user: result.user, userId: res.userId };
+    }
+    return null;
+  } catch (err) {
+    logAuthError('getRedirectResult failed', err);
+    throw err;
+  } finally {
+    sessionStorage.removeItem(GOOGLE_REDIRECT_PENDING_KEY);
   }
-  return null;
 }
 
 // -------- Action-коды (verify email / reset password) --------
@@ -300,6 +324,7 @@ const ERR = {
   'auth/cancelled-popup-request': 'Окно Google закрыто.',
   'auth/unauthorized-domain': 'Домен не разрешён в Firebase.',
   'auth/operation-not-allowed': 'Способ входа выключен в настройках.',
+  'auth/internal-error': 'Внутренняя ошибка Firebase Auth. Подробный стек выведен в Console как [SMM-Boost Auth Legacy].',
   'auth/expired-action-code': 'Ссылка истекла. Запросите новую.',
   'auth/invalid-action-code': 'Ссылка недействительна или уже использована.',
   'auth/account-exists-with-different-credential': 'Аккаунт уже привязан к другому способу входа.'

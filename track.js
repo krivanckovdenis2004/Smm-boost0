@@ -1,4 +1,4 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { firebaseApp } from "./firebase.js?v=20260716-auth-v6";
 
 import {
 
@@ -10,29 +10,8 @@ import {
 
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const firebaseConfig = {
-
-  apiKey: "AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8",
-
-  authDomain: "smm-boost.pro",
-
-  projectId: "smm-boost-905d5",
-
-  storageBucket: "smm-boost-905d5.firebasestorage.app",
-
-  messagingSenderId: "554912523069",
-
-  appId: "1:554912523069:web:26d405b696b9d45e5edb54",
-
-  measurementId: "G-E6SRLXZW5V"
-
-};
-
-const app =
-initializeApp(firebaseConfig);
-
 const db =
-getFirestore(app);
+getFirestore(firebaseApp);
 
 const params =
 new URLSearchParams(window.location.search);
