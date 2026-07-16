@@ -1,81 +1,66 @@
 rules_version = '2';
 
-// SMM-Boost — Firestore правила.
-// Поддерживаются два типа аккаунтов:
-//   1) Старые пользователи (логин+пароль через /api/auth-social-register):
-//      документ /users/{userId}, где userId = 32-символьный hex.
-//      Пишутся клиентским SDK без Firebase Auth, поэтому пропускаем по форме
-//      документа (обязательные поля passwordHash/passwordSalt/username).
-//   2) Новые пользователи (Firebase Authentication — email или Google):
-//      документ /users/{uid}, где uid = auth.uid.
-//      Разрешаем читать/писать только владельцу (request.auth.uid == uid).
-//
-// Задеплой: firebase deploy --only firestore:rules --project smm-boost-905d5
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isPasswordUserId(userId) {
+    function isHexUserId(userId) {
       return userId.matches('^[0-9a-f]{32}$');
     }
-    function isFirebaseAuthOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
+
+    function changedOnly(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
     }
 
-    // ---- Пользователи ----
     match /users/{userId} {
-      // Чтение: свой документ (Firebase Auth) или существующий legacy-документ по id.
-      allow get: if isPasswordUserId(userId) || isFirebaseAuthOwner(userId);
+      allow get: if isHexUserId(userId);
       allow list: if false;
 
-      // Создание документа Firebase-Auth пользователем (email/Google upsert):
-      // владелец создаёт свой документ, не задавая passwordHash/passwordSalt,
-      // и userId в документе совпадает с auth.uid.
-      allow create: if isFirebaseAuthOwner(userId)
-                    && request.resource.data.userId == userId
-                    && !('passwordHash' in request.resource.data)
-                    && !('passwordSalt' in request.resource.data);
+      allow create: if isHexUserId(userId)
+        && request.resource.data.userId == userId
+        && (
+          request.resource.data.keys().hasAll(['userId', 'passwordHash', 'passwordSalt', 'username'])
+          || request.resource.data.keys().hasAll(['userId', 'firebaseUid', 'email', 'sessionToken'])
+        );
 
-      // Создание legacy-документа (серверный API без Firebase Auth):
-      allow create: if isPasswordUserId(userId)
-                    && request.resource.data.userId == userId
-                    && request.resource.data.keys().hasAll(
-                         ['userId', 'passwordHash', 'passwordSalt', 'username']
-                       );
-
-      // Обновление Firebase-Auth пользователем — только своего документа,
-      // нельзя добавлять passwordHash/passwordSalt и менять баланс произвольно.
-      allow update: if isFirebaseAuthOwner(userId)
-                    && request.resource.data.userId == resource.data.userId
-                    && !('passwordHash' in request.resource.data)
-                    && !('passwordSalt' in request.resource.data)
-                    && request.resource.data.balance == resource.data.balance
-                    && request.resource.data.bonusBalance == resource.data.bonusBalance;
-
-      // Обновление legacy-документа (серверный API): нельзя менять
-      // хэш/соль/логин чужим writer'ом.
-      allow update: if isPasswordUserId(userId)
-                    && request.resource.data.userId == resource.data.userId
-                    && request.resource.data.passwordHash == resource.data.passwordHash
-                    && request.resource.data.passwordSalt == resource.data.passwordSalt
-                    && request.resource.data.usernameLower == resource.data.usernameLower;
+      allow update: if isHexUserId(userId)
+        && request.resource.data.userId == resource.data.userId
+        && (
+          (
+            ('passwordHash' in resource.data)
+            && request.resource.data.passwordHash == resource.data.passwordHash
+            && request.resource.data.passwordSalt == resource.data.passwordSalt
+            && request.resource.data.usernameLower == resource.data.usernameLower
+          )
+          || (
+            !('passwordHash' in resource.data)
+            && changedOnly([
+              'firebaseUid', 'authType', 'authProviders', 'username', 'usernameLower',
+              'displayName', 'email', 'photoURL', 'emailVerified', 'pendingEmailVerification',
+              'sessionToken', 'updatedAt', 'lastLoginAt'
+            ])
+            && request.resource.data.balance == resource.data.balance
+            && request.resource.data.bonusBalance == resource.data.bonusBalance
+            && request.resource.data.referralsCount == resource.data.referralsCount
+            && request.resource.data.referralEarned == resource.data.referralEarned
+          )
+          || (
+            changedOnly(['referralsCount', 'updatedAt'])
+            && request.resource.data.referralsCount == resource.data.referralsCount + 1
+          )
+        );
 
       allow delete: if false;
     }
 
-    // ---- Заказы ----
     match /orders/{orderId} {
       allow get: if true;
       allow list: if true;
-      allow create: if request.resource.data.keys().hasAll(
-                         ['userId', 'publicOrderId', 'service', 'amount', 'price', 'status', 'createdAt']
-                       );
+      allow create: if request.resource.data.keys().hasAll(['userId', 'publicOrderId', 'service', 'amount', 'price', 'status', 'createdAt']);
       allow update: if request.resource.data.userId == resource.data.userId
                     && request.resource.data.publicOrderId == resource.data.publicOrderId;
       allow delete: if false;
     }
 
-    // ---- Идемпотентность заказов ----
     match /order_requests/{reqId} {
       allow get: if true;
       allow list: if false;
@@ -84,32 +69,25 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // ---- Пополнения ----
     match /topups/{topupId} {
       allow get: if true;
       allow list: if false;
-      allow create: if request.resource.data.keys().hasAll(
-                         ['userId', 'amount', 'status', 'paymentId']
-                       );
+      allow create: if request.resource.data.keys().hasAll(['userId', 'amount', 'status', 'paymentId']);
       allow update: if request.resource.data.userId == resource.data.userId
                     && request.resource.data.paymentId == resource.data.paymentId;
       allow delete: if false;
     }
 
-    // ---- Каталог услуг (публичный кэш) ----
     match /catalog/{docId} {
       allow read: if true;
       allow write: if false;
     }
 
-    // ---- Бесплатные услуги (free.html) ----
     match /free_claims/{userId} {
-      allow get: if isPasswordUserId(userId) || isFirebaseAuthOwner(userId);
+      allow get: if isHexUserId(userId);
       allow list: if false;
-      allow create: if (isPasswordUserId(userId) || isFirebaseAuthOwner(userId))
-                    && request.resource.data.userId == userId;
-      allow update: if (isPasswordUserId(userId) || isFirebaseAuthOwner(userId))
-                    && request.resource.data.userId == resource.data.userId;
+      allow create: if isHexUserId(userId) && request.resource.data.userId == userId;
+      allow update: if isHexUserId(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if false;
     }
 

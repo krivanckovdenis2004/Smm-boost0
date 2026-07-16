@@ -5,152 +5,145 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="robots" content="noindex, nofollow" />
   <title>Вход и регистрация — SMM-Boost</title>
-  <link rel="stylesheet" href="/style.css" />
   <link rel="icon" href="/favicon.ico" />
+  <link rel="stylesheet" href="/style.css?v=20260711-premium" />
   <style>
-    .auth-page { min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; background: radial-gradient(120% 80% at 50% 0%, #eef2ff 0%, #f8fafc 60%, #ffffff 100%); }
-    .auth-card { width: 100%; max-width: 440px; background: rgba(255,255,255,0.75); backdrop-filter: saturate(1.4) blur(18px); -webkit-backdrop-filter: saturate(1.4) blur(18px); border: 1px solid rgba(15,23,42,0.06); border-radius: 20px; box-shadow: 0 20px 60px rgba(15,23,42,0.10); padding: 28px 24px; }
-    .auth-tabs { display: flex; gap: 4px; padding: 4px; background: rgba(15,23,42,0.05); border-radius: 12px; margin-bottom: 20px; }
-    .auth-tab { flex: 1; border: 0; background: transparent; padding: 10px; border-radius: 8px; font-weight: 600; color: #475569; cursor: pointer; transition: .2s; font-size: 14px; }
-    .auth-tab.is-active { background: #fff; color: #0f172a; box-shadow: 0 1px 2px rgba(15,23,42,.08); }
-    .auth-panel { display: block; }
-    .auth-panel[hidden] { display: none !important; }
+    :root { color-scheme: dark; }
+    body.auth-page { min-height: 100dvh; margin: 0; display: grid; place-items: center; padding: 22px 14px; background: radial-gradient(circle at 50% 0%, #273469 0, #0d1020 38%, #070812 100%); font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #f8fafc; }
+    .auth-shell { width: min(100%, 468px); }
+    .auth-brand { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 18px; color: #fff; text-decoration: none; font-weight: 800; letter-spacing: .02em; }
+    .auth-logo-dot { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 12px; background: linear-gradient(135deg, #7c3aed, #06b6d4); box-shadow: 0 14px 34px rgba(6, 182, 212, .24); }
+    .auth-card { background: rgba(15, 23, 42, .72); border: 1px solid rgba(255,255,255,.12); box-shadow: 0 28px 80px rgba(0,0,0,.42); backdrop-filter: blur(24px) saturate(1.3); -webkit-backdrop-filter: blur(24px) saturate(1.3); border-radius: 24px; padding: 26px; }
+    .auth-card[hidden], .auth-panel[hidden], .auth-error[hidden], .auth-splash[hidden] { display: none !important; }
+    .auth-splash { min-height: 360px; display: grid; place-items: center; text-align: center; }
+    .auth-spinner { width: 42px; height: 42px; border: 3px solid rgba(255,255,255,.18); border-top-color: #67e8f9; border-radius: 50%; animation: spin .85s linear infinite; margin: 0 auto 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .auth-splash p { margin: 0; color: #cbd5e1; font-size: 14px; }
+    .auth-title { margin: 0 0 6px; font-size: 28px; line-height: 1.08; letter-spacing: 0; color: #fff; }
+    .auth-subtitle { margin: 0 0 20px; color: #cbd5e1; font-size: 14px; line-height: 1.55; }
+    .auth-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; border-radius: 14px; background: rgba(255,255,255,.08); margin-bottom: 18px; }
+    .auth-tab { min-width: 0; border: 0; border-radius: 10px; padding: 10px 8px; background: transparent; color: #cbd5e1; font: 700 13px/1.1 inherit; cursor: pointer; transition: .18s; }
+    .auth-tab.is-active { color: #08111f; background: #fff; box-shadow: 0 8px 22px rgba(0,0,0,.18); }
+    .auth-error { margin: 0 0 14px; padding: 11px 12px; border-radius: 12px; border: 1px solid rgba(248,113,113,.35); background: rgba(127,29,29,.34); color: #fecaca; font-size: 13px; line-height: 1.4; }
     .auth-field { display: block; margin-bottom: 12px; }
-    .auth-field label { display:block; font-size:12px; color:#475569; margin-bottom:6px; font-weight:500; }
-    .auth-field input { width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 15px; background: #fff; transition: border-color .15s, box-shadow .15s; }
-    .auth-field input:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.15); }
-    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 16px; border-radius: 10px; border: 0; font-weight: 600; font-size: 15px; cursor: pointer; transition: .15s; }
-    .btn-primary { background: #4f46e5; color: #fff; width: 100%; }
-    .btn-primary:hover { background: #4338ca; }
-    .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
-    .btn-google { width:100%; background: #fff; color: #0f172a; border: 1px solid #e2e8f0; margin-top: 8px; }
-    .btn-google:hover { background:#f8fafc; }
-    .btn-ghost { background: transparent; color: #4f46e5; }
-    .auth-divider { text-align: center; color: #94a3b8; font-size: 12px; margin: 16px 0 8px; position: relative; }
-    .auth-divider::before, .auth-divider::after { content:""; position:absolute; top: 50%; width: 40%; height: 1px; background:#e2e8f0; }
-    .auth-divider::before { left: 0; } .auth-divider::after { right: 0; }
-    .auth-link { color:#4f46e5; text-decoration: none; font-size: 13px; }
-    .auth-link:hover { text-decoration: underline; }
-    .auth-error { background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; padding:10px 12px; border-radius:10px; font-size:13px; margin-bottom:12px; }
-    .auth-error[hidden] { display: none; }
-    .auth-meta { display:flex; justify-content: space-between; align-items:center; margin-top: 4px; }
-
-    /* Skeleton */
-    .auth-skeleton { padding: 8px 0; }
-    .sk-row { height: 44px; background: linear-gradient(90deg, #eef2f7 25%, #f6f8fb 37%, #eef2f7 63%); background-size: 400% 100%; animation: sk 1.4s ease infinite; border-radius: 10px; margin-bottom: 12px; }
-    .sk-row.sm { height: 20px; width: 60%; margin: 0 auto 16px; }
-    @keyframes sk { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
-
-    /* Toast */
-    .toast-root { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
-    .toast { pointer-events: auto; background: #0f172a; color: #fff; padding: 10px 14px; border-radius: 10px; font-size: 14px; box-shadow: 0 10px 30px rgba(15,23,42,.25); opacity: 0; transform: translateY(-6px); transition: .25s; max-width: 340px; }
-    .toast-in { opacity: 1; transform: translateY(0); }
-    .toast-success { background: #059669; }
-    .toast-error { background: #dc2626; }
-
-    /* Verify panel */
-    .verify-illo { font-size: 40px; text-align: center; margin-bottom: 8px; }
-    .verify-title { text-align:center; font-size: 18px; font-weight: 700; color:#0f172a; margin: 0 0 6px; }
-    .verify-desc { text-align:center; font-size: 14px; color:#475569; margin: 0 0 16px; }
-
-    @media (max-width: 480px) {
-      .auth-card { padding: 22px 18px; border-radius: 18px; }
-    }
+    .auth-field span { display: block; margin-bottom: 7px; color: #dbeafe; font-size: 12px; font-weight: 700; }
+    .auth-field input { width: 100%; box-sizing: border-box; border: 1px solid rgba(255,255,255,.13); background: rgba(2,6,23,.54); color: #fff; border-radius: 13px; padding: 13px 14px; font: 500 15px/1.2 inherit; outline: 0; transition: border-color .16s, box-shadow .16s, background .16s; }
+    .auth-field input:focus { border-color: rgba(103,232,249,.72); box-shadow: 0 0 0 4px rgba(103,232,249,.13); background: rgba(2,6,23,.76); }
+    .auth-field input::placeholder { color: #64748b; }
+    .auth-button { width: 100%; min-height: 46px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; border: 0; border-radius: 13px; padding: 12px 15px; background: linear-gradient(135deg, #7c3aed, #0891b2); color: #fff; font: 800 15px/1 inherit; cursor: pointer; box-shadow: 0 16px 34px rgba(8,145,178,.26); transition: transform .16s, filter .16s, opacity .16s; }
+    .auth-button:hover { transform: translateY(-1px); filter: brightness(1.04); }
+    .auth-button:disabled { opacity: .62; cursor: not-allowed; transform: none; }
+    .auth-button.secondary { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); box-shadow: none; color: #e2e8f0; }
+    .auth-button.danger { background: rgba(239,68,68,.14); border: 1px solid rgba(248,113,113,.3); box-shadow: none; color: #fecaca; }
+    .auth-divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; color: #94a3b8; font-size: 12px; }
+    .auth-divider::before, .auth-divider::after { content: ""; height: 1px; flex: 1; background: rgba(255,255,255,.1); }
+    .auth-inline { margin-top: 12px; text-align: center; }
+    .auth-link { border: 0; background: transparent; color: #67e8f9; font: 700 13px/1 inherit; cursor: pointer; text-decoration: none; }
+    .verify-icon { width: 58px; height: 58px; display: grid; place-items: center; margin: 0 auto 14px; border-radius: 18px; background: rgba(103,232,249,.12); font-size: 28px; }
+    .verify-title { margin: 0 0 8px; text-align: center; font-size: 22px; color: #fff; }
+    .verify-text { margin: 0 0 18px; text-align: center; color: #cbd5e1; line-height: 1.55; font-size: 14px; }
+    .account-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+    .account-avatar { width: 54px; height: 54px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 18px; background: linear-gradient(135deg, #7c3aed, #06b6d4); color: #fff; font-weight: 900; overflow: hidden; }
+    .account-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .account-name { margin: 0 0 3px; font-size: 18px; color: #fff; font-weight: 850; }
+    .account-email { color: #94a3b8; font-size: 13px; word-break: break-all; }
+    .account-balance { padding: 13px 14px; border-radius: 15px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1); margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .account-links { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .account-links a { color: #e2e8f0; text-decoration: none; padding: 11px 12px; border-radius: 12px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1); font-weight: 700; font-size: 13px; text-align: center; }
+    .auth-toast-root { position: fixed; top: calc(env(safe-area-inset-top) + 14px); right: 14px; z-index: 9999; display: grid; gap: 8px; }
+    .auth-toast { max-width: 360px; padding: 11px 13px; border-radius: 12px; background: #0f172a; color: #fff; box-shadow: 0 18px 50px rgba(0,0,0,.3); opacity: 0; transform: translateY(-8px); transition: .22s; font-size: 14px; }
+    .auth-toast.is-visible { opacity: 1; transform: translateY(0); }
+    .auth-toast-success { background: #047857; }
+    .auth-toast-error { background: #b91c1c; }
+    .auth-toast-warning { background: #a16207; }
+    @media (max-width: 420px) { .auth-card { padding: 20px 16px; border-radius: 20px; } .auth-title { font-size: 24px; } .auth-tabs { grid-template-columns: 1fr; } .account-links { grid-template-columns: 1fr; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
   </style>
 </head>
 <body class="auth-page">
-  <div class="auth-card-wrap">
-    <!-- Skeleton: показывается ДО того, как определится состояние Firebase.
-         Это устраняет мерцание регистрации, если пользователь уже вошёл. -->
-    <div class="auth-card auth-skeleton" data-auth-skeleton aria-hidden="true">
-      <div class="sk-row sm"></div>
-      <div class="sk-row"></div>
-      <div class="sk-row"></div>
-      <div class="sk-row"></div>
-    </div>
+  <main class="auth-shell" aria-live="polite">
+    <a class="auth-brand" href="/index.html"><span class="auth-logo-dot">⚡</span><span>SMM-Boost</span></a>
 
-    <div class="auth-card" data-auth-card hidden>
-      <div class="auth-tabs" role="tablist">
-        <button class="auth-tab is-active" data-tab="signin" role="tab" aria-selected="true">Войти</button>
-        <button class="auth-tab" data-tab="signup" role="tab" aria-selected="false">Регистрация</button>
-        <button class="auth-tab" data-tab="reset" role="tab" aria-selected="false">Забыли?</button>
+    <section class="auth-card auth-splash" data-auth-splash>
+      <div>
+        <div class="auth-spinner" aria-hidden="true"></div>
+        <p>Проверяем сессию...</p>
+      </div>
+    </section>
+
+    <section class="auth-card" data-auth-app hidden>
+      <h1 class="auth-title">Аккаунт SMM-Boost</h1>
+      <p class="auth-subtitle">Вход, регистрация, подтверждение email и восстановление пароля в одном безопасном окне.</p>
+
+      <div class="auth-tabs" role="tablist" aria-label="Авторизация">
+        <button class="auth-tab is-active" type="button" data-tab="signin" role="tab" aria-selected="true">Вход</button>
+        <button class="auth-tab" type="button" data-tab="signup" role="tab" aria-selected="false">Регистрация</button>
+        <button class="auth-tab" type="button" data-tab="reset" role="tab" aria-selected="false">Пароль</button>
       </div>
 
       <div class="auth-error" data-auth-error hidden></div>
 
-      <!-- Signin -->
       <section class="auth-panel" data-panel="signin">
         <form id="form-signin" novalidate>
-          <div class="auth-field">
-            <label>Email</label>
-            <input type="email" name="email" required autocomplete="email" />
-          </div>
-          <div class="auth-field">
-            <label>Пароль</label>
-            <input type="password" name="password" required minlength="6" autocomplete="current-password" />
-          </div>
-          <button class="btn btn-primary" type="submit">Войти</button>
+          <label class="auth-field"><span>Email</span><input type="email" name="email" autocomplete="email" required placeholder="you@example.com"></label>
+          <label class="auth-field"><span>Пароль</span><input type="password" name="password" autocomplete="current-password" required placeholder="Ваш пароль"></label>
+          <button class="auth-button" type="submit">Войти</button>
         </form>
         <div class="auth-divider">или</div>
-        <button class="btn btn-google" type="button" data-google>
-          <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.9 32.5 29.4 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.1l6.6 4.8C14.7 15.1 19 12 24 12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.1z"/><path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.2C29.3 35.2 26.8 36 24 36c-5.4 0-9.9-3.5-11.5-8.3l-6.6 5.1C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.5l6.3 5.2C41.9 35 44 30 44 24c0-1.3-.1-2.3-.4-3.5z"/></svg>
-          Продолжить с Google
-        </button>
+        <button class="auth-button secondary" type="button" data-google>Продолжить с Google</button>
       </section>
 
-      <!-- Signup -->
       <section class="auth-panel" data-panel="signup" hidden>
         <form id="form-signup" novalidate>
-          <div class="auth-field">
-            <label>Email</label>
-            <input type="email" name="email" required autocomplete="email" />
-          </div>
-          <div class="auth-field">
-            <label>Пароль (минимум 6 символов)</label>
-            <input type="password" name="password" required minlength="6" autocomplete="new-password" />
-          </div>
-          <button class="btn btn-primary" type="submit">Создать аккаунт</button>
+          <label class="auth-field"><span>Имя</span><input type="text" name="displayName" autocomplete="name" placeholder="Как к вам обращаться"></label>
+          <label class="auth-field"><span>Email</span><input type="email" name="email" autocomplete="email" required placeholder="you@example.com"></label>
+          <label class="auth-field"><span>Пароль</span><input type="password" name="password" autocomplete="new-password" minlength="6" required placeholder="Минимум 6 символов"></label>
+          <button class="auth-button" type="submit">Создать аккаунт</button>
         </form>
         <div class="auth-divider">или</div>
-        <button class="btn btn-google" type="button" data-google>Продолжить с Google</button>
+        <button class="auth-button secondary" type="button" data-google>Зарегистрироваться через Google</button>
       </section>
 
-      <!-- Reset -->
       <section class="auth-panel" data-panel="reset" hidden>
         <form id="form-reset" novalidate>
-          <div class="auth-field">
-            <label>Email для восстановления</label>
-            <input type="email" name="email" required autocomplete="email" />
-          </div>
-          <button class="btn btn-primary" type="submit">Отправить письмо</button>
+          <label class="auth-field"><span>Email</span><input type="email" name="email" autocomplete="email" required placeholder="you@example.com"></label>
+          <button class="auth-button" type="submit">Отправить ссылку</button>
         </form>
       </section>
 
-      <!-- Verify state -->
       <section class="auth-panel" data-panel="verify" hidden>
-        <div class="verify-illo">📩</div>
-        <h2 class="verify-title">Подтвердите Email</h2>
-        <p class="verify-desc">Мы отправили письмо на <strong data-verify-email></strong>. Откройте его и подтвердите адрес.</p>
-        <button class="btn btn-primary" type="button" data-resend>
-          Отправить снова<span data-resend-timer></span>
-        </button>
-        <div class="auth-meta" style="margin-top:12px;">
-          <button class="btn btn-ghost" type="button" onclick="location.reload()">Я подтвердил</button>
-        </div>
+        <div class="verify-icon">📩</div>
+        <h2 class="verify-title">Подтвердите email</h2>
+        <p class="verify-text">Мы отправили письмо на <strong data-verify-email>вашу почту</strong>. После подтверждения вернитесь на эту страницу и войдите.</p>
+        <button class="auth-button" type="button" data-resend data-action>Отправить письмо ещё раз</button>
+        <div class="auth-inline"><button class="auth-link" type="button" data-switch-panel="signin">Перейти ко входу</button></div>
       </section>
 
-      <!-- Reset sent -->
       <section class="auth-panel" data-panel="reset-sent" hidden>
-        <div class="verify-illo">✉️</div>
+        <div class="verify-icon">✉️</div>
         <h2 class="verify-title">Письмо отправлено</h2>
-        <p class="verify-desc">Ссылка для сброса пароля отправлена на <strong data-reset-sent-email></strong>.</p>
-        <button class="btn btn-primary" type="button" data-tab="signin" onclick="document.querySelector('[data-tab=signin]').click()">Вернуться ко входу</button>
+        <p class="verify-text">Ссылка для восстановления отправлена на <strong data-reset-sent-email></strong>.</p>
+        <button class="auth-button secondary" type="button" data-switch-panel="signin">Вернуться ко входу</button>
       </section>
-    </div>
-  </div>
 
-  <div class="toast-root" data-toast-root></div>
+      <section class="auth-panel" data-panel="account" hidden>
+        <div class="account-head">
+          <div class="account-avatar" data-account-avatar><span>U</span></div>
+          <div><p class="account-name" data-account-name>Пользователь</p><div class="account-email" data-account-email></div></div>
+        </div>
+        <div class="account-balance"><span>Баланс</span><strong data-account-balance>0,00₽</strong></div>
+        <div class="account-links">
+          <a href="/wallet.html">Личный кабинет</a>
+          <a href="/orders.html">Мои заказы</a>
+          <a href="/referral.html">Реферальная программа</a>
+          <a href="/services.html">Заказать услуги</a>
+        </div>
+        <button class="auth-button danger" type="button" data-logout data-action>Выйти</button>
+      </section>
+    </section>
+  </main>
 
-  <script type="module" src="/auth.js"></script>
+  <div class="auth-toast-root" data-toast-root></div>
+  <script type="module" src="/auth.js?v=20260716-auth-v5"></script>
 </body>
 </html>

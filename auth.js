@@ -1,283 +1,316 @@
-// auth.js — контроллер страницы /auth.html. Гарантирует, что форма
-// появляется мгновенно, без вечной загрузки, и корректно редиректит
-// уже авторизованного пользователя.
+// auth.js — страница авторизации без FOUC и без вечного loader.
+// Интерфейс рисуется только после первичной проверки Firebase Auth.
 
-import { auth, authReady } from "./firebase.js";
 import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  sendEmailVerification,
-  sendPasswordResetEmail,
-  GoogleAuthProvider,
-  signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  auth,
+  waitForAuthState,
+  subscribeAuth,
+  registerWithEmail,
+  loginWithEmail,
+  resendVerificationEmail,
+  sendPasswordReset,
+  signInWithGoogleProvider,
+  handleGoogleRedirectResult,
+  applyEmailVerificationCode,
+  signOutEverywhere,
+  humanAuthError,
+} from "./firebase.js";
 
-const REDIRECT_AFTER_LOGIN = "/account.html";
-const RESEND_COOLDOWN_MS = 60_000;
-const INIT_HARD_TIMEOUT_MS = 6000;
-
+const REDIRECT_AFTER_LOGIN = new URLSearchParams(location.search).get("next") || "/wallet.html";
 const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
 const els = {
-  skeleton: $("[data-auth-skeleton]"),
-  card: $("[data-auth-card]"),
+  splash: $("[data-auth-splash]"),
+  app: $("[data-auth-app]"),
+  tabs: $$("[data-tab]"),
+  panels: $$("[data-panel]"),
   error: $("[data-auth-error]"),
-  toast: $("[data-toast-root]"),
-  tabs: document.querySelectorAll("[data-tab]"),
-  panels: document.querySelectorAll("[data-panel]"),
+  toastRoot: $("[data-toast-root]"),
   signinForm: $("#form-signin"),
   signupForm: $("#form-signup"),
   resetForm: $("#form-reset"),
-  googleBtn: $("[data-google]"),
-  verifyPanel: $("[data-panel='verify']"),
-  verifyEmail: $("[data-verify-email]"),
   resendBtn: $("[data-resend]"),
-  resendTimer: $("[data-resend-timer]"),
-  resetSent: $("[data-panel='reset-sent']"),
+  logoutBtns: $$("[data-logout]"),
+  verifyEmail: $("[data-verify-email]"),
   resetSentEmail: $("[data-reset-sent-email]"),
+  accountName: $("[data-account-name]"),
+  accountEmail: $("[data-account-email]"),
+  accountBalance: $("[data-account-balance]"),
+  accountAvatar: $("[data-account-avatar]"),
 };
 
-// ─────────── UI helpers ───────────
-function showSkeleton(show) {
-  if (!els.skeleton || !els.card) return;
-  els.skeleton.hidden = !show;
-  els.card.hidden = show;
+let unsubscribeAuth = null;
+let initialized = false;
+
+captureReferral();
+
+function captureReferral() {
+  try {
+    const ref = (new URLSearchParams(location.search).get("ref") || "").trim().toLowerCase();
+    if (/^[0-9a-f]{32}$/.test(ref)) sessionStorage.setItem("sb_ref", ref);
+  } catch (_) {}
 }
-function showError(msg) {
-  if (!els.error) return alert(msg);
-  els.error.textContent = msg;
-  els.error.hidden = !msg;
+
+function setSplash(show) {
+  if (els.splash) els.splash.hidden = !show;
+  if (els.app) els.app.hidden = show;
 }
-function toast(msg, type = "info") {
-  if (!els.toast) return;
-  const el = document.createElement("div");
-  el.className = `toast toast-${type}`;
-  el.textContent = msg;
-  els.toast.appendChild(el);
-  requestAnimationFrame(() => el.classList.add("toast-in"));
+
+function showError(message = "") {
+  if (!els.error) return;
+  els.error.textContent = message;
+  els.error.hidden = !message;
+}
+
+function toast(message, type = "info") {
+  if (!els.toastRoot || !message) return;
+  const node = document.createElement("div");
+  node.className = `auth-toast auth-toast-${type}`;
+  node.textContent = message;
+  els.toastRoot.appendChild(node);
+  requestAnimationFrame(() => node.classList.add("is-visible"));
   setTimeout(() => {
-    el.classList.remove("toast-in");
-    setTimeout(() => el.remove(), 300);
-  }, 4000);
-}
-function activateTab(name) {
-  els.tabs.forEach((t) => {
-    const active = t.dataset.tab === name;
-    t.classList.toggle("is-active", active);
-    t.setAttribute("aria-selected", String(active));
-  });
-  els.panels.forEach((p) => (p.hidden = p.dataset.panel !== name));
-}
-function humanError(err) {
-  const code = err?.code || "";
-  const map = {
-    "auth/invalid-email": "Некорректный email.",
-    "auth/user-disabled": "Аккаунт отключён.",
-    "auth/user-not-found": "Пользователь не найден.",
-    "auth/wrong-password": "Неверный пароль.",
-    "auth/invalid-credential": "Неверный email или пароль.",
-    "auth/email-already-in-use": "Такой email уже зарегистрирован. Войдите.",
-    "auth/weak-password": "Пароль слишком простой (минимум 6 символов).",
-    "auth/too-many-requests": "Слишком много попыток. Попробуйте позже.",
-    "auth/network-request-failed": "Проблема с сетью. Проверьте соединение.",
-    "auth/popup-blocked": "Всплывающее окно заблокировано браузером.",
-    "auth/popup-closed-by-user": "Окно входа было закрыто.",
-    "auth/cancelled-popup-request": "Отменено.",
-  };
-  return map[code] || err?.message || "Что-то пошло не так. Повторите попытку.";
+    node.classList.remove("is-visible");
+    setTimeout(() => node.remove(), 220);
+  }, 3600);
 }
 
-// ─────────── Verify / resend ───────────
-let resendTimerId = null;
-function startResendCooldown() {
-  const btn = els.resendBtn;
-  const timerEl = els.resendTimer;
+function setBusy(formOrButton, busy, label = "Подождите...") {
+  const btn = formOrButton?.matches?.("button") ? formOrButton : formOrButton?.querySelector?.("button[type='submit'],button[data-action]");
   if (!btn) return;
-  const until = Date.now() + RESEND_COOLDOWN_MS;
-  btn.disabled = true;
-  const tick = () => {
-    const left = Math.max(0, Math.ceil((until - Date.now()) / 1000));
-    if (timerEl) timerEl.textContent = left ? ` (${left}с)` : "";
-    if (left <= 0) {
-      btn.disabled = false;
-      clearInterval(resendTimerId);
-    }
-  };
-  clearInterval(resendTimerId);
-  tick();
-  resendTimerId = setInterval(tick, 1000);
+  if (busy) {
+    btn.dataset.prevText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = label;
+  } else {
+    btn.disabled = false;
+    if (btn.dataset.prevText) btn.textContent = btn.dataset.prevText;
+    delete btn.dataset.prevText;
+  }
 }
 
-async function showVerifyPanel(email) {
-  activateTab("verify");
-  if (els.verifyEmail) els.verifyEmail.textContent = email || auth.currentUser?.email || "";
-  startResendCooldown();
-}
-
-// ─────────── Handlers ───────────
-async function handleSignup(e) {
-  e.preventDefault();
+function activatePanel(name) {
   showError("");
-  const email = e.target.email.value.trim();
-  const password = e.target.password.value;
-  const btn = e.target.querySelector("button[type=submit]");
-  btn.disabled = true;
-  btn.dataset.label = btn.textContent;
-  btn.textContent = "Создаём аккаунт...";
-  try {
-    const { user } = await createUserWithEmailAndPassword(auth, email, password);
+  els.tabs.forEach((tab) => {
+    const active = tab.dataset.tab === name;
+    tab.classList.toggle("is-active", active);
+    tab.setAttribute("aria-selected", String(active));
+  });
+  els.panels.forEach((panel) => { panel.hidden = panel.dataset.panel !== name; });
+}
+
+function formatMoney(value) {
+  return Number(value || 0).toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "₽";
+}
+
+function renderAccount(user) {
+  if (!user) return;
+  const name = user.displayName || user.username || user.email || "Пользователь";
+  const email = user.email || "";
+  if (els.accountName) els.accountName.textContent = name;
+  if (els.accountEmail) els.accountEmail.textContent = email;
+  if (els.accountBalance) els.accountBalance.textContent = formatMoney(Number(user.balance || 0) + Number(user.bonusBalance || 0));
+  if (els.accountAvatar) {
+    els.accountAvatar.innerHTML = user.photoURL
+      ? `<img src="${escapeHtml(user.photoURL)}" alt="" referrerpolicy="no-referrer">`
+      : `<span>${escapeHtml((name[0] || "U").toUpperCase())}</span>`;
+  }
+  activatePanel("account");
+}
+
+function renderVerify(email) {
+  if (els.verifyEmail) els.verifyEmail.textContent = email || auth.currentUser?.email || "вашу почту";
+  activatePanel("verify");
+}
+
+function escapeHtml(value) {
+  return String(value || "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+}
+
+async function handleUrlActionCodes() {
+  const params = new URLSearchParams(location.search);
+  const mode = params.get("mode");
+  const oobCode = params.get("oobCode");
+  if (!mode || !oobCode) return false;
+
+  if (mode === "resetPassword") {
+    location.replace("/reset-password.html" + location.search);
+    return true;
+  }
+
+  if (mode === "verifyEmail") {
     try {
-      await sendEmailVerification(user, { url: window.location.origin + "/auth.html?verified=1" });
+      await applyEmailVerificationCode(oobCode);
+      history.replaceState({}, "", "/auth.html?verified=1");
+      toast("Email подтверждён. Теперь можно войти.", "success");
+      activatePanel("signin");
     } catch (err) {
-      console.warn("[auth] verification send failed", err);
+      showError(humanAuthError(err));
+      activatePanel("signin");
     }
-    toast("Аккаунт создан. Проверьте почту.", "success");
-    await showVerifyPanel(email);
-  } catch (err) {
-    showError(humanError(err));
-  } finally {
-    btn.disabled = false;
-    btn.textContent = btn.dataset.label;
+    return true;
   }
+
+  return false;
 }
 
-async function handleSignin(e) {
-  e.preventDefault();
-  showError("");
-  const email = e.target.email.value.trim();
-  const password = e.target.password.value;
-  const btn = e.target.querySelector("button[type=submit]");
-  btn.disabled = true;
-  btn.dataset.label = btn.textContent;
-  btn.textContent = "Входим...";
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-    toast("Вход выполнен", "success");
-    setTimeout(() => (window.location.href = REDIRECT_AFTER_LOGIN), 300);
-  } catch (err) {
-    showError(humanError(err));
-  } finally {
-    btn.disabled = false;
-    btn.textContent = btn.dataset.label;
-  }
-}
+function bindHandlers() {
+  if (initialized) return;
+  initialized = true;
 
-async function handleReset(e) {
-  e.preventDefault();
-  showError("");
-  const email = e.target.email.value.trim();
-  const btn = e.target.querySelector("button[type=submit]");
-  btn.disabled = true;
-  btn.dataset.label = btn.textContent;
-  btn.textContent = "Отправляем...";
-  try {
-    await sendPasswordResetEmail(auth, email, {
-      url: window.location.origin + "/reset-password.html",
-    });
-    activateTab("reset-sent");
-    if (els.resetSentEmail) els.resetSentEmail.textContent = email;
-  } catch (err) {
-    showError(humanError(err));
-  } finally {
-    btn.disabled = false;
-    btn.textContent = btn.dataset.label;
-  }
-}
+  els.tabs.forEach((tab) => tab.addEventListener("click", () => activatePanel(tab.dataset.tab)));
 
-async function handleResend() {
-  if (!auth.currentUser) return;
-  try {
-    await sendEmailVerification(auth.currentUser, {
-      url: window.location.origin + "/auth.html?verified=1",
-    });
-    toast("Письмо отправлено повторно", "success");
-    startResendCooldown();
-  } catch (err) {
-    toast(humanError(err), "error");
-  }
-}
-
-async function handleGoogle() {
-  showError("");
-  const provider = new GoogleAuthProvider();
-  try {
-    await signInWithPopup(auth, provider);
-    toast("Вход через Google выполнен", "success");
-    setTimeout(() => (window.location.href = REDIRECT_AFTER_LOGIN), 300);
-  } catch (err) {
-    if (err?.code === "auth/popup-blocked" || err?.code === "auth/operation-not-supported-in-this-environment") {
-      try {
-        await signInWithRedirect(auth, provider);
-        return;
-      } catch (err2) {
-        showError(humanError(err2));
+  els.signinForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    showError("");
+    const form = event.currentTarget;
+    const email = form.email.value.trim();
+    const password = form.password.value;
+    if (!email || !password) return showError("Введите email и пароль.");
+    setBusy(form, true, "Входим...");
+    try {
+      const result = await loginWithEmail({ email, password });
+      if (result.needsVerification) {
+        renderVerify(email);
+        toast("Подтвердите email, чтобы продолжить.", "warning");
         return;
       }
+      toast("Вход выполнен.", "success");
+      setTimeout(() => { location.href = REDIRECT_AFTER_LOGIN; }, 450);
+    } catch (err) {
+      showError(humanAuthError(err));
+    } finally {
+      setBusy(form, false);
     }
-    if (err?.code !== "auth/popup-closed-by-user" && err?.code !== "auth/cancelled-popup-request") {
-      showError(humanError(err));
+  });
+
+  els.signupForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    showError("");
+    const form = event.currentTarget;
+    const displayName = form.displayName.value.trim();
+    const email = form.email.value.trim();
+    const password = form.password.value;
+    if (!email || password.length < 6) return showError("Введите email и пароль минимум из 6 символов.");
+    setBusy(form, true, "Создаём аккаунт...");
+    try {
+      await registerWithEmail({ email, password, displayName });
+      renderVerify(email);
+      toast("Аккаунт создан. Проверьте почту.", "success");
+    } catch (err) {
+      showError(humanAuthError(err));
+    } finally {
+      setBusy(form, false);
     }
-  }
+  });
+
+  els.resetForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    showError("");
+    const form = event.currentTarget;
+    const email = form.email.value.trim();
+    if (!email) return showError("Введите email для восстановления.");
+    setBusy(form, true, "Отправляем...");
+    try {
+      await sendPasswordReset(email);
+      if (els.resetSentEmail) els.resetSentEmail.textContent = email;
+      activatePanel("reset-sent");
+      toast("Письмо для восстановления отправлено.", "success");
+    } catch (err) {
+      showError(humanAuthError(err));
+    } finally {
+      setBusy(form, false);
+    }
+  });
+
+  $$('[data-google]').forEach((button) => {
+    button.addEventListener("click", async () => {
+      showError("");
+      setBusy(button, true, "Открываем Google...");
+      try {
+        const result = await signInWithGoogleProvider();
+        if (result?.redirect) return;
+        toast("Вход через Google выполнен.", "success");
+        setTimeout(() => { location.href = REDIRECT_AFTER_LOGIN; }, 450);
+      } catch (err) {
+        if (err?.code !== "auth/popup-closed-by-user" && err?.code !== "auth/cancelled-popup-request") {
+          showError(humanAuthError(err));
+        }
+      } finally {
+        setBusy(button, false);
+      }
+    });
+  });
+
+  els.resendBtn?.addEventListener("click", async () => {
+    setBusy(els.resendBtn, true, "Отправляем...");
+    try {
+      await resendVerificationEmail();
+      toast("Письмо отправлено повторно.", "success");
+    } catch (err) {
+      toast(humanAuthError(err), "error");
+    } finally {
+      setBusy(els.resendBtn, false);
+    }
+  });
+
+  els.logoutBtns.forEach((button) => button.addEventListener("click", async () => {
+    setBusy(button, true, "Выходим...");
+    await signOutEverywhere();
+    toast("Вы вышли из аккаунта.", "success");
+    activatePanel("signin");
+    setBusy(button, false);
+  }));
+
+  document.addEventListener("click", (event) => {
+    const target = event.target.closest("[data-switch-panel]");
+    if (target) activatePanel(target.dataset.switchPanel);
+  });
 }
 
-// ─────────── Init ───────────
 async function init() {
-  // Обработать редирект-результат Google, если возвращались с /__/auth/handler
-  try {
-    await getRedirectResult(auth);
-  } catch (err) {
-    console.warn("[auth] redirect result", err);
+  setSplash(true);
+  bindHandlers();
+
+  try { await handleGoogleRedirectResult(); } catch (err) {
+    if (err?.code !== "auth/no-auth-event") console.warn("[auth] Google redirect result:", err);
   }
 
-  // Ждём определение состояния — с жёстким таймаутом.
-  const user = await Promise.race([
-    authReady,
-    new Promise((res) => setTimeout(() => res(null), INIT_HARD_TIMEOUT_MS)),
-  ]);
+  const handledAction = await handleUrlActionCodes();
+  const snapshot = await waitForAuthState();
+  setSplash(false);
 
-  // Если уже авторизован — редиректим, не показываем форму регистрации.
-  if (user) {
-    window.location.replace(REDIRECT_AFTER_LOGIN);
-    return;
+  if (snapshot.user && snapshot.firebaseUser && !snapshot.firebaseUser.emailVerified && !handledAction) {
+    renderVerify(snapshot.user.email);
+  } else if (snapshot.user && !handledAction) {
+    renderAccount(snapshot.user);
+  } else if (!handledAction) {
+    const params = new URLSearchParams(location.search);
+    if (params.get("verified") === "1") {
+      toast("Email подтверждён. Войдите в аккаунт.", "success");
+      activatePanel("signin");
+    } else if (params.get("tab") === "signup") {
+      activatePanel("signup");
+    } else if (params.get("tab") === "reset") {
+      activatePanel("reset");
+    } else {
+      activatePanel("signin");
+    }
   }
 
-  // Показываем форму.
-  showSkeleton(false);
-
-  // Определяем начальную вкладку по query.
-  const params = new URLSearchParams(location.search);
-  if (params.get("verified") === "1") {
-    toast("Email подтверждён. Войдите в аккаунт.", "success");
-    activateTab("signin");
-  } else if (params.get("tab") === "signup") {
-    activateTab("signup");
-  } else {
-    activateTab(document.querySelector(".auth-tab.is-active")?.dataset.tab || "signin");
-  }
-
-  // Навешиваем обработчики.
-  els.tabs.forEach((t) =>
-    t.addEventListener("click", () => activateTab(t.dataset.tab)),
-  );
-  els.signinForm?.addEventListener("submit", handleSignin);
-  els.signupForm?.addEventListener("submit", handleSignup);
-  els.resetForm?.addEventListener("submit", handleReset);
-  els.resendBtn?.addEventListener("click", handleResend);
-  els.googleBtn?.addEventListener("click", handleGoogle);
+  unsubscribeAuth = subscribeAuth((nextState) => {
+    if (!nextState.ready || nextState.loading) return;
+    if (nextState.user && nextState.firebaseUser && !nextState.firebaseUser.emailVerified) renderVerify(nextState.user.email);
+    else if (nextState.user) renderAccount(nextState.user);
+  });
 }
 
-// Гарантия, что даже при исключении в init() пользователь увидит форму.
+window.addEventListener("pagehide", () => { try { unsubscribeAuth?.(); } catch (_) {} });
+
 init().catch((err) => {
   console.error("[auth] init failed", err);
-  showSkeleton(false);
-  showError("Не удалось инициализировать авторизацию. Обновите страницу.");
+  setSplash(false);
+  showError("Не удалось запустить авторизацию. Обновите страницу или проверьте соединение.");
+  activatePanel("signin");
 });
-
-// Финальный предохранитель: если что-то пошло не по плану — снять skeleton.
-setTimeout(() => {
-  if (els.skeleton && !els.skeleton.hidden) {
-    console.warn("[auth] hard fallback: revealing form");
-    showSkeleton(false);
-  }
-}, INIT_HARD_TIMEOUT_MS + 500);
