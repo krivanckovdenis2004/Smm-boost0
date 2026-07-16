@@ -1,4 +1,4 @@
-import { firebaseApp } from "./firebase.js?v=20260716-auth-v9";
+import { firebaseApp, auth } from "./firebase.js?v=20260716-auth-v9";
 import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const db = getFirestore(firebaseApp);
@@ -99,10 +99,25 @@ async function createTopup(type) {
   console.log('[TOPUP] create start', { type, amount, requestId });
 
   try {
+    // Всегда прикрепляем свежий Firebase ID Token, если пользователь вошёл через Firebase.
+    // Это позволяет серверу опознать юзера даже если локальный sessionToken устарел.
+    let idToken = '';
+    try {
+      if (auth?.currentUser) idToken = await auth.currentUser.getIdToken(false);
+    } catch (e) {
+      console.warn('[TOPUP] getIdToken failed', e?.message);
+    }
+
     const res = await fetch(type === 'crypto' ? '/api/create-balance-invoice' : '/api/create-balance-yookassa', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount, userId: user.userId, sessionToken: user.sessionToken, login: user.username || user.displayName || user.email || '' })
+      body: JSON.stringify({
+        amount,
+        idToken,
+        userId: user.userId,
+        sessionToken: user.sessionToken,
+        login: user.username || user.displayName || user.email || ''
+      })
     });
 
     const data = await res.json().catch(() => ({}));

@@ -1,4 +1,4 @@
-import { firebaseApp } from "./firebase.js?v=20260716-auth-v9";
+import { firebaseApp, auth } from "./firebase.js?v=20260716-auth-v9";
 import { getFirestore, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const db = getFirestore(firebaseApp);
@@ -127,7 +127,10 @@ function renderHistory(history) {
 
 async function loadStatus(user) {
   try {
+    let idToken = '';
+    try { if (auth?.currentUser) idToken = await auth.currentUser.getIdToken(false); } catch (_) {}
     const q = new URLSearchParams({ userId: user.userId, sessionToken: user.sessionToken });
+    if (idToken) q.set('idToken', idToken);
     const r = await fetch('/api/free-service?' + q.toString());
     const d = await r.json().catch(() => ({}));
     if (!r.ok) {
@@ -162,10 +165,13 @@ async function submitClaim(user) {
   els.status.textContent = 'Отправляем заявку...';
 
   try {
+    let idToken = '';
+    try { if (auth?.currentUser) idToken = await auth.currentUser.getIdToken(false); } catch (_) {}
     const r = await fetch('/api/free-service', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        idToken,
         userId: user.userId,
         sessionToken: user.sessionToken,
         serviceKey: selectedService.key,

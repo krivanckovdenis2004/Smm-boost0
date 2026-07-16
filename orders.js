@@ -1,4 +1,4 @@
-import { firebaseApp } from "./firebase.js?v=20260716-auth-v9";
+import { firebaseApp, auth } from "./firebase.js?v=20260716-auth-v9";
 import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const db = getFirestore(firebaseApp);
@@ -148,10 +148,12 @@ async function loadOrdersOnce() {
   }
 
   try {
+    let idToken = '';
+    try { if (auth?.currentUser) idToken = await auth.currentUser.getIdToken(false); } catch (_) {}
     const res = await fetch('/api/list-orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: user.userId, sessionToken: user.sessionToken })
+      body: JSON.stringify({ idToken, userId: user.userId, sessionToken: user.sessionToken })
     });
     const data = await res.json().catch(() => ({}));
     if (res.status === 401) {

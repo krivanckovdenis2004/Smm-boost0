@@ -1,4 +1,4 @@
-import { firebaseApp } from "./firebase.js?v=20260716-auth-v9";
+import { firebaseApp, auth } from "./firebase.js?v=20260716-auth-v9";
 import {
   getFirestore,
   collection,
@@ -253,10 +253,13 @@ async function submitQuickOrder(event) {
   if (btn) { btn.disabled = true; btn.textContent = 'Создание заказа...'; }
 
   try {
+    let idToken = '';
+    try { if (auth?.currentUser) idToken = await auth.currentUser.getIdToken(false); } catch (_) {}
     const response = await fetch('/api/balance-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        idToken,
         userId: user.userId,
         login: user.username || user.displayName || user.email || '',
         sessionToken: user.sessionToken,
