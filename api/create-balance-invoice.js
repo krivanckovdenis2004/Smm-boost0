@@ -4,21 +4,8 @@
 //   - ЮKassa     (путь /api/create-balance-yookassa — через rewrite в vercel.json)
 // Совместимость с существующим фронтендом сохранена: он вызывает оба URL как раньше.
 
-import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
-
-const firebaseConfig = {
-  apiKey: 'AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8',
-  authDomain: 'smm-boost.pro',
-  projectId: 'smm-boost-905d5',
-  storageBucket: 'smm-boost-905d5.firebasestorage.app',
-  messagingSenderId: '554912523069',
-  appId: '1:554912523069:web:26d405b696b9d45e5edb54',
-  measurementId: 'G-E6SRLXZW5V'
-};
-
-const firebaseApp = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-const db = getFirestore(firebaseApp);
+import { db } from './_lib/shared.js';
+import { resolveAuthedUser } from './_lib/shared.js';
 
 function json(res, status, payload) {
   return res.status(status).json(payload);
@@ -36,19 +23,13 @@ export default async function handler(req, res) {
 
   try {
     const amount = Number(req.body?.amount || 0);
-    const userId = String(req.body?.userId || '').trim();
-    const sessionToken = String(req.body?.sessionToken || '').trim();
-    const login = String(req.body?.login || req.body?.username || '').trim();
-
-    if (!userId || !sessionToken) return json(res, 401, { error: 'Сначала войдите в аккаунт' });
     if (!Number.isFinite(amount) || amount < 100) return json(res, 400, { error: 'Минимальное пополнение 100₽' });
 
-    const userRef = doc(db, 'users', userId);
-    const userSnap = await getDoc(userRef);
-    if (!userSnap.exists()) return json(res, 401, { error: 'Аккаунт не найден. Войдите заново.' });
-    const user = userSnap.data();
-    if (String(user.sessionToken || '') !== sessionToken) return json(res, 401, { error: 'Сессия устарела. Войдите заново.' });
-    const userLogin = login || user.username || user.displayName || 'user';
+    const authed = await resolveAuthedUser(db, req);
+    if (!authed.ok) return json(res, authed.status || 401, { error: authed.error });
+    const { user, userId } = authed;
+    const loginRaw = String(req.body?.login || req.body?.username || '').trim();
+    const userLogin = loginRaw || user.username || user.displayName || user.email || 'user';
 
     const provider = detectProvider(req);
 

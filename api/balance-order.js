@@ -1,20 +1,7 @@
 import crypto from 'crypto';
 import { validateOrderPayload } from './service-catalog.js';
-import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp, runTransaction, collection, addDoc } from 'firebase/firestore';
-
-const firebaseConfig = {
-  apiKey: 'AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8',
-  authDomain: 'smm-boost.pro',
-  projectId: 'smm-boost-905d5',
-  storageBucket: 'smm-boost-905d5.firebasestorage.app',
-  messagingSenderId: '554912523069',
-  appId: '1:554912523069:web:26d405b696b9d45e5edb54',
-  measurementId: 'G-E6SRLXZW5V'
-};
-
-const firebaseApp = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-const db = getFirestore(firebaseApp);
+import { doc, getDoc, setDoc, serverTimestamp, runTransaction, collection, addDoc } from 'firebase/firestore';
+import { db, resolveAuthedUser } from './_lib/shared.js';
 
 
 const JAP_API_KEY = process.env.JAP_API_KEY || '';
@@ -36,12 +23,12 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const userId = String(req.body?.userId || '').trim();
-    const sessionToken = String(req.body?.sessionToken || '').trim();
     const requestId = String(req.body?.requestId || '').trim().slice(0, 80);
-
-    if (!userId || !sessionToken) return res.status(401).json({ error: 'Сначала войдите в аккаунт' });
     if (!JAP_API_KEY) return res.status(500).json({ error: 'JAP_API_KEY не настроен в Vercel' });
+
+    const authed = await resolveAuthedUser(db, req);
+    if (!authed.ok) return res.status(authed.status || 401).json({ error: authed.error });
+    const { userId, userRef, user, source } = authed;
 
     // Идемпотентность: если клиент прислал requestId, кладём маркер в Firestore.
     // Повторный вызов с тем же requestId вернёт уже созданный заказ.
@@ -66,16 +53,6 @@ export default async function handler(req, res) {
     if (!validated.ok) return res.status(400).json({ error: validated.error });
 
     const { service, quantity, link, priceRub } = validated;
-
-    const userRef = doc(db, 'users', userId);
-    console.log('[BALANCE-ORDER] STEP 3: getDoc(users/' + userId + ')');
-    const userSnap = await getDoc(userRef);
-    if (!userSnap.exists()) return res.status(401).json({ error: 'Аккаунт не найден' });
-
-    const user = userSnap.data();
-    if (String(user.sessionToken || '') !== sessionToken) {
-      return res.status(401).json({ error: 'Сессия устарела. Войдите заново.' });
-    }
 
     const totalBalance = Number(user.balance || 0) + Number(user.bonusBalance || 0);
     if (totalBalance + 0.001 < priceRub) {
@@ -141,7 +118,10 @@ export default async function handler(req, res) {
       if (!freshSnap.exists()) throw new Error('Аккаунт не найден');
 
       const fresh = freshSnap.data();
-      if (String(fresh.sessionToken || '') !== sessionToken) throw new Error('Сессия устарела');
+      // Для firebase-source сессия уже подтверждена через ID Token; для legacy — сверяем токен.
+      if (source === 'legacy' && String(fresh.sessionToken || '') !== String(req.body?.sessionToken || '').trim()) {
+        throw new Error('Сессия устарела');
+      }
 
       let bonus = Number(fresh.bonusBalance || 0);
       let balance = Number(fresh.balance || 0);

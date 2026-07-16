@@ -152,19 +152,19 @@ function generatePublicOrderId() {
 }
 
 export default async function handler(req, res) {
+  const { resolveAuthedUser } = await import('./_lib/shared.js');
   if (req.method === 'GET') {
     // Проверка статуса пользователя (следующее доступное время и история)
     try {
-      const userId = String(req.query?.userId || '').trim();
-      const sessionToken = String(req.query?.sessionToken || '').trim();
-      if (!userId || !sessionToken) return res.status(401).json({ error: 'Требуется вход' });
-
+      // GET присылает поля как query, нормализуем под общий resolver.
+      const authed = await resolveAuthedUser(db, { body: {
+        idToken: String(req.query?.idToken || ''),
+        userId: String(req.query?.userId || ''),
+        sessionToken: String(req.query?.sessionToken || '')
+      }});
+      if (!authed.ok) return res.status(authed.status || 401).json({ error: authed.error });
+      const { userId } = authed;
       const { getDoc } = await import('firebase/firestore');
-      const userSnap = await getDoc(doc(db, 'users', userId));
-      if (!userSnap.exists()) return res.status(401).json({ error: 'Аккаунт не найден' });
-      if (String(userSnap.data().sessionToken || '') !== sessionToken) {
-        return res.status(401).json({ error: 'Сессия устарела' });
-      }
 
       const claimsSnap = await getDoc(doc(db, 'free_claims', userId));
       const data = claimsSnap.exists() ? claimsSnap.data() : {};
@@ -192,14 +192,14 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const userId = String(req.body?.userId || '').trim();
+    const authed = await resolveAuthedUser(db, req);
+    if (!authed.ok) return res.status(authed.status || 401).json({ error: authed.error });
+    const { userId, source } = authed;
     const sessionToken = String(req.body?.sessionToken || '').trim();
     const serviceKey = String(req.body?.serviceKey || '').trim();
     const social = String(req.body?.social || '').trim();
     const link = String(req.body?.link || '').trim();
     const telegramUser = String(req.body?.telegramUser || '').trim();
-
-    if (!userId || !sessionToken) return res.status(401).json({ error: 'Сначала войдите в аккаунт' });
 
     const service = FREE_SERVICES[serviceKey];
     if (!service) return res.status(400).json({ error: 'Неизвестная услуга' });
@@ -217,7 +217,7 @@ export default async function handler(req, res) {
       const userSnap = await tx.get(userRef);
       if (!userSnap.exists()) throw new Error('Аккаунт не найден');
       const user = userSnap.data();
-      if (String(user.sessionToken || '') !== sessionToken) {
+      if (source === 'legacy' && String(user.sessionToken || '') !== sessionToken) {
         throw new Error('Сессия устарела. Войдите заново.');
       }
 

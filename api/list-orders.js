@@ -22,19 +22,10 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed' });
 
   try {
-    const userId = String(req.body?.userId || '').trim();
-    const sessionToken = String(req.body?.sessionToken || '').trim();
-
-    if (!userId || !sessionToken) return json(res, 401, { error: 'Сначала войдите в аккаунт' });
-
-    const userRef = doc(db, 'users', userId);
-    const userSnap = await getDoc(userRef);
-    if (!userSnap.exists()) return json(res, 401, { error: 'Аккаунт не найден' });
-
-    const user = userSnap.data();
-    if (String(user.sessionToken || '') !== sessionToken) {
-      return json(res, 401, { error: 'Сессия устарела. Войдите заново.' });
-    }
+    const { resolveAuthedUser } = await import('./_lib/shared.js');
+    const authed = await resolveAuthedUser(db, req);
+    if (!authed.ok) return json(res, authed.status || 401, { error: authed.error });
+    const { userId } = authed;
 
     const ordersQuery = query(collection(db, 'orders'), where('userId', '==', userId));
     const snap = await getDocs(ordersQuery);
