@@ -1,4 +1,4 @@
-import { firebaseApp, auth } from "./firebase.js?v=20260716-auth-v9";
+import { firebaseApp, auth, syncFirebaseUser, waitForAuthState } from "./firebase.js?v=20260717-topup-v12";
 import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const db = getFirestore(firebaseApp);
@@ -20,6 +20,45 @@ function getUser() {
 
 function isLoggedIn(user) {
   return Boolean(user && user.userId && user.sessionToken);
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function resolveTopupAuth() {
+  let state = null;
+  try {
+    state = await Promise.race([waitForAuthState(), wait(7000).then(() => null)]);
+  } catch (e) {
+    console.warn('[TOPUP] waitForAuthState failed', e?.message);
+  }
+
+  let user = state?.user || getUser();
+  let idToken = '';
+
+  if (auth?.currentUser) {
+    try {
+      idToken = await auth.currentUser.getIdToken(true);
+    } catch (e) {
+      console.warn('[TOPUP] getIdToken failed', e?.message);
+    }
+
+    try {
+      const synced = await syncFirebaseUser(auth.currentUser, { forceToken: false });
+      if (synced?.userId && synced?.sessionToken) user = synced;
+    } catch (e) {
+      console.warn('[TOPUP] syncFirebaseUser failed', e?.message);
+    }
+  }
+
+  return { user, idToken };
+}
+
+async function readResponseJson(res) {
+  const text = await res.text();
+  try { return text ? JSON.parse(text) : {}; }
+  catch { return { error: text || 'Сервер вернул некорректный ответ' }; }
 }
 
 function clearBrokenSession(user) {
@@ -72,7 +111,7 @@ async function createTopup(type) {
     return;
   }
 
-  const user = getUser();
+  const { user, idToken } = await resolveTopupAuth();
   if (!isLoggedIn(user)) {
     alert('Сначала войдите в аккаунт');
     window.location.href = 'auth.html';
@@ -99,20 +138,16 @@ async function createTopup(type) {
   console.log('[TOPUP] create start', { type, amount, requestId });
 
   try {
-    // Всегда прикрепляем свежий Firebase ID Token, если пользователь вошёл через Firebase.
-    // Это позволяет серверу опознать юзера даже если локальный sessionToken устарел.
-    let idToken = '';
-    try {
-      if (auth?.currentUser) idToken = await auth.currentUser.getIdToken(false);
-    } catch (e) {
-      console.warn('[TOPUP] getIdToken failed', e?.message);
-    }
-
     const res = await fetch(type === 'crypto' ? '/api/create-balance-invoice' : '/api/create-balance-yookassa', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(idToken ? { Authorization: `Bearer ${idToken}` } : {})
+      },
       body: JSON.stringify({
         amount,
+        provider: type === 'crypto' ? 'cryptobot' : 'yookassa',
+        requestId,
         idToken,
         userId: user.userId,
         sessionToken: user.sessionToken,
@@ -120,19 +155,21 @@ async function createTopup(type) {
       })
     });
 
-    const data = await res.json().catch(() => ({}));
+    const data = await readResponseJson(res);
     if (!res.ok) {
       if (res.status === 401) {
         localStorage.removeItem('sb_user');
         window.SBUserState?.refresh?.();
       }
-      throw new Error(data.error || data.description || 'Ошибка создания оплаты');
+      console.error('[TOPUP] create failed', { type, requestId, status: res.status, data });
+      throw new Error(data.error || data.description || data.message || `Ошибка создания оплаты (${res.status})`);
     }
 
     console.log('[TOPUP] created', { type, requestId, paymentId: data.id || data.result?.invoice_id || null });
 
-    if (type === 'crypto' && data.ok && data.result?.pay_url) {
-      window.location.href = data.result.pay_url;
+    const cryptoPayUrl = data.result?.pay_url || data.result?.bot_invoice_url || data.result?.mini_app_invoice_url;
+    if (type === 'crypto' && data.ok && cryptoPayUrl) {
+      window.location.href = cryptoPayUrl;
       return;
     }
 
@@ -141,7 +178,8 @@ async function createTopup(type) {
       return;
     }
 
-    throw new Error(data.error || data.description || 'Не найдена ссылка оплаты');
+    console.error('[TOPUP] payment link missing', { type, requestId, data });
+    throw new Error(data.error || data.description || 'Провайдер не вернул ссылку оплаты. Попробуйте ещё раз или выберите другой способ.');
   } catch (e) {
     alert(e.message || 'Ошибка создания оплаты');
   } finally {
