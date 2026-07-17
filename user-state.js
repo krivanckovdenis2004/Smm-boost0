@@ -87,19 +87,19 @@
       .sb-user-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:145px}\
       .sb-user-balance{font-size:11px;color:#a7f3d0;font-weight:800}\
       .sb-user-caret{opacity:.7}\
-      .sb-user-dropdown{position:absolute;top:calc(100% + 9px);right:0;width:268px;padding:8px;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:rgba(15,23,42,.97);box-shadow:0 22px 60px rgba(0,0,0,.34);z-index:10000;color:#f8fafc}\
+      .sb-user-dropdown{position:absolute;top:calc(100% + 10px);right:0;width:292px;padding:12px;border:1px solid rgba(148,163,184,.24);border-radius:18px;background:linear-gradient(180deg,rgba(15,23,42,.98),rgba(10,15,29,.98));box-shadow:0 24px 70px rgba(0,0,0,.42),0 0 0 1px rgba(255,255,255,.04) inset;z-index:10000;color:#f8fafc}\
       .sb-user-dropdown[hidden]{display:none!important}\
-      .sb-user-head{padding:10px 11px 12px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:6px}\
+      .sb-user-head{padding:10px 11px 13px;border-bottom:1px solid rgba(148,163,184,.18);margin-bottom:7px}\
       .sb-user-head strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}\
       .sb-user-head span{display:block;margin-top:3px;color:#94a3b8;font-size:12px;word-break:break-all}\
-      .sb-user-item{display:flex;align-items:center;gap:9px;width:100%;box-sizing:border-box;padding:10px 11px;border:0;border-radius:11px;background:transparent;color:#e2e8f0;text-decoration:none;text-align:left;cursor:pointer;font:700 14px/1 inherit}\
-      .sb-user-item:hover{background:rgba(255,255,255,.08)}\
-      .sb-user-item.logout{margin-top:8px;padding:11px 12px;border-radius:12px;justify-content:center;gap:8px;color:#fff;font-weight:800;letter-spacing:.2px;background:linear-gradient(135deg,rgba(244,63,94,.9),rgba(190,18,60,.9));box-shadow:0 8px 22px rgba(244,63,94,.28);transition:transform .15s ease,box-shadow .15s ease,filter .15s ease}\
-      .sb-user-item.logout:hover{filter:brightness(1.08);box-shadow:0 10px 26px rgba(244,63,94,.4);background:linear-gradient(135deg,rgba(244,63,94,1),rgba(190,18,60,1))}\
+      .sb-user-item{display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;padding:11px 12px;border:0;border-radius:12px;background:transparent;color:#e2e8f0;text-decoration:none;text-align:left;cursor:pointer;font:800 15px/1.12 inherit;transition:background .15s ease,color .15s ease,transform .15s ease}\
+      .sb-user-item:hover{background:rgba(255,255,255,.09);color:#fff}\
+      .sb-user-item.logout{margin-top:10px;padding:12px 14px;border-radius:14px;justify-content:center;gap:9px;color:#fff;font-weight:900;letter-spacing:.2px;background:linear-gradient(135deg,#fb7185,#e11d48 48%,#be123c);box-shadow:0 12px 30px rgba(225,29,72,.34),0 1px 0 rgba(255,255,255,.18) inset;transition:transform .15s ease,box-shadow .15s ease,filter .15s ease}\
+      .sb-user-item.logout:hover{filter:brightness(1.06);box-shadow:0 15px 36px rgba(225,29,72,.46),0 1px 0 rgba(255,255,255,.22) inset;background:linear-gradient(135deg,#ff8da1,#f43f5e 46%,#be123c)}\
       .sb-user-item.logout:active{transform:translateY(1px)}\
-      .sb-user-item.logout svg{width:16px;height:16px;flex:0 0 auto}\
+      .sb-user-item.logout svg{width:17px;height:17px;flex:0 0 auto}\
       .nav-register-link{display:inline-flex;align-items:center}\
-      @media(max-width:520px){.sb-user-name{max-width:92px}.sb-user-dropdown{right:-10px;width:246px}.sb-user-trigger{max-width:170px}}\
+      @media(max-width:520px){.sb-user-name{max-width:92px}.sb-user-dropdown{right:-10px;width:min(292px,calc(100vw - 34px))}.sb-user-trigger{max-width:170px}}\
       @media(prefers-reduced-motion:reduce){.skeleton-pill{animation:none}}";
     document.head.appendChild(style);
   }
@@ -206,7 +206,9 @@
 
   function renderDropMenu(user) {
     document.querySelectorAll(".nav-menu").forEach(function (menu) {
-      Array.from(menu.querySelectorAll('a[href="auth.html"], a[href="/auth.html"], .sb-menu-auth-link, .sb-menu-logout-link, a[href="wallet.html"], a[href="/wallet.html"], a[href="orders.html"], a[href="/orders.html"], a[href="referral.html"], a[href="/referral.html"], a[href="settings.html"], a[href="/settings.html"]')).forEach(function (node) { node.remove(); });
+      Array.from(menu.querySelectorAll("a,button")).forEach(function (node) {
+        if (isDuplicateMenuItem(node)) node.remove();
+      });
       ensureMenuLink(menu, "services.html", "🚀", "Заказать услуги");
       if (!user) {
         var login = document.createElement("a");
@@ -216,6 +218,14 @@
         menu.insertBefore(login, menu.firstChild);
       }
     });
+  }
+
+  function isDuplicateMenuItem(node) {
+    var href = String(node.getAttribute("href") || "").replace(/^\//, "").split("#")[0].split("?")[0].toLowerCase();
+    var text = String(node.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+    if (node.matches && node.matches('.sb-menu-auth-link,.sb-menu-logout-link,[data-sb-logout]')) return true;
+    if (["auth.html", "wallet.html", "orders.html", "referral.html", "settings.html", "account.html", "balance.html", "dashboard.html"].indexOf(href) !== -1) return true;
+    return /баланс|мои заказы|личный кабинет|реферальная программа|настройки|выйти|профиль|регистрация|вход/.test(text);
   }
 
   function ensureMenuLink(menu, href, emoji, text) {
