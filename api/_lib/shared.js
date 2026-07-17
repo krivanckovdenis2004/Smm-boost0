@@ -1,6 +1,7 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import crypto from 'crypto';
+import { AdminFieldValue, getFirebaseAdminAuth, getFirebaseAdminDb } from './firebase-admin.js';
 
 // Shared Firebase initialization — uses env vars, no hardcoded secrets
 // Публичный Firebase-config: env-переменные приоритетнее, но с проверенным дефолтом,
@@ -48,7 +49,19 @@ export async function verifySession(db, userId, sessionToken) {
     return { ok: false, error: 'Сначала войдите в аккаунт', status: 401 };
   }
 
-  const userRef = doc(db, 'users', String(userId).trim());
+  const normalizedUserId = String(userId).trim();
+  const adminDb = getFirebaseAdminDb();
+  if (adminDb) {
+    const adminSnap = await adminDb.collection('users').doc(normalizedUserId).get();
+    if (!adminSnap.exists) return { ok: false, error: 'Аккаунт не найден', status: 401 };
+    const adminUser = adminSnap.data() || {};
+    if (String(adminUser.sessionToken || '') !== String(sessionToken).trim()) {
+      return { ok: false, error: 'Сессия устарела. Войдите заново.', status: 401 };
+    }
+    return { ok: true, user: adminUser, userRef: doc(db, 'users', normalizedUserId) };
+  }
+
+  const userRef = doc(db, 'users', normalizedUserId);
   const userSnap = await getDoc(userRef);
 
   if (!userSnap.exists()) {
@@ -69,7 +82,7 @@ export async function verifySession(db, userId, sessionToken) {
 // даже если локальный sessionToken устарел или отсутствует.
 // ---------------------------------------------------------------------------
 
-function uidFromEmail(email) {
+export function uidFromEmail(email) {
   return crypto.createHash('sha256').update('email:' + String(email).toLowerCase()).digest('hex').slice(0, 32);
 }
 
@@ -94,11 +107,25 @@ function b64urlToBuf(s) {
 
 // Верификация Firebase ID Token: RS256, ключи securetoken@system.gserviceaccount.com.
 // Не требует API-key, не требует firebase-admin — работает на любом Vercel-функции.
-async function verifyFirebaseIdToken(idToken) {
+export async function verifyFirebaseIdToken(idToken) {
   const token = String(idToken || '').trim();
   if (!token || token.split('.').length !== 3) return null;
   const projectId = process.env.FIREBASE_PROJECT_ID || 'smm-boost-905d5';
   try {
+    const adminAuth = getFirebaseAdminAuth();
+    if (adminAuth) {
+      const decoded = await adminAuth.verifyIdToken(token, true);
+      const providerId = decoded.firebase?.sign_in_provider || 'password';
+      return {
+        uid: decoded.uid || decoded.sub,
+        email: String(decoded.email || '').toLowerCase(),
+        emailVerified: !!decoded.email_verified,
+        displayName: decoded.name || '',
+        photoURL: decoded.picture || '',
+        providerIds: [providerId]
+      };
+    }
+
     const [headerB64, payloadB64, sigB64] = token.split('.');
     const header = JSON.parse(b64urlToBuf(headerB64).toString('utf8'));
     const payload = JSON.parse(b64urlToBuf(payloadB64).toString('utf8'));
@@ -139,10 +166,67 @@ async function verifyFirebaseIdToken(idToken) {
 async function ensureFirebaseUserDoc(db, fb) {
   const userId = uidFromEmail(fb.email || fb.uid);
   const userRef = doc(db, 'users', userId);
-  const snap = await getDoc(userRef);
+  const adminDb = getFirebaseAdminDb();
   const sessionToken = `firebase:${fb.uid}`;
   const providerId = fb.providerIds.includes('google.com') ? 'google.com' : 'password';
   const authType = providerId === 'google.com' ? 'google' : 'email';
+
+  if (adminDb) {
+    const adminRef = adminDb.collection('users').doc(userId);
+    const adminSnap = await adminRef.get();
+    const now = AdminFieldValue.serverTimestamp();
+
+    if (!adminSnap.exists) {
+      const created = {
+        userId,
+        firebaseUid: fb.uid,
+        authType,
+        authProviders: [providerId],
+        username: fb.email || userId,
+        usernameLower: (fb.email || '').toLowerCase(),
+        displayName: fb.displayName || (fb.email ? fb.email.split('@')[0] : 'Пользователь'),
+        email: fb.email || '',
+        photoURL: fb.photoURL || '',
+        emailVerified: fb.emailVerified,
+        pendingEmailVerification: !fb.emailVerified,
+        sessionToken,
+        referralCode: userId,
+        referredBy: '',
+        balance: 0,
+        bonusBalance: 0,
+        registrationBonus: 0,
+        referralsCount: 0,
+        referralEarned: 0,
+        createdAt: now,
+        updatedAt: now,
+        lastLoginAt: now
+      };
+      await adminRef.set(created);
+      return { userId, userRef, user: created };
+    }
+
+    const existing = adminSnap.data() || {};
+    const patch = {
+      userId,
+      firebaseUid: fb.uid,
+      authType: existing.authType && existing.authType !== 'password' ? existing.authType : authType,
+      authProviders: Array.from(new Set([...(Array.isArray(existing.authProviders) ? existing.authProviders : []), providerId])),
+      username: existing.username || fb.email || userId,
+      usernameLower: (existing.usernameLower || fb.email || '').toLowerCase(),
+      displayName: existing.displayName || fb.displayName || (fb.email ? fb.email.split('@')[0] : 'Пользователь'),
+      email: existing.email || fb.email || '',
+      photoURL: existing.photoURL || fb.photoURL || '',
+      emailVerified: existing.emailVerified || fb.emailVerified,
+      pendingEmailVerification: !(existing.emailVerified || fb.emailVerified),
+      sessionToken,
+      updatedAt: now,
+      lastLoginAt: now
+    };
+    await adminRef.set(patch, { merge: true });
+    return { userId, userRef, user: { ...existing, ...patch } };
+  }
+
+  const snap = await getDoc(userRef);
 
   if (!snap.exists()) {
     const created = {
