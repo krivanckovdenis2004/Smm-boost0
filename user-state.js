@@ -94,7 +94,10 @@
       .sb-user-head span{display:block;margin-top:3px;color:#94a3b8;font-size:12px;word-break:break-all}\
       .sb-user-item{display:flex;align-items:center;gap:9px;width:100%;box-sizing:border-box;padding:10px 11px;border:0;border-radius:11px;background:transparent;color:#e2e8f0;text-decoration:none;text-align:left;cursor:pointer;font:700 14px/1 inherit}\
       .sb-user-item:hover{background:rgba(255,255,255,.08)}\
-      .sb-user-item.danger{color:#fecaca;border-top:1px solid rgba(255,255,255,.08);border-radius:0 0 11px 11px;margin-top:5px}\
+      .sb-user-item.logout{margin-top:8px;padding:11px 12px;border-radius:12px;justify-content:center;gap:8px;color:#fff;font-weight:800;letter-spacing:.2px;background:linear-gradient(135deg,rgba(244,63,94,.9),rgba(190,18,60,.9));box-shadow:0 8px 22px rgba(244,63,94,.28);transition:transform .15s ease,box-shadow .15s ease,filter .15s ease}\
+      .sb-user-item.logout:hover{filter:brightness(1.08);box-shadow:0 10px 26px rgba(244,63,94,.4);background:linear-gradient(135deg,rgba(244,63,94,1),rgba(190,18,60,1))}\
+      .sb-user-item.logout:active{transform:translateY(1px)}\
+      .sb-user-item.logout svg{width:16px;height:16px;flex:0 0 auto}\
       .nav-register-link{display:inline-flex;align-items:center}\
       @media(max-width:520px){.sb-user-name{max-width:92px}.sb-user-dropdown{right:-10px;width:246px}.sb-user-trigger{max-width:170px}}\
       @media(prefers-reduced-motion:reduce){.skeleton-pill{animation:none}}";
@@ -193,32 +196,19 @@
         '<a class="sb-user-item" href="wallet.html" role="menuitem">💰 Баланс</a>' +
         '<a class="sb-user-item" href="orders.html" role="menuitem">📦 Мои заказы</a>' +
         '<a class="sb-user-item" href="referral.html" role="menuitem">🤝 Реферальная программа</a>' +
-        '<a class="sb-user-item" href="auth.html?tab=settings" role="menuitem">⚙️ Настройки</a>' +
-        '<button class="sb-user-item danger" type="button" data-sb-logout role="menuitem">↩ Выйти</button>' +
+        '<button class="sb-user-item logout" type="button" data-sb-logout role="menuitem">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 17l5-5-5-5"/><path d="M20 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></svg>' +
+          '<span>Выйти</span>' +
+        '</button>' +
       '</div>';
     return wrap;
   }
 
   function renderDropMenu(user) {
     document.querySelectorAll(".nav-menu").forEach(function (menu) {
-      Array.from(menu.querySelectorAll('a[href="auth.html"], a[href="/auth.html"], .sb-menu-auth-link, .sb-menu-logout-link')).forEach(function (node) { node.remove(); });
+      Array.from(menu.querySelectorAll('a[href="auth.html"], a[href="/auth.html"], .sb-menu-auth-link, .sb-menu-logout-link, a[href="wallet.html"], a[href="/wallet.html"], a[href="orders.html"], a[href="/orders.html"], a[href="referral.html"], a[href="/referral.html"], a[href="settings.html"], a[href="/settings.html"]')).forEach(function (node) { node.remove(); });
       ensureMenuLink(menu, "services.html", "🚀", "Заказать услуги");
-      ensureMenuLink(menu, "wallet.html", "💰", "Баланс");
-      ensureMenuLink(menu, "orders.html", "📦", "Мои заказы");
-      ensureMenuLink(menu, "referral.html", "🤝", "Реферальная программа");
-      if (user) {
-        var profile = document.createElement("a");
-        profile.href = "wallet.html";
-        profile.className = "sb-menu-auth-link";
-        profile.innerHTML = '<span class="menu-emoji">👤</span><span>' + escapeHtml(displayName(user)) + '</span>';
-        menu.insertBefore(profile, menu.firstChild);
-        var logoutBtn = document.createElement("button");
-        logoutBtn.type = "button";
-        logoutBtn.className = "sb-menu-logout-link";
-        logoutBtn.setAttribute("data-sb-logout", "1");
-        logoutBtn.innerHTML = '<span class="menu-emoji">↩</span><span>Выйти</span>';
-        menu.appendChild(logoutBtn);
-      } else {
+      if (!user) {
         var login = document.createElement("a");
         login.href = "auth.html";
         login.className = "sb-menu-auth-link";
@@ -256,6 +246,7 @@
         var dropdown = wrap && wrap.querySelector(".sb-user-dropdown");
         var opened = dropdown && dropdown.hidden;
         closeUserMenus();
+        closeMenus();
         if (dropdown && opened) { dropdown.hidden = false; userTrigger.setAttribute("aria-expanded", "true"); }
         return;
       }
@@ -277,6 +268,7 @@
         if (!menu) return;
         var willOpen = !menu.classList.contains("open");
         closeMenus();
+        closeUserMenus();
         if (willOpen) { menu.classList.add("open"); menuBtn.setAttribute("aria-expanded", "true"); }
         return;
       }
