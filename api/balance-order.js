@@ -1,8 +1,6 @@
-import crypto from 'crypto';
 import { validateOrderPayload } from './service-catalog.js';
-import { doc, getDoc, setDoc, serverTimestamp, runTransaction, collection, addDoc } from 'firebase/firestore';
 import { db, resolveAuthedUser } from './_lib/shared.js';
-
+import { AdminFieldValue, getFirebaseAdminDb } from './_lib/firebase-admin.js';
 
 const JAP_API_KEY = process.env.JAP_API_KEY || '';
 
@@ -26,17 +24,21 @@ export default async function handler(req, res) {
     const requestId = String(req.body?.requestId || '').trim().slice(0, 80);
     if (!JAP_API_KEY) return res.status(500).json({ error: 'JAP_API_KEY не настроен в Vercel' });
 
+    const adminDb = getFirebaseAdminDb();
+    if (!adminDb) return res.status(500).json({ error: 'Firebase Admin SDK не настроен (FIREBASE_SERVICE_ACCOUNT)' });
+    const adminTs = () => AdminFieldValue.serverTimestamp();
+
     const authed = await resolveAuthedUser(db, req);
     if (!authed.ok) return res.status(authed.status || 401).json({ error: authed.error });
-    const { userId, userRef, user, source } = authed;
+    const { userId, user, source } = authed;
+    const userRef = adminDb.collection('users').doc(userId);
 
     // Идемпотентность: если клиент прислал requestId, кладём маркер в Firestore.
     // Повторный вызов с тем же requestId вернёт уже созданный заказ.
     if (requestId) {
-      const reqRef = doc(db, 'order_requests', `${userId}_${requestId}`);
-      console.log('[BALANCE-ORDER] STEP 1: getDoc(order_requests/' + userId + '_' + requestId + ')');
-      const reqSnap = await getDoc(reqRef);
-      if (reqSnap.exists()) {
+      const reqRef = adminDb.collection('order_requests').doc(`${userId}_${requestId}`);
+      const reqSnap = await reqRef.get();
+      if (reqSnap.exists) {
         const cached = reqSnap.data();
         if (cached.status === 'done') {
           return res.status(200).json({ ok: true, cached: true, orderDocId: cached.orderDocId, publicOrderId: cached.publicOrderId, japOrderId: cached.japOrderId });
@@ -45,8 +47,7 @@ export default async function handler(req, res) {
           return res.status(429).json({ error: 'Заказ уже обрабатывается, подождите пару секунд.' });
         }
       }
-      console.log('[BALANCE-ORDER] STEP 2: setDoc(order_requests) status=processing');
-      await setDoc(reqRef, { userId, status: 'processing', createdAt: serverTimestamp() }, { merge: true });
+      await reqRef.set({ userId, status: 'processing', createdAt: adminTs() }, { merge: true });
     }
 
     const validated = await validateOrderPayload(req.body || {});
@@ -90,8 +91,7 @@ export default async function handler(req, res) {
     const japErrorText = japData.error || japData.message || japData.description || '';
 
     if (!japOrderId) {
-      console.log('[BALANCE-ORDER] STEP 4a: addDoc(orders) JAP error');
-      await addDoc(collection(db, 'orders'), {
+      await adminDb.collection('orders').add({
         userId,
         userLogin: String(user.username || user.displayName || user.email || ''),
         publicOrderId,
@@ -104,7 +104,7 @@ export default async function handler(req, res) {
         paymentMethod: 'Баланс',
         japOrderId: '',
         japError: String(japErrorText || ''),
-        createdAt: serverTimestamp()
+        createdAt: adminTs()
       });
       return res.status(400).json({ error: 'Ошибка JAP: ' + (japErrorText || 'order not created') });
     }
@@ -112,10 +112,9 @@ export default async function handler(req, res) {
     let spentBonus = 0;
     let spentBalance = 0;
 
-    console.log('[BALANCE-ORDER] STEP 5: runTransaction(users)');
-    await runTransaction(db, async (transaction) => {
+    await adminDb.runTransaction(async (transaction) => {
       const freshSnap = await transaction.get(userRef);
-      if (!freshSnap.exists()) throw new Error('Аккаунт не найден');
+      if (!freshSnap.exists) throw new Error('Аккаунт не найден');
 
       const fresh = freshSnap.data();
       // Для firebase-source сессия уже подтверждена через ID Token; для legacy — сверяем токен.
@@ -134,12 +133,11 @@ export default async function handler(req, res) {
       transaction.set(userRef, {
         bonusBalance: Number((bonus - spentBonus).toFixed(2)),
         balance: Number((balance - spentBalance).toFixed(2)),
-        updatedAt: serverTimestamp()
+        updatedAt: adminTs()
       }, { merge: true });
     });
 
-    console.log('[BALANCE-ORDER] STEP 6: addDoc(orders) success');
-    const orderDoc = await addDoc(collection(db, 'orders'), {
+    const orderDoc = await adminDb.collection('orders').add({
       userId,
       userLogin: String(user.username || user.displayName || user.email || ''),
       publicOrderId,
@@ -153,21 +151,21 @@ export default async function handler(req, res) {
       status: '🟡 В обработке',
       paymentMethod: 'Баланс',
       japOrderId: String(japOrderId),
-      paidAt: serverTimestamp(),
-      createdAt: serverTimestamp()
+      paidAt: adminTs(),
+      createdAt: adminTs()
     });
 
     await sendTelegram(`🔥 Новый заказ с баланса\n\nID: ${publicOrderId}\nЛогин: ${user.username || user.displayName || user.email || '—'}\nУслуга: ${service.name}\nКоличество: ${quantity}\nСумма: ${priceRub}₽\nБонусами: ${spentBonus.toFixed(2)}₽\nБалансом: ${spentBalance.toFixed(2)}₽\nСсылка: ${link}\n\nJAP ID:\n${japOrderId}`);
 
     if (requestId) {
       try {
-        await setDoc(doc(db, 'order_requests', `${userId}_${requestId}`), {
+        await adminDb.collection('order_requests').doc(`${userId}_${requestId}`).set({
           userId,
           status: 'done',
           orderDocId: orderDoc.id,
           publicOrderId,
           japOrderId: String(japOrderId),
-          completedAt: serverTimestamp()
+          completedAt: adminTs()
         }, { merge: true });
       } catch (e) { /* не критично */ }
     }
