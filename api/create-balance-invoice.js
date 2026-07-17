@@ -13,9 +13,20 @@ function json(res, status, payload) {
 
 function detectProvider(req) {
   const url = String(req.url || '');
+  if (req.query && req.query.provider) return String(req.query.provider);
   if (req.body && req.body.provider) return String(req.body.provider);
   if (url.includes('yookassa')) return 'yookassa';
   return 'cryptobot';
+}
+
+async function readJsonResponse(response) {
+  const text = await response.text();
+  try { return text ? JSON.parse(text) : {}; }
+  catch { return { error: text || 'Провайдер вернул некорректный ответ' }; }
+}
+
+function providerError(data, fallback) {
+  return data?.description || data?.message || data?.error_description || data?.error?.message || data?.error || fallback;
 }
 
 export default async function handler(req, res) {
@@ -32,14 +43,17 @@ export default async function handler(req, res) {
     const userLogin = loginRaw || user.username || user.displayName || user.email || 'user';
 
     const provider = detectProvider(req);
+    const requestId = String(req.body?.requestId || '').trim().slice(0, 80);
 
     if (provider === 'yookassa') {
       if (!process.env.YOOKASSA_SHOP_ID || !process.env.YOOKASSA_SECRET_KEY) {
         return json(res, 500, { error: 'YooKassa credentials are not configured' });
       }
       const auth = Buffer.from(process.env.YOOKASSA_SHOP_ID + ':' + process.env.YOOKASSA_SECRET_KEY).toString('base64');
-      const { randomUUID } = await import('crypto');
-      const idempotenceKey = randomUUID();
+      const { createHash, randomUUID } = await import('crypto');
+      const idempotenceKey = requestId
+        ? createHash('sha256').update(`topup:yookassa:${userId}:${requestId}:${amount.toFixed(2)}`).digest('hex')
+        : randomUUID();
 
       const response = await fetch('https://api.yookassa.ru/v3/payments', {
         method: 'POST',
@@ -64,8 +78,14 @@ export default async function handler(req, res) {
           }
         })
       });
-      const data = await response.json();
-      return json(res, response.ok ? 200 : response.status, data);
+      const data = await readJsonResponse(response);
+      if (!response.ok) {
+        return json(res, response.status, { ...data, error: providerError(data, 'YooKassa отклонила создание платежа') });
+      }
+      if (!data?.confirmation?.confirmation_url) {
+        return json(res, 502, { error: 'YooKassa не вернула ссылку оплаты', providerResponse: data });
+      }
+      return json(res, 200, data);
     }
 
     // CryptoBot по умолчанию
@@ -90,9 +110,18 @@ export default async function handler(req, res) {
         })
       })
     });
-    const data = await response.json();
-    return json(res, response.ok ? 200 : response.status, data);
+    const data = await readJsonResponse(response);
+    if (!response.ok || data?.ok === false) {
+      return json(res, response.ok ? 502 : response.status, { ...data, error: providerError(data, 'CryptoBot отклонил создание счёта') });
+    }
+    const payUrl = data?.result?.pay_url || data?.result?.bot_invoice_url || data?.result?.mini_app_invoice_url;
+    if (!payUrl) {
+      return json(res, 502, { error: 'CryptoBot не вернул ссылку оплаты', providerResponse: data });
+    }
+    data.result.pay_url = payUrl;
+    return json(res, 200, data);
   } catch (e) {
+    console.error('[CREATE-BALANCE-INVOICE] FAIL:', e?.code, e?.message, e?.stack);
     return json(res, 500, { error: e.message });
   }
 }

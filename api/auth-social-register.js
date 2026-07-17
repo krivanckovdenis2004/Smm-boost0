@@ -1,6 +1,8 @@
 import crypto from 'crypto';
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp, increment } from 'firebase/firestore';
+import { verifyFirebaseIdToken as verifySharedFirebaseIdToken } from './_lib/shared.js';
+import { AdminFieldValue, getFirebaseAdminDb } from './_lib/firebase-admin.js';
 
 const firebaseConfig = {
   apiKey: process.env.FIREBASE_API_KEY || 'AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8',
@@ -112,25 +114,9 @@ async function incrementReferrer(referredBy) {
 async function verifyFirebaseIdToken(idToken) {
   const token = safeText(idToken, 6000);
   if (!token) throw new Error('idToken required');
-  const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(firebaseConfig.apiKey)}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ idToken: token })
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok || !Array.isArray(data.users) || !data.users[0]) {
-    throw new Error(data?.error?.message || 'Firebase token verification failed');
-  }
-  const user = data.users[0];
-  const providerIds = Array.isArray(user.providerUserInfo) ? user.providerUserInfo.map((p) => p.providerId).filter(Boolean) : [];
-  return {
-    uid: user.localId,
-    email: String(user.email || '').toLowerCase(),
-    emailVerified: Boolean(user.emailVerified),
-    displayName: user.displayName || '',
-    photoURL: user.photoUrl || '',
-    providerIds
-  };
+  const fb = await verifySharedFirebaseIdToken(token);
+  if (!fb?.uid) throw new Error('Firebase token verification failed');
+  return fb;
 }
 
 async function syncFirebaseAuthUser(req, res) {
@@ -138,12 +124,76 @@ async function syncFirebaseAuthUser(req, res) {
   if (!fb.uid || !fb.email) return res.status(400).json({ error: 'Firebase user email required' });
 
   const userId = uidFromKey(`email:${fb.email}`);
+  const authType = fb.providerIds.includes('google.com') ? 'google' : 'email';
+  const sessionToken = `firebase:${fb.uid}`;
+  const adminDb = getFirebaseAdminDb();
+
+  if (adminDb) {
+    const userRefAdmin = adminDb.collection('users').doc(userId);
+    const userSnapAdmin = await userRefAdmin.get();
+    const existing = userSnapAdmin.exists ? { userId, ...userSnapAdmin.data() } : null;
+    let referredBy = existing?.referredBy || '';
+
+    if (!referredBy) {
+      const ref = safeText(req.body?.ref || req.body?.referredBy || '', 64).toLowerCase();
+      if (/^[0-9a-f]{32}$/.test(ref) && ref !== userId) {
+        const refSnap = await adminDb.collection('users').doc(ref).get();
+        referredBy = refSnap.exists ? ref : '';
+      }
+    }
+
+    const now = AdminFieldValue.serverTimestamp();
+    const patch = {
+      userId,
+      firebaseUid: fb.uid,
+      authType: existing?.authType && existing.authType !== 'password' ? existing.authType : authType,
+      authProviders: Array.from(new Set([...(Array.isArray(existing?.authProviders) ? existing.authProviders : []), ...fb.providerIds, authType === 'email' ? 'password' : 'google.com'])),
+      username: existing?.username || fb.email,
+      usernameLower: fb.email,
+      displayName: fb.displayName || existing?.displayName || fb.email.split('@')[0],
+      email: fb.email,
+      photoURL: fb.photoURL || existing?.photoURL || '',
+      emailVerified: fb.emailVerified,
+      pendingEmailVerification: !fb.emailVerified,
+      sessionToken,
+      updatedAt: now,
+      lastLoginAt: now
+    };
+
+    if (!existing) {
+      const created = {
+        ...patch,
+        referralCode: userId,
+        referredBy,
+        balance: 0,
+        bonusBalance: 0,
+        registrationBonus: 0,
+        referralsCount: 0,
+        referralEarned: 0,
+        createdAt: now
+      };
+      await userRefAdmin.set(created);
+      if (referredBy) {
+        try {
+          await adminDb.collection('users').doc(referredBy).set({
+            referralsCount: AdminFieldValue.increment(1),
+            updatedAt: now
+          }, { merge: true });
+        } catch (e) {
+          console.warn('[auth] admin increment referralsCount failed', e?.message);
+        }
+      }
+      return res.status(200).json({ ok: true, created: true, user: publicUser(created) });
+    }
+
+    await userRefAdmin.set(patch, { merge: true });
+    return res.status(200).json({ ok: true, created: false, user: publicUser({ ...existing, ...patch }) });
+  }
+
   const userRef = doc(db, 'users', userId);
   const userSnap = await readUserDoc(userRef, 'firebase:getDoc users/{userId}');
   const existing = userSnap.exists() ? { userId, ...userSnap.data() } : null;
   const referredBy = existing?.referredBy || await resolveReferrer(req.body?.ref || req.body?.referredBy || '', userId);
-  const authType = fb.providerIds.includes('google.com') ? 'google' : 'email';
-  const sessionToken = `firebase:${fb.uid}`;
 
   const patch = {
     userId,
