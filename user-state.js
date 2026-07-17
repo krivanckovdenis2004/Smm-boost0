@@ -7,6 +7,7 @@
   injectStyles();
   markAuthBooting();
   exposeApi();
+  bindButtonLoaders();
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", boot, { once: true });
@@ -305,6 +306,33 @@
   function closeMenus() {
     document.querySelectorAll(".nav-menu.open").forEach(function (menu) { menu.classList.remove("open"); });
     document.querySelectorAll('.menu-toggle[aria-expanded="true"]').forEach(function (btn) { btn.setAttribute("aria-expanded", "false"); });
+  }
+
+  // Progressive-enhancement: show a spinner on primary CTAs while their handler runs.
+  // Non-destructive: never preventDefault, auto-clears after 2.2s or on pagehide.
+  function bindButtonLoaders() {
+    if (document.documentElement.dataset.sbLoaderBound === "1") return;
+    document.documentElement.dataset.sbLoaderBound = "1";
+    var SELECTOR = [
+      ".payment-method-btn",
+      ".hero-button:not(.hero-register-button)",
+      ".wallet-link",
+      ".order-btn",
+      ".trust-card-button",
+      ".primary-wide-btn",
+      "[data-loading]"
+    ].join(",");
+    document.addEventListener("click", function (e) {
+      var el = e.target && e.target.closest && e.target.closest(SELECTOR);
+      if (!el || el.classList.contains("is-loading") || el.disabled) return;
+      if (el.matches(".sb-user-item,.menu-toggle,.sb-user-trigger,[data-sb-logout]")) return;
+      el.classList.add("is-loading");
+      var t = setTimeout(function () { el.classList.remove("is-loading"); }, 2200);
+      el.addEventListener("blur", function once() { clearTimeout(t); el.classList.remove("is-loading"); el.removeEventListener("blur", once); });
+    }, false);
+    window.addEventListener("pagehide", function () {
+      document.querySelectorAll(".is-loading").forEach(function (n) { n.classList.remove("is-loading"); });
+    });
   }
 
   async function logout(button) {

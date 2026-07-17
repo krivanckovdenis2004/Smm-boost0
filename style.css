@@ -6330,3 +6330,255 @@ img, svg, video { max-width: 100%; height: auto; }
   .bg-animation,.telegram-support,#live-orders,.nav-menu,.menu-toggle{display:none!important}
   body{background:#fff!important;color:#000!important}
 }
+
+/* ============================================================
+   THEME v17 — Dark charcoal + violet gradient
+   Modern polish: buttons, cards, typography, motion
+   ============================================================ */
+:root{
+  --v17-bg-0:#0b0d12;
+  --v17-bg-1:#12141c;
+  --v17-bg-2:#181b25;
+  --v17-surface:rgba(24,27,37,.72);
+  --v17-surface-2:rgba(30,34,46,.86);
+  --v17-border:rgba(148,163,184,.14);
+  --v17-border-strong:rgba(167,139,250,.28);
+  --v17-text:#e8ebf3;
+  --v17-text-dim:#a8b0c0;
+  --v17-text-mute:#7a8296;
+  --v17-violet-1:#8b5cf6;
+  --v17-violet-2:#a855f7;
+  --v17-violet-3:#c084fc;
+  --v17-violet-4:#6d28d9;
+  --v17-gradient:linear-gradient(135deg,#7c3aed 0%,#8b5cf6 40%,#a855f7 100%);
+  --v17-gradient-hover:linear-gradient(135deg,#8b5cf6 0%,#a855f7 50%,#c084fc 100%);
+  --v17-glow:0 10px 30px -6px rgba(139,92,246,.55),0 0 0 1px rgba(167,139,250,.28) inset;
+  --v17-glow-strong:0 18px 46px -8px rgba(168,85,247,.65),0 0 0 1px rgba(192,132,252,.4) inset;
+  --v17-shadow-card:0 12px 32px -12px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.03) inset;
+}
+
+/* ---- Background: dark charcoal with subtle violet aurora ---- */
+html,body{background:var(--v17-bg-0)!important;color:var(--v17-text)!important;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body{
+  background:
+    radial-gradient(1200px 700px at 8% -10%,rgba(139,92,246,.16),transparent 60%),
+    radial-gradient(900px 600px at 95% 10%,rgba(168,85,247,.12),transparent 60%),
+    radial-gradient(1000px 700px at 50% 110%,rgba(109,40,217,.14),transparent 60%),
+    linear-gradient(180deg,#0b0d12 0%,#0e1017 60%,#0b0d12 100%)!important;
+  background-attachment:fixed;
+}
+.bg-animation span{opacity:.14!important;filter:blur(110px)!important}
+.bg-animation span:nth-child(1){background:#7c3aed!important}
+.bg-animation span:nth-child(2){background:#a855f7!important}
+.bg-animation span:nth-child(3){background:#6d28d9!important}
+.bg-animation span:nth-child(4){background:#8b5cf6!important}
+
+/* ---- Typography polish ---- */
+h1,h2,h3,h4{letter-spacing:-.01em;color:#f4f4fb}
+h1{font-weight:800}
+h2{font-weight:700}
+p{color:var(--v17-text-dim)}
+a{transition:color .2s ease}
+::selection{background:rgba(168,85,247,.35);color:#fff}
+
+/* ---- Navbar refinement ---- */
+.navbar,.trust-navbar{
+  background:linear-gradient(180deg,rgba(11,13,18,.88),rgba(11,13,18,.72))!important;
+  backdrop-filter:saturate(140%) blur(14px);
+  -webkit-backdrop-filter:saturate(140%) blur(14px);
+  border-bottom:1px solid var(--v17-border)!important;
+}
+.nav-logo{background:var(--v17-gradient);-webkit-background-clip:text;background-clip:text;color:transparent!important;font-weight:800;letter-spacing:-.02em}
+.nav-menu{
+  background:linear-gradient(180deg,rgba(18,20,28,.98),rgba(11,13,18,.98))!important;
+  border:1px solid var(--v17-border)!important;
+  box-shadow:0 24px 60px rgba(0,0,0,.5)!important;
+  border-radius:18px!important;
+}
+.nav-menu a{color:var(--v17-text)!important;transition:background .18s ease,transform .18s ease,color .18s ease}
+.nav-menu a:hover{background:rgba(139,92,246,.14)!important;color:#fff!important;transform:translateX(2px)}
+
+/* ---- Cards / sections ---- */
+.card,.wallet-card,.category-card,.trust-card,.faq details.faq-item{
+  background:var(--v17-surface)!important;
+  border:1px solid var(--v17-border)!important;
+  box-shadow:var(--v17-shadow-card)!important;
+  border-radius:20px!important;
+  transition:transform .28s cubic-bezier(.22,1,.36,1),border-color .28s ease,box-shadow .28s ease!important;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+.category-card:hover,.trust-card:hover,.card:hover{
+  transform:translateY(-4px);
+  border-color:var(--v17-border-strong)!important;
+  box-shadow:0 20px 50px -14px rgba(139,92,246,.35),0 0 0 1px rgba(167,139,250,.28) inset!important;
+}
+.category-card b{color:#fff}
+.category-card span{color:var(--v17-text-mute)}
+
+/* ---- Universal violet-gradient buttons ---- */
+.hero-button,
+.payment-method-btn,
+.wallet-link,
+.order-btn,
+.trust-card-button,
+.primary-wide-btn,
+.hero-small-button,
+.nav-register-link,
+.page-404-search button,
+.btn{
+  position:relative;
+  overflow:hidden;
+  background:var(--v17-gradient)!important;
+  background-size:200% 100%!important;
+  color:#fff!important;
+  border:0!important;
+  border-radius:16px!important;
+  font-weight:800!important;
+  letter-spacing:.01em;
+  box-shadow:var(--v17-glow)!important;
+  transition:transform .18s cubic-bezier(.22,1,.36,1),box-shadow .25s ease,background-position .5s ease,filter .18s ease!important;
+  isolation:isolate;
+}
+.hero-button::after,
+.payment-method-btn::after,
+.wallet-link::after,
+.trust-card-button::after,
+.primary-wide-btn::after,
+.nav-register-link::after,
+.btn::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(120deg,transparent 20%,rgba(255,255,255,.35) 50%,transparent 80%);
+  transform:translateX(-120%);transition:transform .7s ease;z-index:1;
+}
+.hero-button:hover,
+.payment-method-btn:hover,
+.wallet-link:hover,
+.trust-card-button:hover,
+.primary-wide-btn:hover,
+.nav-register-link:hover,
+.btn:hover{
+  transform:translateY(-2px) scale(1.01)!important;
+  background:var(--v17-gradient-hover)!important;
+  background-position:100% 0!important;
+  box-shadow:var(--v17-glow-strong)!important;
+  filter:saturate(1.05);
+}
+.hero-button:hover::after,
+.payment-method-btn:hover::after,
+.wallet-link:hover::after,
+.trust-card-button:hover::after,
+.primary-wide-btn:hover::after,
+.nav-register-link:hover::after,
+.btn:hover::after{transform:translateX(120%)}
+.hero-button:active,
+.payment-method-btn:active,
+.wallet-link:active,
+.trust-card-button:active,
+.primary-wide-btn:active,
+.btn:active{transform:translateY(0) scale(.99)!important;filter:saturate(.98)}
+
+/* Secondary/ghost variant retained: hero-register-button, crypto */
+.hero-register-button{
+  background:rgba(255,255,255,.06)!important;
+  border:1px solid rgba(192,132,252,.35)!important;
+  color:#efeaff!important;
+  box-shadow:0 6px 20px -8px rgba(139,92,246,.35)!important;
+}
+.hero-register-button:hover{
+  background:rgba(139,92,246,.14)!important;
+  border-color:rgba(192,132,252,.6)!important;
+}
+.crypto-btn,.payment-method-btn.crypto-btn{
+  background:linear-gradient(135deg,#0ea5e9 0%,#6366f1 50%,#8b5cf6 100%)!important;
+}
+
+/* ---- Loading state (spinner on button) ---- */
+@keyframes v17-spin{to{transform:rotate(360deg)}}
+@keyframes v17-shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.is-loading{pointer-events:none;cursor:progress;color:transparent!important;position:relative}
+.is-loading::before{
+  content:"";position:absolute;top:50%;left:50%;
+  width:20px;height:20px;margin:-10px 0 0 -10px;
+  border:2.4px solid rgba(255,255,255,.35);
+  border-top-color:#fff;border-radius:50%;
+  animation:v17-spin .7s linear infinite;
+  z-index:3;
+}
+.is-loading::after{
+  transform:none!important;
+  background:linear-gradient(90deg,rgba(255,255,255,.05),rgba(255,255,255,.18),rgba(255,255,255,.05))!important;
+  background-size:200% 100%!important;
+  animation:v17-shimmer 1.4s linear infinite;
+  opacity:.6;
+}
+
+/* ---- Inputs polish ---- */
+input,textarea,select{
+  background:rgba(15,18,26,.85)!important;
+  border:1px solid var(--v17-border)!important;
+  color:var(--v17-text)!important;
+  border-radius:14px!important;
+  transition:border-color .2s ease,box-shadow .2s ease,background .2s ease!important;
+}
+input:focus,textarea:focus,select:focus{
+  border-color:rgba(168,85,247,.6)!important;
+  box-shadow:0 0 0 4px rgba(139,92,246,.18)!important;
+  outline:none!important;
+}
+input::placeholder,textarea::placeholder{color:var(--v17-text-mute)!important}
+
+/* ---- Wallet balances glow ---- */
+.balance-grid > div{
+  background:linear-gradient(160deg,rgba(139,92,246,.10),rgba(15,18,26,.6))!important;
+  border:1px solid var(--v17-border)!important;
+  border-radius:18px!important;
+  padding:18px!important;
+  transition:transform .25s ease,border-color .25s ease;
+}
+.balance-grid > div:hover{transform:translateY(-2px);border-color:var(--v17-border-strong)!important}
+.balance-grid b{background:var(--v17-gradient);-webkit-background-clip:text;background-clip:text;color:transparent!important;font-size:1.8em}
+
+/* ---- Footer polish ---- */
+.footer,.trust-footer{
+  background:linear-gradient(180deg,rgba(11,13,18,0),rgba(11,13,18,.9))!important;
+  border-top:1px solid var(--v17-border)!important;
+}
+.footer a{color:var(--v17-text-dim)!important;transition:color .2s}
+.footer a:hover{color:var(--v17-violet-3)!important}
+.footer-logo{background:var(--v17-gradient);-webkit-background-clip:text;background-clip:text;color:transparent!important;font-weight:800}
+
+/* ---- Hero refinement ---- */
+.hero h1,.trust-hero h1{
+  background:linear-gradient(120deg,#ffffff 0%,#e9defc 45%,#c4b5fd 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.hero-subtitle{color:var(--v17-text-dim)!important}
+
+/* ---- Breadcrumbs ---- */
+.breadcrumbs{color:var(--v17-text-mute)}
+.breadcrumbs a{color:var(--v17-text-dim)}
+.breadcrumbs a:hover{color:var(--v17-violet-3)}
+
+/* ---- Fade-in on load ---- */
+@keyframes v17-fade-up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+main > section,.wallet-card,.card{animation:v17-fade-up .55s cubic-bezier(.22,1,.36,1) both}
+main > section:nth-child(2){animation-delay:.06s}
+main > section:nth-child(3){animation-delay:.12s}
+main > section:nth-child(4){animation-delay:.18s}
+
+/* ---- Telegram FAB ---- */
+.telegram-support{
+  background:var(--v17-gradient)!important;
+  box-shadow:var(--v17-glow)!important;
+  transition:transform .25s cubic-bezier(.22,1,.36,1),box-shadow .25s ease!important;
+}
+.telegram-support:hover{transform:translateY(-3px) scale(1.05);box-shadow:var(--v17-glow-strong)!important}
+
+/* ---- Reduced motion ---- */
+@media (prefers-reduced-motion:reduce){
+  main > section,.wallet-card,.card{animation:none}
+  .hero-button,.payment-method-btn,.wallet-link,.btn{transition:none!important}
+  .is-loading::before{animation-duration:1.5s}
+}
+/* END THEME v17 */
