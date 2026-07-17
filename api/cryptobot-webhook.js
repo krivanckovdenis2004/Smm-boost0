@@ -1,6 +1,7 @@
 import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, doc, updateDoc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, doc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { validateOrderPayload } from './service-catalog.js';
+import { AdminFieldValue, getFirebaseAdminDb } from './_lib/firebase-admin.js';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8',
@@ -53,6 +54,77 @@ async function verifyCryptoBotInvoice(invoiceId) {
   return invoice;
 }
 
+function adminTs() {
+  return AdminFieldValue.serverTimestamp();
+}
+
+async function processBalanceTopupAdmin({ userId, login, amountRub, paymentId }) {
+  const adminDb = getFirebaseAdminDb();
+  if (!adminDb) {
+    throw new Error('Firebase Admin SDK is not configured. Set FIREBASE_SERVICE_ACCOUNT in Vercel.');
+  }
+
+  const userRef = adminDb.collection('users').doc(userId);
+  const topupRef = adminDb.collection('topups').doc(paymentId);
+  let referredBy = '';
+
+  const duplicate = await adminDb.runTransaction(async (tx) => {
+    const topupSnap = await tx.get(topupRef);
+    if (topupSnap.exists) return true;
+
+    const userSnap = await tx.get(userRef);
+    const userData = userSnap.exists ? (userSnap.data() || {}) : {};
+    const oldBalance = Number(userData.balance || 0);
+    referredBy = String(userData.referredBy || '');
+
+    tx.set(userRef, {
+      userId,
+      login,
+      balance: Number((oldBalance + amountRub).toFixed(2)),
+      updatedAt: adminTs()
+    }, { merge: true });
+
+    tx.set(topupRef, {
+      userId,
+      login,
+      amount: amountRub,
+      paymentMethod: 'CryptoBot',
+      paymentId,
+      invoiceId: paymentId,
+      status: 'paid',
+      createdAt: adminTs()
+    });
+
+    return false;
+  });
+
+  if (duplicate) return { duplicate: true, referredBy: '' };
+  return { duplicate: false, referredBy };
+}
+
+async function addReferralBonusAdmin({ referredBy, login, amountRub }) {
+  if (!/^[0-9a-f]{32}$/.test(String(referredBy || ''))) return;
+  const adminDb = getFirebaseAdminDb();
+  if (!adminDb) return;
+
+  const refRef = adminDb.collection('users').doc(referredBy);
+  const refSnap = await refRef.get();
+  if (!refSnap.exists) return;
+
+  const refData = refSnap.data() || {};
+  const commission = Number((amountRub * 0.1).toFixed(2));
+  const prevBonus = Number(refData.bonusBalance || 0);
+  const prevEarned = Number(refData.referralEarned || 0);
+
+  await refRef.set({
+    bonusBalance: Number((prevBonus + commission).toFixed(2)),
+    referralEarned: Number((prevEarned + commission).toFixed(2)),
+    updatedAt: adminTs()
+  }, { merge: true });
+
+  await sendTelegram(`🎉 Реферальный бонус ${commission}₽ начислен ${refData.username || referredBy} за пополнение ${login}`);
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -78,56 +150,14 @@ export default async function handler(req, res) {
       }
 
       const paymentId = String(verifiedInvoice.invoice_id || eventInvoice.invoice_id || '');
-      const userRef = doc(db, 'users', userId);
-      const topupRef = doc(db, 'topups', paymentId);
-
-      // Идемпотентность: один invoice_id — одно начисление.
-      const preSnap = await getDoc(topupRef);
-      if (preSnap.exists()) {
+      const topupResult = await processBalanceTopupAdmin({ userId, login, amountRub, paymentId });
+      if (topupResult.duplicate) {
         return res.status(200).json({ success: true, topup: true, duplicate: true });
       }
 
-      const userSnap = await getDoc(userRef);
-      const oldBalance = userSnap.exists() ? Number(userSnap.data().balance || 0) : 0;
-
-      await setDoc(userRef, {
-        userId,
-        login,
-        balance: Number((oldBalance + amountRub).toFixed(2)),
-        updatedAt: serverTimestamp()
-      }, { merge: true });
-
-      // Поля документа должны совпадать с firestore.rules для /topups:
-      // hasAll(['userId','amount','status','paymentId'])
-      await setDoc(topupRef, {
-        userId,
-        login,
-        amount: amountRub,
-        paymentMethod: 'CryptoBot',
-        paymentId,
-        invoiceId: paymentId,
-        status: 'paid',
-        createdAt: serverTimestamp()
-      });
-
       // Реферальный бонус: 10% пополнения — пригласившему.
       try {
-        const referredBy = String(userSnap.exists() ? (userSnap.data().referredBy || '') : '');
-        if (/^[0-9a-f]{32}$/.test(referredBy)) {
-          const refRef = doc(db, 'users', referredBy);
-          const refSnap = await getDoc(refRef);
-          if (refSnap.exists()) {
-            const commission = Number((amountRub * 0.1).toFixed(2));
-            const prevBonus = Number(refSnap.data().bonusBalance || 0);
-            const prevEarned = Number(refSnap.data().referralEarned || 0);
-            await setDoc(refRef, {
-              bonusBalance: Number((prevBonus + commission).toFixed(2)),
-              referralEarned: Number((prevEarned + commission).toFixed(2)),
-              updatedAt: serverTimestamp()
-            }, { merge: true });
-            await sendTelegram(`🎉 Реферальный бонус ${commission}₽ начислен ${refSnap.data().username || referredBy} за пополнение ${login}`);
-          }
-        }
+        await addReferralBonusAdmin({ referredBy: topupResult.referredBy, login, amountRub });
       } catch (refErr) {
         console.warn('[CB-WEBHOOK] referral bonus failed', refErr?.message);
       }

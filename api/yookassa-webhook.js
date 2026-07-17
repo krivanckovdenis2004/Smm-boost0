@@ -1,6 +1,7 @@
 import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, doc, updateDoc, setDoc, getDoc, serverTimestamp, runTransaction } from 'firebase/firestore';
+import { getFirestore, doc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { validateOrderPayload } from './service-catalog.js';
+import { AdminFieldValue, getFirebaseAdminDb } from './_lib/firebase-admin.js';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyCPhcoKEW9O1soc_bbBHWmitjaoZwHrfL8',
@@ -52,6 +53,76 @@ async function verifyYooKassaPayment(paymentId) {
   return data;
 }
 
+function adminTs() {
+  return AdminFieldValue.serverTimestamp();
+}
+
+async function processBalanceTopupAdmin({ userId, login, amountRub, paymentId }) {
+  const adminDb = getFirebaseAdminDb();
+  if (!adminDb) {
+    throw new Error('Firebase Admin SDK is not configured. Set FIREBASE_SERVICE_ACCOUNT in Vercel.');
+  }
+
+  const userRef = adminDb.collection('users').doc(userId);
+  const topupRef = adminDb.collection('topups').doc(paymentId);
+  let referredBy = '';
+
+  const duplicate = await adminDb.runTransaction(async (tx) => {
+    const topupSnap = await tx.get(topupRef);
+    if (topupSnap.exists) return true;
+
+    const userSnap = await tx.get(userRef);
+    const userData = userSnap.exists ? (userSnap.data() || {}) : {};
+    const oldBalance = Number(userData.balance || 0);
+    referredBy = String(userData.referredBy || '');
+
+    tx.set(topupRef, {
+      userId,
+      login,
+      amount: amountRub,
+      paymentMethod: 'ЮKassa',
+      paymentId: String(paymentId || ''),
+      status: 'paid',
+      createdAt: adminTs()
+    });
+
+    tx.set(userRef, {
+      userId,
+      login,
+      balance: Number((oldBalance + amountRub).toFixed(2)),
+      updatedAt: adminTs()
+    }, { merge: true });
+
+    return false;
+  });
+
+  if (duplicate) return { duplicate: true, referredBy: '' };
+  return { duplicate: false, referredBy };
+}
+
+async function addReferralBonusAdmin({ referredBy, login, amountRub }) {
+  if (!/^[0-9a-f]{32}$/.test(String(referredBy || ''))) return;
+  const adminDb = getFirebaseAdminDb();
+  if (!adminDb) return;
+
+  const refRef = adminDb.collection('users').doc(referredBy);
+  const refSnap = await refRef.get();
+  if (!refSnap.exists) return;
+
+  const refData = refSnap.data() || {};
+  const commission = Number((amountRub * 0.1).toFixed(2));
+  const prevBonus = Number(refData.bonusBalance || 0);
+  const prevEarned = Number(refData.referralEarned || 0);
+
+  await refRef.set({
+    bonusBalance: Number((prevBonus + commission).toFixed(2)),
+    referralEarned: Number((prevEarned + commission).toFixed(2)),
+    updatedAt: adminTs()
+  }, { merge: true });
+
+  await sendTelegram(`🎉 Реферальный бонус ${commission}₽ начислен пользователю ${refData.username || referredBy} за пополнение ${login}`);
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -88,101 +159,14 @@ if (String(orderData.type || '') === 'balance_topup') {
         throw new Error(`Paid amount is too low. Paid: ${paidAmount}, required: ${amountRub}`);
       }
 
-      const userRef = doc(db, 'users', userId);
-      const topupRef = doc(db, 'topups', String(verifiedPayment.id));
-
-      console.log('[YK-WEBHOOK] STEP 0: start topup transaction', { userId, paymentId: verifiedPayment.id, amountRub });
-
-      // Быстрая идемпотентность до транзакции: если документ уже существует —
-      // платёж уже начислен, никаких изменений баланса и Telegram.
-      try {
-        const preSnap = await getDoc(topupRef);
-        if (preSnap.exists()) {
-          console.log('[YK-WEBHOOK] PRE-CHECK: topup already exists, skipping', verifiedPayment.id);
-          return res.status(200).json({ success: true, topup: true, duplicate: true });
-        }
-      } catch (preErr) {
-        console.warn('[YK-WEBHOOK] PRE-CHECK failed (continue to tx):', preErr && preErr.message);
-      }
-
-      // Идемпотентность: один payment.id — одно начисление.
-      // Внутри транзакции проверяем ЛЮБОЕ существование topups/{paymentId},
-      // а не только status=='paid', и создаём документ атомарно (без merge),
-      // чтобы повторная доставка webhook гарантированно упала на конфликте.
-      let currentStep = 'init';
-      let alreadyProcessed = false;
-      try {
-        alreadyProcessed = await runTransaction(db, async (tx) => {
-          currentStep = 'STEP 1: tx.get(topups/' + verifiedPayment.id + ')';
-          console.log('[YK-WEBHOOK]', currentStep);
-          const topupSnap = await tx.get(topupRef);
-          if (topupSnap.exists()) {
-            console.log('[YK-WEBHOOK] STEP 1a: topup already exists, skipping');
-            return true;
-          }
-
-          currentStep = 'STEP 2: tx.get(users/' + userId + ')';
-          console.log('[YK-WEBHOOK]', currentStep);
-          const userSnap = await tx.get(userRef);
-          const oldBalance = userSnap.exists() ? Number(userSnap.data().balance || 0) : 0;
-          console.log('[YK-WEBHOOK] STEP 2a: user exists=', userSnap.exists(), ' oldBalance=', oldBalance);
-
-          currentStep = 'STEP 3: tx.set(topups/' + verifiedPayment.id + ') create (atomic marker)';
-          console.log('[YK-WEBHOOK]', currentStep);
-          // Создаём маркер БЕЗ merge — при гонке второй transaction увидит
-          // существующий документ на retry и вернёт alreadyProcessed=true.
-          tx.set(topupRef, {
-            userId,
-            login,
-            amount: amountRub,
-            paymentMethod: 'ЮKassa',
-            paymentId: String(verifiedPayment.id || ''),
-            status: 'paid',
-            createdAt: serverTimestamp()
-          });
-
-          currentStep = 'STEP 4: tx.set(users/' + userId + ') balance update';
-          console.log('[YK-WEBHOOK]', currentStep);
-          tx.set(userRef, {
-            userId,
-            login,
-            balance: Number((oldBalance + amountRub).toFixed(2)),
-            updatedAt: serverTimestamp()
-          }, { merge: true });
-
-          currentStep = 'STEP 5: transaction commit';
-          console.log('[YK-WEBHOOK]', currentStep);
-          return false;
-        });
-        console.log('[YK-WEBHOOK] STEP 6: transaction OK, alreadyProcessed=', alreadyProcessed);
-      } catch (txErr) {
-        console.error('[YK-WEBHOOK] FAIL at', currentStep, '->', txErr && txErr.code, txErr && txErr.message);
-        throw new Error('Firestore failed at ' + currentStep + ': ' + (txErr && txErr.message ? txErr.message : String(txErr)));
-      }
-
-      if (alreadyProcessed) {
+      const topupResult = await processBalanceTopupAdmin({ userId, login, amountRub, paymentId: String(verifiedPayment.id || '') });
+      if (topupResult.duplicate) {
         return res.status(200).json({ success: true, topup: true, duplicate: true });
       }
 
       // Реферальный бонус: 10% пополнения зачисляем пригласившему.
       try {
-        const userSnap2 = await getDoc(userRef);
-        const referredBy = userSnap2.exists() ? String(userSnap2.data().referredBy || '') : '';
-        if (/^[0-9a-f]{32}$/.test(referredBy)) {
-          const refRef = doc(db, 'users', referredBy);
-          const refSnap = await getDoc(refRef);
-          if (refSnap.exists()) {
-            const commission = Number((amountRub * 0.1).toFixed(2));
-            const prevBonus = Number(refSnap.data().bonusBalance || 0);
-            const prevEarned = Number(refSnap.data().referralEarned || 0);
-            await setDoc(refRef, {
-              bonusBalance: Number((prevBonus + commission).toFixed(2)),
-              referralEarned: Number((prevEarned + commission).toFixed(2)),
-              updatedAt: serverTimestamp()
-            }, { merge: true });
-            await sendTelegram(`🎉 Реферальный бонус ${commission}₽ начислен пользователю ${refSnap.data().username || referredBy} за пополнение ${login}`);
-          }
-        }
+        await addReferralBonusAdmin({ referredBy: topupResult.referredBy, login, amountRub });
       } catch (refErr) {
         console.warn('[YK-WEBHOOK] referral bonus failed', refErr?.message);
       }
